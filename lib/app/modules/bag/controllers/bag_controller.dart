@@ -9,13 +9,16 @@ import '../../../data/config/app_color.dart';
 import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/mixins/skeleton_loading_mixin.dart';
+import '../../../data/widgets/no_internet_dialog.dart';
 import '../../../routes/app_pages.dart';
 import '../../product_details/models/product_details_model.dart';
 import '../models/cart_model.dart';
 
 class BagController extends GetxController with SkeletonLoadingMixin {
   final cartItems = <CartItemModel>[].obs;
-  static const String _localCartStorageKey = 'LOCAL_CART_ITEMS_V1';
+  final isMutating = false.obs;
+  final hasInternetError = false.obs;
+  DateTime? _lastFetchTime;
 
   bool get _hasAuth {
     final token = getBox.read(USER_TOKEN);
@@ -27,54 +30,61 @@ class BagController extends GetxController with SkeletonLoadingMixin {
   @override
   void onInit() {
     super.onInit();
-    _loadLocalCart();
+    // Wipe any previously saved local cart data completely
+    try {
+      getBox.remove('LOCAL_CART_ITEMS_V1');
+      getBox.remove('LOCAL_CART_ITEMS');
+    } catch (_) {}
 
     if (!_hasAuth) {
       isLoading.value = false;
+      cartItems.clear();
     } else {
-      if (cartItems.isEmpty) {
-        isLoading.value = true;
-      }
+      isLoading.value = true;
+      fetchCart(showLoading: true, force: true);
+    }
+  }
+
+  void _updateCartFromData(dynamic rawData) {
+    if (rawData is Map) {
+      final mapData = Map<String, dynamic>.from(rawData);
+      final model = CartModel.fromJson(mapData);
+      cartItems.assignAll(model.items);
+    }
+  }
+
+  /// 1. GET /cart - Fetch user's cart from API (no local storage)
+  Future<void> fetchCart({bool showLoading = true, bool force = false}) async {
+    if (!_hasAuth) {
+      isLoading.value = false;
+      cartItems.clear();
+      hasInternetError.value = false;
+      return;
     }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      fetchCart(showLoading: cartItems.isEmpty);
-    });
-  }
+    if (!force && _lastFetchTime != null) {
+      final elapsed = DateTime.now().difference(_lastFetchTime!).inSeconds;
+      if (elapsed < 3) return;
+    }
+    _lastFetchTime = DateTime.now();
 
-  void _saveLocalCart() {
-    try {
-      final jsonList = cartItems.map((e) => e.toJson()).toList();
-      getBox.write(_localCartStorageKey, jsonList);
-    } catch (_) {}
-  }
-
-  void _loadLocalCart() {
-    try {
-      final saved = getBox.read(_localCartStorageKey);
-      if (saved is List && saved.isNotEmpty) {
-        final list = <CartItemModel>[];
-        for (var e in saved) {
-          if (e is Map) {
-            list.add(CartItemModel.fromJson(Map<String, dynamic>.from(e)));
-          }
-        }
-        if (list.isNotEmpty) {
-          cartItems.assignAll(list);
-        }
+    final isOnline = await hasInternetConnection();
+    if (!isOnline) {
+      isLoading.value = false;
+      if (cartItems.isEmpty) {
+        hasInternetError.value = true;
+      } else {
+        showNoInternetDialog(
+          onRetry: () => fetchCart(showLoading: showLoading, force: true),
+        );
       }
-    } catch (_) {}
-  }
+      return;
+    }
 
-  /// 1. GET /cart - Fetch user's cart from API
-  Future<void> fetchCart({bool showLoading = true}) async {
+    hasInternetError.value = false;
+
     if (showLoading && cartItems.isEmpty) {
       isLoading.value = true;
-    }
-
-    if (!_hasAuth) {
-      isLoading.value = false;
-      return;
     }
 
     try {
@@ -88,6 +98,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
       );
 
       if (response.statusCode == 200 && response.data != null) {
+        hasInternetError.value = false;
         dynamic rawData = response.data;
         if (rawData is String) {
           try {
@@ -97,6 +108,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
         if (rawData is Map && rawData.containsKey('data')) {
           rawData = rawData['data'];
         }
+
         List<CartItemModel> incomingItems = [];
         if (rawData is Map) {
           final cartModel =
@@ -112,57 +124,15 @@ class BagController extends GetxController with SkeletonLoadingMixin {
           }
         }
 
-        // If server returns items, update cart and cache locally
-        if (incomingItems.isNotEmpty) {
-          cartItems.assignAll(incomingItems);
-          _saveLocalCart();
-        } else if (cartItems.isNotEmpty) {
-          // Server cart is empty but local cart has items - attempt to sync local items to server
-          bool syncedAny = false;
-          for (var item in cartItems) {
-            final vId = item.variantId;
-            if (vId != null && vId.isNotEmpty && vId != item.productId) {
-              try {
-                final syncRes = await dioPost(
-                  endUrl: 'cart',
-                  data: {'variantId': vId, 'qty': item.quantity},
-                  isJson: true,
-                );
-                if (syncRes.statusCode == 200 || syncRes.statusCode == 201) {
-                  syncedAny = true;
-                }
-              } catch (_) {}
-            }
-          }
-          if (syncedAny) {
-            // Re-fetch after syncing
-            final reRes = await dioGet('cart');
-            if (reRes.statusCode == 200 && reRes.data != null) {
-              dynamic reRaw = reRes.data;
-              if (reRaw is Map && reRaw.containsKey('data')) {
-                reRaw = reRaw['data'];
-              }
-              if (reRaw is Map) {
-                final reModel =
-                    CartModel.fromJson(Map<String, dynamic>.from(reRaw));
-                if (reModel.items.isNotEmpty) {
-                  cartItems.assignAll(reModel.items);
-                  _saveLocalCart();
-                }
-              }
-            }
-          } else {
-            // No valid items could be synced; reflect server empty state
-            cartItems.clear();
-            _saveLocalCart();
-          }
-        } else {
-          cartItems.clear();
-          _saveLocalCart();
-        }
+        cartItems.assignAll(incomingItems);
+      } else {
+        cartItems.clear();
       }
     } catch (_) {
-      // Keep existing local cart on failure so items do not disappear unexpectedly
+      final onlineCheck = await hasInternetConnection();
+      if (!onlineCheck && cartItems.isEmpty) {
+        hasInternetError.value = true;
+      }
     } finally {
       isLoading.value = false;
     }
@@ -170,7 +140,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
 
   /// Pull-to-refresh handler
   Future<void> refreshCart() async {
-    await fetchCart(showLoading: false);
+    await fetchCart(showLoading: false, force: true);
   }
 
   int get totalItemCount {
@@ -190,46 +160,108 @@ class BagController extends GetxController with SkeletonLoadingMixin {
   }
 
   double get deliveryFee => subtotal > 499 || subtotal == 0 ? 0.0 : 49.0;
-  double get tax => subtotal * 0.05;
+  double get tax => 0.0;
   double get totalAmount => subtotal + deliveryFee + tax;
 
   /// 2. PATCH /cart/items/{id} - Increment quantity
   Future<void> incrementQuantity(int index) async {
+    if (index < 0 || index >= cartItems.length) return;
     final item = cartItems[index];
-    final newQty = item.quantity + 1;
+
+    // Check stock limit if known
+    if (item.maxStock != null && item.quantity >= item.maxStock!) {
+      Get.snackbar(
+        'Stock Limit Reached',
+        'Only ${item.maxStock} items available in stock',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFFF59E0B),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+      return;
+    }
+
+    final oldQty = item.quantity;
+    final newQty = oldQty + 1;
     item.quantity = newQty;
     cartItems.refresh();
-    _saveLocalCart();
 
     if (_hasAuth) {
       try {
-        await dioPatch(
+        final res = await dioPatch(
           endUrl: 'cart/items/${item.id}',
           data: {'qty': newQty},
           isJson: true,
         );
-      } catch (_) {}
+
+        if (res.statusCode == 200 || res.statusCode == 201) {
+          dynamic rawData = res.data;
+          if (rawData is Map && rawData.containsKey('data')) {
+            _updateCartFromData(rawData['data']);
+          }
+        } else {
+          // Revert on failure
+          item.quantity = oldQty;
+          cartItems.refresh();
+
+          String errMsg = 'Failed to update quantity';
+          if (res.data is Map) {
+            final map = res.data as Map;
+            if (map['error'] is Map && map['error']['message'] != null) {
+              errMsg = map['error']['message'].toString();
+            } else if (map['message'] != null) {
+              errMsg = map['message'].toString();
+            }
+          }
+          Get.snackbar(
+            'Unable to Update',
+            errMsg,
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: AppColor.error,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 2),
+          );
+        }
+      } catch (_) {
+        item.quantity = oldQty;
+        cartItems.refresh();
+      }
     }
   }
 
   /// 3. PATCH /cart/items/{id} - Decrement quantity
   Future<void> decrementQuantity(int index) async {
+    if (index < 0 || index >= cartItems.length) return;
     final item = cartItems[index];
     final currentQty = item.quantity;
+
     if (currentQty > 1) {
+      final oldQty = currentQty;
       final newQty = currentQty - 1;
       item.quantity = newQty;
       cartItems.refresh();
-      _saveLocalCart();
 
       if (_hasAuth) {
         try {
-          await dioPatch(
+          final res = await dioPatch(
             endUrl: 'cart/items/${item.id}',
             data: {'qty': newQty},
             isJson: true,
           );
-        } catch (_) {}
+
+          if (res.statusCode == 200 || res.statusCode == 201) {
+            dynamic rawData = res.data;
+            if (rawData is Map && rawData.containsKey('data')) {
+              _updateCartFromData(rawData['data']);
+            }
+          } else {
+            item.quantity = oldQty;
+            cartItems.refresh();
+          }
+        } catch (_) {
+          item.quantity = oldQty;
+          cartItems.refresh();
+        }
       }
     } else {
       removeItem(index);
@@ -238,31 +270,67 @@ class BagController extends GetxController with SkeletonLoadingMixin {
 
   /// 4. DELETE /cart/items/{id} - Remove single item
   Future<void> removeItem(int index) async {
+    if (index < 0 || index >= cartItems.length) return;
     final removed = cartItems.removeAt(index);
-    _saveLocalCart();
+
+    if (_hasAuth) {
+      try {
+        final res = await dioDelete('cart/items/${removed.id}');
+        if (res.statusCode == 200 && res.data != null) {
+          dynamic rawData = res.data;
+          if (rawData is Map && rawData.containsKey('data')) {
+            _updateCartFromData(rawData['data']);
+          }
+        }
+      } catch (_) {}
+    }
 
     Get.snackbar(
-      'Removed',
+      'Item Removed',
       '${removed.title} removed from bag',
       snackPosition: SnackPosition.BOTTOM,
       backgroundColor: AppColor.textPrimary,
       colorText: Colors.white,
       duration: const Duration(seconds: 2),
     );
-
-    if (_hasAuth) {
-      try {
-        await dioDelete('cart/items/${removed.id}');
-      } catch (_) {}
-    }
   }
 
-  /// 5. POST /cart - Add item to bag
+  /// 5. POST /cart - Add item to bag directly on server
   Future<void> addItemToBag(Map<String, dynamic> item, {int quantity = 1}) async {
+    final isOnline = await hasInternetConnection();
+    if (!isOnline) {
+      showNoInternetDialog(
+        onRetry: () => addItemToBag(item, quantity: quantity),
+      );
+      return;
+    }
+
+    if (!_hasAuth) {
+      Get.snackbar(
+        'Login Required',
+        'Please log in to add items to your shopping bag',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColor.error,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 3),
+        mainButton: TextButton(
+          onPressed: () => Get.toNamed(Routes.LOGIN),
+          child: const Text(
+            'LOG IN',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
     final qtyToAdd = quantity > 0 ? quantity : 1;
     final prodId = item['productId']?.toString() ??
         item['id']?.toString() ??
-        DateTime.now().millisecondsSinceEpoch.toString();
+        '';
 
     String? variantId = item['variantId']?.toString();
 
@@ -301,106 +369,118 @@ class BagController extends GetxController with SkeletonLoadingMixin {
       } catch (_) {}
     }
 
-    // If still missing, we use prodId as fallback for local item model
-    final fallbackVariantId = (variantId != null && variantId.isNotEmpty)
-        ? variantId
-        : prodId;
+    if (variantId == null || variantId.isEmpty || variantId == prodId) {
+      Get.snackbar(
+        'Product Option',
+        'Please select an available variant on product page',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColor.error,
+        colorText: Colors.white,
+      );
+      return;
+    }
 
-    final existingIndex = cartItems.indexWhere(
-      (element) =>
-          (element.productId == prodId || element.id == prodId) &&
-          (element.variantId == fallbackVariantId ||
-              element.variantId == variantId),
-    );
-
-    if (existingIndex != -1) {
-      final existingItem = cartItems[existingIndex];
-      final newQty = existingItem.quantity + qtyToAdd;
-      existingItem.quantity = newQty;
-      cartItems.refresh();
-      _saveLocalCart();
-
-      if (_hasAuth) {
-        try {
-          await dioPatch(
-            endUrl: 'cart/items/${existingItem.id}',
-            data: {'qty': newQty},
-            isJson: true,
-          );
-        } catch (_) {}
-      }
-    } else {
-      double priceVal = 0.0;
-      final rawPriceMinor = item['priceMinor'];
-      if (rawPriceMinor is num) {
-        priceVal = rawPriceMinor / 100.0;
-      } else {
-        final rawPrice = item['rawPrice'] ?? item['price'];
-        if (rawPrice is num) {
-          priceVal = rawPrice.toDouble();
-        } else if (rawPrice is String) {
-          priceVal =
-              double.tryParse(
-                rawPrice
-                    .replaceAll('৳', '')
-                    .replaceAll('₹', '')
-                    .replaceAll('\$', '')
-                    .replaceAll(',', '')
-                    .trim(),
-              ) ??
-              0.0;
-        }
-      }
-
-      final newItem = CartItemModel(
-        id: prodId,
-        productId: prodId,
-        variantId: fallbackVariantId,
-        brand: item['brand']?.toString() ??
-            item['brandName']?.toString() ??
-            'Alif',
-        title:
-            item['title']?.toString() ?? item['name']?.toString() ?? 'Product',
-        price: priceVal,
-        quantity: qtyToAdd,
-        image: item['image']?.toString() ?? '',
+    isMutating.value = true;
+    try {
+      final response = await dioPost(
+        endUrl: 'cart',
+        data: {
+          'variantId': variantId,
+          'qty': qtyToAdd,
+        },
+        isJson: true,
       );
 
-      cartItems.add(newItem);
-      _saveLocalCart();
-
-      // Only attempt server POST if authenticated and we have a valid variantId distinct from prodId
-      if (_hasAuth && variantId != null && variantId != prodId) {
-        try {
-          final response = await dioPost(
-            endUrl: 'cart',
-            data: {
-              'variantId': variantId,
-              'qty': qtyToAdd,
-            },
-            isJson: true,
-          );
-          if (response.statusCode == 200 || response.statusCode == 201) {
-            await fetchCart(showLoading: false);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        dynamic rawData = response.data;
+        if (rawData is Map && rawData.containsKey('data')) {
+          _updateCartFromData(rawData['data']);
+        } else {
+          await fetchCart(showLoading: false, force: true);
+        }
+        Get.snackbar(
+          'Added to Bag',
+          '${item['title'] ?? item['name'] ?? 'Item'} added to your bag',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFF16A34A),
+          colorText: Colors.white,
+          duration: const Duration(seconds: 2),
+        );
+      } else {
+        String errMsg = 'Failed to add item to bag';
+        if (response.data is Map) {
+          final map = response.data as Map;
+          if (map['error'] is Map && map['error']['message'] != null) {
+            errMsg = map['error']['message'].toString();
+          } else if (map['message'] != null) {
+            errMsg = map['message'].toString();
           }
-        } catch (_) {}
+        }
+        Get.snackbar(
+          'Unable to Add',
+          errMsg,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: AppColor.error,
+          colorText: Colors.white,
+        );
       }
+    } catch (_) {
+      final isOnline = await hasInternetConnection();
+      if (!isOnline) {
+        showNoInternetDialog(
+          onRetry: () => addItemToBag(item, quantity: quantity),
+        );
+      } else {
+        Get.snackbar(
+          'Error',
+          'Network error while adding to bag',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: AppColor.error,
+          colorText: Colors.white,
+        );
+      }
+    } finally {
+      isMutating.value = false;
     }
   }
 
-  /// 6. DELETE /cart - Clear whole cart
+  /// 6. DELETE /cart - Clear whole cart directly on server
   Future<void> clearCart() async {
-    cartItems.clear();
-    _saveLocalCart();
+    final isOnline = await hasInternetConnection();
+    if (!isOnline) {
+      showNoInternetDialog(
+        onRetry: () => clearCart(),
+      );
+      return;
+    }
 
+    cartItems.clear();
     if (_hasAuth) {
       try {
-        await dioDelete('cart');
+        final res = await dioDelete('cart');
+        if (res.statusCode == 200 || res.statusCode == 204) {
+          Get.snackbar(
+            'Bag Cleared',
+            'All items removed from your shopping bag',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: AppColor.textPrimary,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 2),
+          );
+        }
       } catch (_) {}
     }
   }
 
-  void proceedToCheckout() {
+  Future<void> proceedToCheckout() async {
+    final isOnline = await hasInternetConnection();
+    if (!isOnline) {
+      showNoInternetDialog(
+        onRetry: () => proceedToCheckout(),
+      );
+      return;
+    }
+
     if (cartItems.isEmpty) {
       Get.snackbar(
         'Empty Bag',
@@ -411,6 +491,11 @@ class BagController extends GetxController with SkeletonLoadingMixin {
       );
       return;
     }
+
+    if (!validateStockBeforeCheckout()) {
+      return;
+    }
+
     final itemsPayload = cartItems.map((e) => e.toJson()).toList();
     Get.toNamed(
       Routes.CHECKOUT,
@@ -423,5 +508,48 @@ class BagController extends GetxController with SkeletonLoadingMixin {
         'isDirectBuy': false,
       },
     );
+  }
+
+  /// Checks whether a product or specific variant is present in cart
+  bool hasItem(String productId, [String? variantId]) {
+    return cartItems.any((item) {
+      if (item.productId != productId && item.id != productId) return false;
+      if (variantId != null && variantId.isNotEmpty) {
+        return item.variantId == variantId;
+      }
+      return true;
+    });
+  }
+
+  /// Returns current quantity of a specific product or variant in cart
+  int getItemQuantity(String productId, [String? variantId]) {
+    for (var item in cartItems) {
+      if (item.productId == productId || item.id == productId) {
+        if (variantId == null ||
+            variantId.isEmpty ||
+            item.variantId == variantId) {
+          return item.quantity;
+        }
+      }
+    }
+    return 0;
+  }
+
+  /// Validates stock levels for all items in bag before proceeding to checkout
+  bool validateStockBeforeCheckout() {
+    for (var item in cartItems) {
+      if (item.maxStock != null && item.quantity > item.maxStock!) {
+        Get.snackbar(
+          'Insufficient Stock',
+          '${item.title} only has ${item.maxStock} items available',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: AppColor.error,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 3),
+        );
+        return false;
+      }
+    }
+    return true;
   }
 }

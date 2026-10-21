@@ -66,7 +66,13 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                     color: AppColor.textPrimary,
                     size: 22.r,
                   ),
-                  onPressed: () => Get.toNamed(Routes.BAG),
+                  onPressed: () {
+                    if (!Get.isRegistered<BagController>()) {
+                      Get.put(BagController());
+                    }
+                    Get.find<BagController>().fetchCart(force: true);
+                    Get.toNamed(Routes.BAG);
+                  },
                 ),
                 if (count > 0)
                   Positioned(

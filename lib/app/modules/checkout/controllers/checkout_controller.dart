@@ -127,18 +127,23 @@ class CheckoutController extends GetxController {
           final parsed = <Map<String, dynamic>>[];
           for (var item in addrList) {
             if (item is Map<String, dynamic>) {
-              final street = item['addressLine']?.toString() ??
+              final street =
+                  item['addressLine']?.toString() ??
                   item['address']?.toString() ??
                   '';
               final upazila = item['upazila']?.toString() ?? '';
-              final district = item['district']?.toString() ??
+              final district =
+                  item['district']?.toString() ??
                   item['city']?.toString() ??
                   '';
               final division = item['division']?.toString() ?? '';
 
-              final parts = [street, upazila, district, division]
-                  .where((s) => s.trim().isNotEmpty)
-                  .toList();
+              final parts = [
+                street,
+                upazila,
+                district,
+                division,
+              ].where((s) => s.trim().isNotEmpty).toList();
               final fullAddress = parts.isNotEmpty ? parts.join(', ') : street;
 
               parsed.add({
@@ -165,8 +170,7 @@ class CheckoutController extends GetxController {
           }
           if (parsed.isNotEmpty) {
             addresses.assignAll(parsed);
-            final defaultIdx =
-                parsed.indexWhere((a) => a['isDefault'] == true);
+            final defaultIdx = parsed.indexWhere((a) => a['isDefault'] == true);
             if (defaultIdx != -1) {
               selectedAddressIndex.value = defaultIdx;
             } else if (selectedAddressIndex.value >= addresses.length) {
@@ -225,8 +229,9 @@ class CheckoutController extends GetxController {
                   final vId = line['variantId']?.toString() ?? '';
                   final pMinor = line['unitPriceMinor'] ?? line['priceMinor'];
                   final priceVal = pMinor is num ? (pMinor / 100.0) : 0.0;
-                  final qVal =
-                      line['qty'] is num ? (line['qty'] as num).toInt() : 1;
+                  final qVal = line['qty'] is num
+                      ? (line['qty'] as num).toInt()
+                      : 1;
 
                   // Find matching image from existing items or bag items
                   String img = '';
@@ -254,7 +259,8 @@ class CheckoutController extends GetxController {
                     'productId': pId,
                     'variantId': vId,
                     'variantLabel': line['variantLabel']?.toString(),
-                    'title': line['productName']?.toString() ??
+                    'title':
+                        line['productName']?.toString() ??
                         line['title']?.toString() ??
                         'Product',
                     'price': priceVal,
@@ -332,8 +338,7 @@ class CheckoutController extends GetxController {
             districts.assignAll(list);
             if (list.isNotEmpty) {
               final defaultDist = list.firstWhere(
-                (d) =>
-                    d['name']?.toString().toLowerCase() == 'dhaka',
+                (d) => d['name']?.toString().toLowerCase() == 'dhaka',
                 orElse: () => list.first,
               );
               selectedDistrictId.value = defaultDist['id']?.toString();
@@ -358,8 +363,7 @@ class CheckoutController extends GetxController {
             divisions.assignAll(list);
             if (list.isNotEmpty) {
               final defaultDiv = list.firstWhere(
-                (d) =>
-                    d['name']?.toString().toLowerCase() == 'dhaka',
+                (d) => d['name']?.toString().toLowerCase() == 'dhaka',
                 orElse: () => list.first,
               );
               selectedDivisionId.value = defaultDiv['id']?.toString();
@@ -425,7 +429,9 @@ class CheckoutController extends GetxController {
                           backgroundColor: const Color(0xFFF1F5F9),
                           labelStyle: GoogleFonts.lato(
                             fontSize: 12.sp,
-                            fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
+                            fontWeight: isSel
+                                ? FontWeight.bold
+                                : FontWeight.w500,
                             color: isSel ? Colors.white : AppColor.textPrimary,
                           ),
                         ),
@@ -657,8 +663,8 @@ class CheckoutController extends GetxController {
                               final street = streetCtrl.text.trim();
                               final postal =
                                   postalCodeCtrl.text.trim().isNotEmpty
-                                      ? postalCodeCtrl.text.trim()
-                                      : '1000';
+                                  ? postalCodeCtrl.text.trim()
+                                  : '1000';
 
                               if (name.isEmpty ||
                                   rawPhoneInput.isEmpty ||
@@ -675,7 +681,9 @@ class CheckoutController extends GetxController {
 
                               // Format & validate Bangladesh mobile number
                               var phone = rawPhoneInput.replaceAll(
-                                  RegExp(r'[\s\-\(\)]'), '');
+                                RegExp(r'[\s\-\(\)]'),
+                                '',
+                              );
                               if (phone.startsWith('+880')) {
                                 phone = phone.substring(3);
                               } else if (phone.startsWith('880')) {
@@ -685,8 +693,7 @@ class CheckoutController extends GetxController {
                                 phone = '0$phone';
                               }
 
-                              if (!RegExp(r'^01[3-9]\d{8}$')
-                                  .hasMatch(phone)) {
+                              if (!RegExp(r'^01[3-9]\d{8}$').hasMatch(phone)) {
                                 Get.snackbar(
                                   'Invalid Phone Number',
                                   'Please enter a valid 11-digit mobile number (e.g. 017XXXXXXXX)',
@@ -718,8 +725,7 @@ class CheckoutController extends GetxController {
                                 orElse: () => {},
                               );
 
-                              final divName =
-                                  divItem['name']?.toString() ?? '';
+                              final divName = divItem['name']?.toString() ?? '';
                               final distName =
                                   distItem['name']?.toString() ?? '';
                               final upazilaName =
@@ -769,8 +775,7 @@ class CheckoutController extends GetxController {
                                     'Address Saved',
                                     'Delivery address added successfully',
                                     snackPosition: SnackPosition.BOTTOM,
-                                    backgroundColor:
-                                        const Color(0xFF16A34A),
+                                    backgroundColor: const Color(0xFF16A34A),
                                     colorText: Colors.white,
                                   );
                                 } else {
@@ -779,8 +784,7 @@ class CheckoutController extends GetxController {
                                     final d = response.data as Map;
                                     if (d['error'] is Map &&
                                         d['error']['message'] != null) {
-                                      errMsg =
-                                          d['error']['message'].toString();
+                                      errMsg = d['error']['message'].toString();
                                     } else if (d['message'] != null) {
                                       errMsg = d['message'].toString();
                                     }
@@ -867,7 +871,9 @@ class CheckoutController extends GetxController {
 
   /// 3. POST /checkout/place - Place order
   Future<void> placeOrder() async {
-    if (addresses.isEmpty || selectedAddressId == null || selectedAddressId!.isEmpty) {
+    if (addresses.isEmpty ||
+        selectedAddressId == null ||
+        selectedAddressId!.isEmpty) {
       Get.snackbar(
         'Address Required',
         'Please add a delivery address to complete your order',
@@ -911,8 +917,11 @@ class CheckoutController extends GetxController {
       'paymentMethod': apiPayment,
       if (appliedPromoCode.value.isNotEmpty)
         'couponCode': appliedPromoCode.value,
-      if (apiPayment == 'wallet') 'remainderMethod': 'cod',
-      'returnUrl': 'https://alifworld.vercel.app/order-success',
+      if (apiPayment == 'wallet') ...{
+        'walletKinds': ['customer_main'],
+        'remainderMethod': 'cod',
+      },
+      'returnUrl': 'https://alifworld.vercel.app/checkout/success',
     };
 
     try {
@@ -920,9 +929,7 @@ class CheckoutController extends GetxController {
         endUrl: 'checkout/place',
         data: payload,
         isJson: true,
-        customHeaders: {
-          'Idempotency-Key': idempotencyKey,
-        },
+        customHeaders: {'Idempotency-Key': idempotencyKey},
       );
 
       isProcessingPayment.value = false;
@@ -936,16 +943,29 @@ class CheckoutController extends GetxController {
 
         String orderId =
             '#ALF-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}';
+        String? batchNumber;
         if (rawData is Map<String, dynamic>) {
-          if (rawData['orderId'] != null) {
-            orderId = rawData['orderId'].toString();
-          } else if (rawData['id'] != null) {
-            orderId = '#${rawData['id']}';
+          if (rawData['orders'] is List &&
+              (rawData['orders'] as List).isNotEmpty) {
+            final firstOrder = (rawData['orders'] as List).first;
+            if (firstOrder is Map && firstOrder['orderNumber'] != null) {
+              orderId = firstOrder['orderNumber'].toString();
+            }
+          }
+          if (rawData['batch'] is Map &&
+              rawData['batch']['batchNumber'] != null) {
+            batchNumber = rawData['batch']['batchNumber'].toString();
+          }
+          if (orderId.startsWith('#ALF') && batchNumber != null) {
+            orderId = batchNumber;
           }
         }
 
-        String paymentId = gatewayPaymentId ??
-            '${apiPayment.toUpperCase()}_${DateTime.now().millisecondsSinceEpoch}';
+        String paymentId =
+            gatewayPaymentId ??
+            (apiPayment == 'cod'
+                ? ''
+                : '${apiPayment.toUpperCase()}_${DateTime.now().millisecondsSinceEpoch}');
 
         _processSuccessfulOrder(
           paymentId: paymentId,
@@ -1195,10 +1215,11 @@ class CheckoutController extends GetxController {
     required String paymentMethod,
     String? customOrderId,
   }) {
-    final orderId = customOrderId ??
+    final orderId =
+        customOrderId ??
         '#ALF-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}';
-    final selectedAddr = (addresses.isNotEmpty &&
-            selectedAddressIndex.value < addresses.length)
+    final selectedAddr =
+        (addresses.isNotEmpty && selectedAddressIndex.value < addresses.length)
         ? addresses[selectedAddressIndex.value]
         : <String, dynamic>{'address': 'Customer Delivery Address'};
 

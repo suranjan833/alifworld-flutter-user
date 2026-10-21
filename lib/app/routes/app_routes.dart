@@ -37,6 +37,7 @@ abstract class Routes {
   static const SHIPPING_POLICY = _Paths.SHIPPING_POLICY;
   static const CHECKOUT = _Paths.CHECKOUT;
   static const ORDER_SUCCESS = _Paths.ORDER_SUCCESS;
+  static const ORDER_DETAILS = _Paths.ORDER_DETAILS;
   static const TOP_BRANDS = _Paths.TOP_BRANDS;
 }
 
@@ -72,5 +73,6 @@ abstract class _Paths {
   static const SHIPPING_POLICY = '/shipping-policy';
   static const CHECKOUT = '/checkout';
   static const ORDER_SUCCESS = '/order-success';
+  static const ORDER_DETAILS = '/order-details';
   static const TOP_BRANDS = '/top-brands';
 }

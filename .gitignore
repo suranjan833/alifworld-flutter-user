@@ -67,3 +67,6 @@ pubspec.lock
 .vscode
 
 .metadata
+dgc.ps1
+gppush.bat
+order-apis.txt

@@ -296,15 +296,6 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
     };
 
     bagCtrl.addItemToBag(itemPayload, quantity: selectedQuantity.value);
-
-    Get.snackbar(
-      'Added to Bag',
-      '${selectedQuantity.value}x ${p.name} added to your shopping bag',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppColor.primary,
-      colorText: Colors.white,
-      duration: const Duration(seconds: 2),
-    );
   }
 
   void buyNow() {

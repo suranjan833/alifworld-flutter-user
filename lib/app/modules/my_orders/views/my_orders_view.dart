@@ -5,9 +5,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../../../data/config/app_color.dart';
+import '../../../data/widgets/no_internet_dialog.dart';
 import '../../../data/widgets/skeleton_box.dart';
+import '../../../routes/app_pages.dart';
+import '../../main_navigation/controllers/main_navigation_controller.dart';
 import '../controllers/my_orders_controller.dart';
 import '../models/order_model.dart';
+import 'order_details_view.dart';
 
 class MyOrdersView extends GetView<MyOrdersController> {
   const MyOrdersView({super.key});
@@ -38,77 +42,152 @@ class MyOrdersView extends GetView<MyOrdersController> {
         ),
         centerTitle: false,
       ),
-      body: Obx(
-        () => controller.isLoading.value
-            ? Padding(
-                padding: EdgeInsets.only(top: 12.h),
-                child: const SkeletonList(itemCount: 4),
-              )
-            : Column(
-        children: [
-          // Filter Tabs
-          Container(
-            color: Colors.white,
-            padding: EdgeInsets.symmetric(vertical: 10.h),
+      body: Obx(() {
+        if (controller.isLoading.value && controller.orders.isEmpty) {
+          return Padding(
+            padding: EdgeInsets.only(top: 12.h),
+            child: const SkeletonList(itemCount: 4),
+          );
+        }
+
+        if (controller.hasInternetError.value && controller.orders.isEmpty) {
+          return RefreshIndicator(
+            color: AppColor.primary,
+            onRefresh: () => controller.refreshOrders(),
             child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              physics: const BouncingScrollPhysics(),
-              child: Obx(
-                () => Row(
-                  children: List.generate(
-                    controller.statuses.length,
-                    (index) => _buildStatusTab(index),
-                  ),
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: SizedBox(
+                height: 0.75.sh,
+                child: NoInternetWidget(
+                  onRetry: () => controller.fetchOrders(),
                 ),
               ),
             ),
-          ),
-          SizedBox(height: 12.h),
+          );
+        }
 
-          // Order Cards List
-          Expanded(
-            child: Obx(() {
-              final ordersList = controller.filteredOrders;
-
-              if (ordersList.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Iconsax.box_remove,
-                        size: 54.r,
-                        color: AppColor.textHint,
+        return RefreshIndicator(
+          color: AppColor.primary,
+          onRefresh: () => controller.refreshOrders(),
+          child: Column(
+            children: [
+              // Filter Tabs
+              Container(
+                color: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 10.h),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  physics: const BouncingScrollPhysics(),
+                  child: Obx(
+                    () => Row(
+                      children: List.generate(
+                        controller.statuses.length,
+                        (index) => _buildStatusTab(index),
                       ),
-                      SizedBox(height: 12.h),
-                      Text(
-                        'No orders found',
-                        style: GoogleFonts.lato(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.bold,
-                          color: AppColor.textSecondary,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 12.h),
+
+              // Order Cards List
+              Expanded(
+                child: Obx(() {
+                  final ordersList = controller.filteredOrders;
+
+                  if (ordersList.isEmpty) {
+                    return SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: SizedBox(
+                        height: 0.6.sh,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 80.r,
+                                height: 80.r,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFF1F5F9),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Icon(
+                                    Iconsax.box_remove,
+                                    size: 40.r,
+                                    color: AppColor.textHint,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 14.h),
+                              Text(
+                                'No orders found',
+                                style: GoogleFonts.inter(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColor.textPrimary,
+                                ),
+                              ),
+                              SizedBox(height: 6.h),
+                              Text(
+                                'You haven\'t placed any orders in this section yet.',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13.sp,
+                                  color: AppColor.textSecondary,
+                                ),
+                              ),
+                              SizedBox(height: 18.h),
+                              ElevatedButton(
+                                onPressed: () {
+                                  if (Get.isRegistered<MainNavigationController>()) {
+                                    Get.find<MainNavigationController>().changeTab(0);
+                                  } else {
+                                    Get.offAllNamed(Routes.MAIN_NAVIGATION);
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColor.primary,
+                                  elevation: 0,
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 22.w,
+                                    vertical: 10.h,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10.r),
+                                  ),
+                                ),
+                                child: Text(
+                                  'Start Shopping',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13.5.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ],
-                  ),
-                );
-              }
+                    );
+                  }
 
-              return ListView.builder(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
-                physics: const BouncingScrollPhysics(),
-                itemCount: ordersList.length,
-                itemBuilder: (context, index) {
-                  final order = ordersList[index];
-                  return _buildOrderCard(order);
-                },
-              );
-            }),
+                  return ListView.builder(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    itemCount: ordersList.length,
+                    itemBuilder: (context, index) {
+                      final order = ordersList[index];
+                      return _buildOrderCard(order);
+                    },
+                  );
+                }),
+              ),
+            ],
           ),
-        ],
-      ),
-        ),
+        );
+      }),
     );
   }
 
@@ -156,23 +235,26 @@ class MyOrdersView extends GetView<MyOrdersController> {
       statusBg = const Color(0xFFFEE2E2);
     }
 
-    return Container(
-      margin: EdgeInsets.only(bottom: 14.h),
-      padding: EdgeInsets.all(16.r),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return InkWell(
+      onTap: () => Get.to(() => OrderDetailsView(order: order)),
+      borderRadius: BorderRadius.circular(16.r),
+      child: Container(
+        margin: EdgeInsets.only(bottom: 14.h),
+        padding: EdgeInsets.all(16.r),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           // Order Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -307,13 +389,7 @@ class MyOrdersView extends GetView<MyOrdersController> {
                 ),
               ),
               OutlinedButton(
-                onPressed: () {
-                  Get.snackbar(
-                    'Order Info',
-                    'Viewing details for ${order.orderId}',
-                    snackPosition: SnackPosition.BOTTOM,
-                  );
-                },
+                onPressed: () => Get.to(() => OrderDetailsView(order: order)),
                 style: OutlinedButton.styleFrom(
                   padding: EdgeInsets.symmetric(
                     horizontal: 14.w,
@@ -337,6 +413,7 @@ class MyOrdersView extends GetView<MyOrdersController> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

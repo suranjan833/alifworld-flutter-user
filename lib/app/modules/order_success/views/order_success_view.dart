@@ -79,13 +79,21 @@ class OrderSuccessView extends GetView<OrderSuccessController> {
                       () => _buildInfoRow('Order ID', controller.orderId.value),
                     ),
                     SizedBox(height: 10.h),
-                    Obx(
-                      () => _buildInfoRow(
-                        'Payment ID',
-                        controller.paymentId.value,
-                      ),
-                    ),
-                    SizedBox(height: 10.h),
+                    Obx(() {
+                      if (!controller.showPaymentId) {
+                        return const SizedBox.shrink();
+                      }
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildInfoRow(
+                            'Payment ID',
+                            controller.paymentId.value,
+                          ),
+                          SizedBox(height: 10.h),
+                        ],
+                      );
+                    }),
                     Obx(
                       () => _buildInfoRow(
                         'Payment Mode',
@@ -100,6 +108,8 @@ class OrderSuccessView extends GetView<OrderSuccessController> {
                         isHighlight: true,
                       ),
                     ),
+                    // Estimated Delivery commented out for now
+                    /*
                     SizedBox(height: 12.h),
                     const Divider(color: Color(0xFFF1F5F9), height: 1),
                     SizedBox(height: 12.h),
@@ -137,6 +147,7 @@ class OrderSuccessView extends GetView<OrderSuccessController> {
                         ),
                       ],
                     ),
+                    */
                   ],
                 ),
               ),

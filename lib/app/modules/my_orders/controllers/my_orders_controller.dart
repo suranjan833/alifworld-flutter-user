@@ -1,97 +1,22 @@
 
+import 'dart:developer' as developer;
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../data/config/app_color.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/mixins/skeleton_loading_mixin.dart';
+import '../../../data/widgets/no_internet_dialog.dart';
 import '../models/order_model.dart';
 
 class MyOrdersController extends GetxController with SkeletonLoadingMixin {
   final selectedStatusIndex = 0.obs;
-
   final statuses = const ['All', 'In Progress', 'Delivered', 'Cancelled'];
 
-  final orders = <OrderModel>[
-    OrderModel(
-      id: '1',
-      orderId: '#ALF-98742',
-      date: '24 Sep 2026',
-      status: 'In Progress',
-      totalAmount: 1299.0,
-      itemCount: 2,
-      items: [
-        OrderItemModel(
-          id: 'it1',
-          name: 'Smart Color Bulb 2 Pack',
-          image:
-              'https://images.unsplash.com/photo-1550525811-e5869dd03032?q=80&w=400&auto=format&fit=crop',
-          quantity: 1,
-          price: 499.0,
-        ),
-        OrderItemModel(
-          id: 'it2',
-          name: 'Gaming Mouse 16000 DPI',
-          image:
-              'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?q=80&w=400&auto=format&fit=crop',
-          quantity: 1,
-          price: 800.0,
-        ),
-      ],
-    ),
-    OrderModel(
-      id: '2',
-      orderId: '#ALF-85412',
-      date: '18 Sep 2026',
-      status: 'Delivered',
-      totalAmount: 2499.0,
-      itemCount: 1,
-      items: [
-        OrderItemModel(
-          id: 'it3',
-          name: 'Gaming Controller Wireless',
-          image:
-              'https://images.unsplash.com/photo-1600080972464-8e5f35f63d08?q=80&w=400&auto=format&fit=crop',
-          quantity: 1,
-          price: 2499.0,
-        ),
-      ],
-    ),
-    OrderModel(
-      id: '3',
-      orderId: '#ALF-74120',
-      date: '10 Aug 2026',
-      status: 'Delivered',
-      totalAmount: 5999.0,
-      itemCount: 1,
-      items: [
-        OrderItemModel(
-          id: 'it4',
-          name: 'Air Fryer Max XL 5.5L',
-          image:
-              'https://images.unsplash.com/photo-1585515320310-259814833e62?q=80&w=400&auto=format&fit=crop',
-          quantity: 1,
-          price: 5999.0,
-        ),
-      ],
-    ),
-    OrderModel(
-      id: '4',
-      orderId: '#ALF-63214',
-      date: '02 Jul 2026',
-      status: 'Cancelled',
-      totalAmount: 899.0,
-      itemCount: 1,
-      items: [
-        OrderItemModel(
-          id: 'it5',
-          name: 'Flip 6 Portable Speaker',
-          image:
-              'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?q=80&w=400&auto=format&fit=crop',
-          quantity: 1,
-          price: 899.0,
-        ),
-      ],
-    ),
-  ].obs;
+  final orders = <OrderModel>[].obs;
+  final nextCursor = RxnString();
+  final isLoadingMore = false.obs;
+  final hasInternetError = false.obs;
 
   @override
   void onInit() {
@@ -99,21 +24,99 @@ class MyOrdersController extends GetxController with SkeletonLoadingMixin {
     fetchOrders();
   }
 
-  /// 1. GET /account/orders - Fetch user orders list from API
-  Future<void> fetchOrders() async {
-    isLoading.value = true;
+  /// 1. GET /account/orders?limit=20 - Fetch user orders list from API
+  Future<void> fetchOrders({bool isRefresh = false}) async {
+    final isOnline = await hasInternetConnection();
+    if (!isOnline) {
+      if (orders.isEmpty) {
+        hasInternetError.value = true;
+      } else {
+        showNoInternetDialog(
+          onRetry: () => fetchOrders(isRefresh: isRefresh),
+        );
+      }
+      isLoading.value = false;
+      return;
+    }
+
+    hasInternetError.value = false;
+    if (!isRefresh && orders.isEmpty) {
+      isLoading.value = true;
+    }
+
     try {
-      final response = await dioGet('account/orders');
+      final response = await dioGet('account/orders?limit=20');
+
       if (response.statusCode == 200 && response.data != null) {
         dynamic rawData = response.data;
         if (rawData is Map<String, dynamic> && rawData.containsKey('data')) {
           rawData = rawData['data'];
         }
+
         List? orderList;
-        if (rawData is Map<String, dynamic> && rawData.containsKey('orders')) {
-          orderList = rawData['orders'] as List?;
+        if (rawData is Map<String, dynamic>) {
+          if (rawData['items'] is List) {
+            orderList = rawData['items'] as List;
+          } else if (rawData['orders'] is List) {
+            orderList = rawData['orders'] as List;
+          }
+          nextCursor.value = rawData['nextCursor']?.toString();
         } else if (rawData is List) {
           orderList = rawData;
+        }
+
+        if (orderList != null) {
+          final parsed = orderList
+              .whereType<Map<String, dynamic>>()
+              .map((e) => OrderModel.fromJson(e))
+              .toList();
+          orders.assignAll(parsed);
+        }
+      }
+    } catch (e, stack) {
+      developer.log(
+        'Failed to fetch user orders: $e',
+        name: 'MyOrdersController',
+        error: e,
+        stackTrace: stack,
+      );
+      final isOnlineCheck = await hasInternetConnection();
+      if (!isOnlineCheck && orders.isEmpty) {
+        hasInternetError.value = true;
+      }
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Pull-to-refresh handler
+  Future<void> refreshOrders() async {
+    await fetchOrders(isRefresh: true);
+  }
+
+  /// Pagination: Fetch next page of orders
+  Future<void> loadMoreOrders() async {
+    final cursor = nextCursor.value;
+    if (cursor == null || cursor.isEmpty || isLoadingMore.value) return;
+
+    isLoadingMore.value = true;
+    try {
+      final response = await dioGet('account/orders?limit=20&cursor=$cursor');
+
+      if (response.statusCode == 200 && response.data != null) {
+        dynamic rawData = response.data;
+        if (rawData is Map<String, dynamic> && rawData.containsKey('data')) {
+          rawData = rawData['data'];
+        }
+
+        List? orderList;
+        if (rawData is Map<String, dynamic>) {
+          if (rawData['items'] is List) {
+            orderList = rawData['items'] as List;
+          } else if (rawData['orders'] is List) {
+            orderList = rawData['orders'] as List;
+          }
+          nextCursor.value = rawData['nextCursor']?.toString();
         }
 
         if (orderList != null && orderList.isNotEmpty) {
@@ -121,34 +124,130 @@ class MyOrdersController extends GetxController with SkeletonLoadingMixin {
               .whereType<Map<String, dynamic>>()
               .map((e) => OrderModel.fromJson(e))
               .toList();
-          if (parsed.isNotEmpty) {
-            orders.assignAll(parsed);
-          }
+          orders.addAll(parsed);
         }
       }
-    } catch (_) {
+    } catch (e) {
+      developer.log('Load more orders failed: $e', name: 'MyOrdersController');
     } finally {
-      isLoading.value = false;
+      isLoadingMore.value = false;
     }
   }
 
-  /// 2. POST /account/orders/{id}/cancel - Cancel an order
-  Future<void> cancelOrder(String orderId, {String reason = 'Customer requested'}) async {
+  /// 2. GET /account/orders/{id} - Fetch single order details
+  Future<OrderModel?> fetchOrderDetails(String orderId) async {
+    try {
+      final response = await dioGet('account/orders/$orderId');
+      if (response.statusCode == 200 && response.data != null) {
+        dynamic rawData = response.data;
+        if (rawData is Map<String, dynamic> && rawData.containsKey('data')) {
+          rawData = rawData['data'];
+        }
+        if (rawData is Map<String, dynamic>) {
+          final updated = OrderModel.fromJson(rawData);
+          // Sync into local list if exists
+          final idx = orders.indexWhere(
+            (o) => o.id == updated.id || o.orderId == updated.orderId,
+          );
+          if (idx != -1) {
+            orders[idx] = updated;
+            orders.refresh();
+          }
+          return updated;
+        }
+      }
+    } catch (e) {
+      developer.log('fetchOrderDetails error: $e', name: 'MyOrdersController');
+    }
+    return null;
+  }
+
+  /// 3. POST /account/orders/{id}/cancel - Cancel an order
+  Future<bool> cancelOrder(
+    String orderId, {
+    String reason = 'Customer requested',
+  }) async {
+    final isOnline = await hasInternetConnection();
+    if (!isOnline) {
+      showNoInternetDialog(
+        onRetry: () => cancelOrder(orderId, reason: reason),
+      );
+      return false;
+    }
+
     try {
       final response = await dioPost(
         endUrl: 'account/orders/$orderId/cancel',
         data: {'reason': reason},
         isJson: true,
       );
+
       if (response.statusCode == 200 || response.statusCode == 201) {
+        // Update local status immediately
+        final idx = orders.indexWhere(
+          (o) => o.id == orderId || o.orderId == orderId,
+        );
+        if (idx != -1) {
+          final existing = orders[idx];
+          orders[idx] = OrderModel(
+            id: existing.id,
+            orderId: existing.orderId,
+            date: existing.date,
+            status: 'Cancelled',
+            totalAmount: existing.totalAmount,
+            subtotal: existing.subtotal,
+            shippingFee: existing.shippingFee,
+            discount: existing.discount,
+            itemCount: existing.itemCount,
+            items: existing.items,
+            paymentMethod: existing.paymentMethod,
+            paymentStatus: existing.paymentStatus,
+            address: existing.address,
+            recipientName: existing.recipientName,
+            phone: existing.phone,
+          );
+          orders.refresh();
+        }
+
         Get.snackbar(
           'Order Cancelled',
-          'Order $orderId has been cancelled',
+          'Order $orderId has been cancelled successfully.',
           snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: AppColor.textPrimary,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 3),
         );
-        fetchOrders();
+        fetchOrders(isRefresh: true);
+        return true;
+      } else {
+        String errMsg = 'Failed to cancel order.';
+        if (response.data is Map) {
+          final d = response.data as Map;
+          if (d['error'] is Map && d['error']['message'] != null) {
+            errMsg = d['error']['message'].toString();
+          } else if (d['message'] != null) {
+            errMsg = d['message'].toString();
+          }
+        }
+        Get.snackbar(
+          'Unable to Cancel',
+          errMsg,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: AppColor.error,
+          colorText: Colors.white,
+        );
+        return false;
       }
-    } catch (_) {}
+    } catch (e) {
+      Get.snackbar(
+        'Cancellation Error',
+        'Could not cancel order. Please try again.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColor.error,
+        colorText: Colors.white,
+      );
+      return false;
+    }
   }
 
   List<OrderModel> get filteredOrders {

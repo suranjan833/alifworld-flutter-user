@@ -12,6 +12,7 @@ import '../../../data/widgets/skeleton_box.dart';
 import '../../../data/widgets/typewriter_search_hint.dart';
 import '../../../routes/app_pages.dart';
 import '../../bag/controllers/bag_controller.dart';
+import '../../main_navigation/controllers/main_navigation_controller.dart';
 import '../controllers/home_controller.dart';
 import '../models/home_category_model.dart';
 import '../models/showcase_model.dart';
@@ -150,115 +151,118 @@ class HomeView extends GetView<HomeController> {
                                   child: Row(
                                     children: [
                                       ClipRRect(
-                                        borderRadius: BorderRadius.circular(10.r),
-                                      child: Image.network(
-                                        'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?q=80&w=400&auto=format&fit=crop',
-                                        width: 100.w,
-                                        height: 80.h,
-                                        fit: BoxFit.cover,
-                                        errorBuilder:
-                                            (context, error, stackTrace) =>
-                                                Container(
-                                                  width: 100.w,
-                                                  height: 80.h,
-                                                  color: Colors.grey.shade700,
-                                                  child: const Icon(
-                                                    Iconsax.shopping_bag,
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                      ),
-                                    ),
-                                    SizedBox(width: 14.w),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              const SizedBox(),
-                                              Container(
-                                                padding: EdgeInsets.symmetric(
-                                                  horizontal: 10.w,
-                                                  vertical: 4.h,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: const Color(
-                                                    0xFFFF9900,
-                                                  ),
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                        6.r,
-                                                      ),
-                                                ),
-                                                child: Row(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    Text(
-                                                      'LEVEL IT UP',
-                                                      style: GoogleFonts.lato(
-                                                        fontSize: 10.sp,
-                                                        fontWeight:
-                                                            FontWeight.w900,
-                                                        color: Colors.white,
-                                                      ),
-                                                    ),
-                                                    SizedBox(width: 2.w),
-                                                    Icon(
-                                                      Icons.north_east_rounded,
-                                                      size: 12.r,
+                                        borderRadius: BorderRadius.circular(
+                                          10.r,
+                                        ),
+                                        child: Image.network(
+                                          'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?q=80&w=400&auto=format&fit=crop',
+                                          width: 100.w,
+                                          height: 80.h,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stackTrace) =>
+                                                  Container(
+                                                    width: 100.w,
+                                                    height: 80.h,
+                                                    color: Colors.grey.shade700,
+                                                    child: const Icon(
+                                                      Iconsax.shopping_bag,
                                                       color: Colors.white,
                                                     ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          SizedBox(height: 4.h),
-                                          Text(
-                                            'BUY 3\nGET EXTRA\n10% OFF',
-                                            style: GoogleFonts.montserrat(
-                                              fontSize: 16.sp,
-                                              fontWeight: FontWeight.w900,
-                                              color: const Color(0xFFFFB800),
-                                              height: 1.1,
-                                            ),
-                                          ),
-                                          SizedBox(height: 8.h),
-                                          Container(
-                                            padding: EdgeInsets.symmetric(
-                                              horizontal: 8.w,
-                                              vertical: 3.h,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white.withValues(
-                                                alpha: 0.15,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(4.r),
-                                            ),
-                                            child: Text(
-                                              'Offer auto-applies at checkout',
-                                              style: GoogleFonts.lato(
-                                                fontSize: 9.sp,
-                                                color: Colors.white.withValues(
-                                                  alpha: 0.9,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
+                                                  ),
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                      SizedBox(width: 14.w),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                const SizedBox(),
+                                                Container(
+                                                  padding: EdgeInsets.symmetric(
+                                                    horizontal: 10.w,
+                                                    vertical: 4.h,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: const Color(
+                                                      0xFFFF9900,
+                                                    ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          6.r,
+                                                        ),
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      Text(
+                                                        'LEVEL IT UP',
+                                                        style: GoogleFonts.lato(
+                                                          fontSize: 10.sp,
+                                                          fontWeight:
+                                                              FontWeight.w900,
+                                                          color: Colors.white,
+                                                        ),
+                                                      ),
+                                                      SizedBox(width: 2.w),
+                                                      Icon(
+                                                        Icons
+                                                            .north_east_rounded,
+                                                        size: 12.r,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(height: 4.h),
+                                            Text(
+                                              'BUY 3\nGET EXTRA\n10% OFF',
+                                              style: GoogleFonts.montserrat(
+                                                fontSize: 16.sp,
+                                                fontWeight: FontWeight.w900,
+                                                color: const Color(0xFFFFB800),
+                                                height: 1.1,
+                                              ),
+                                            ),
+                                            SizedBox(height: 8.h),
+                                            Container(
+                                              padding: EdgeInsets.symmetric(
+                                                horizontal: 8.w,
+                                                vertical: 3.h,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white.withValues(
+                                                  alpha: 0.15,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(4.r),
+                                              ),
+                                              child: Text(
+                                                'Offer auto-applies at checkout',
+                                                style: GoogleFonts.lato(
+                                                  fontSize: 9.sp,
+                                                  color: Colors.white
+                                                      .withValues(alpha: 0.9),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
 
                             SizedBox(height: 24.h),
 
@@ -429,10 +433,8 @@ class HomeView extends GetView<HomeController> {
           child: Row(
             children: List.generate(
               rail.products.length,
-              (index) => _buildProductCard(
-                rail.products[index].toDetailsMap(),
-                index,
-              ),
+              (index) =>
+                  _buildProductCard(rail.products[index].toDetailsMap(), index),
             ),
           ),
         ),
@@ -460,11 +462,7 @@ class HomeView extends GetView<HomeController> {
               shape: BoxShape.circle,
             ),
             child: Center(
-              child: Icon(
-                Iconsax.box,
-                size: 22.r,
-                color: AppColor.primaryDark,
-              ),
+              child: Icon(Iconsax.box, size: 22.r, color: AppColor.primaryDark),
             ),
           ),
           SizedBox(width: 12.w),
@@ -507,10 +505,7 @@ class HomeView extends GetView<HomeController> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColor.primary,
               elevation: 0,
-              padding: EdgeInsets.symmetric(
-                horizontal: 14.w,
-                vertical: 8.h,
-              ),
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10.r),
               ),
@@ -797,7 +792,11 @@ class HomeView extends GetView<HomeController> {
                       ),
                     ],
                   ),
-                  child: Icon(Icons.add_rounded, color: Colors.white, size: 20.r),
+                  child: Icon(
+                    Icons.add_rounded,
+                    color: Colors.white,
+                    size: 20.r,
+                  ),
                 ),
               ),
             ),
@@ -858,7 +857,17 @@ class HomeView extends GetView<HomeController> {
               ),
               // Bag with live cart count badge
               GestureDetector(
-                onTap: () => Get.toNamed(Routes.BAG),
+                onTap: () {
+                  if (!Get.isRegistered<BagController>()) {
+                    Get.put(BagController());
+                  }
+                  Get.find<BagController>().fetchCart(force: true);
+                  if (Get.isRegistered<MainNavigationController>()) {
+                    Get.find<MainNavigationController>().changeTab(3);
+                  } else {
+                    Get.toNamed(Routes.BAG);
+                  }
+                },
                 behavior: HitTestBehavior.opaque,
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 6.w),
@@ -1010,7 +1019,8 @@ class HomeView extends GetView<HomeController> {
     return Obx(() {
       String headerUrl = controller.currentCategory.headerBgMobileUrl;
       if (headerUrl.isEmpty &&
-          (controller.showcase.value?.fullHeaderBgMobileUrl.isNotEmpty ?? false)) {
+          (controller.showcase.value?.fullHeaderBgMobileUrl.isNotEmpty ??
+              false)) {
         headerUrl = controller.showcase.value!.fullHeaderBgMobileUrl;
       }
       if (headerUrl.isNotEmpty && !headerUrl.startsWith('http')) {
@@ -1163,7 +1173,8 @@ class HomeView extends GetView<HomeController> {
     }
 
     if (iconUrl.isNotEmpty) {
-      final isSvg = iconUrl.toLowerCase().endsWith('.svg') ||
+      final isSvg =
+          iconUrl.toLowerCase().endsWith('.svg') ||
           iconUrl.toLowerCase().contains('.svg?');
 
       if (isSvg) {
@@ -1277,6 +1288,7 @@ class HomeView extends GetView<HomeController> {
       ),
     );
   }
+
   Widget _buildBrandCard(Map<String, String> brand) {
     return Container(
       width: 135.w,
@@ -1308,10 +1320,7 @@ class HomeView extends GetView<HomeController> {
           },
           child: Center(
             child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: 14.w,
-                vertical: 12.h,
-              ),
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
               child: BrandLogoWidget(
                 logoUrl: brand['logo'] ?? '',
                 brandName: brand['name'] ?? '',

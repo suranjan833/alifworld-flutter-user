@@ -18,6 +18,7 @@ import '../modules/manage_addresses/bindings/manage_addresses_binding.dart';
 import '../modules/manage_addresses/views/manage_addresses_view.dart';
 import '../modules/my_orders/bindings/my_orders_binding.dart';
 import '../modules/my_orders/views/my_orders_view.dart';
+import '../modules/my_orders/views/order_details_view.dart';
 import '../modules/about_us/bindings/about_us_binding.dart';
 import '../modules/about_us/views/about_us_view.dart';
 import '../modules/privacy_policy/bindings/privacy_policy_binding.dart';
@@ -252,6 +253,11 @@ class AppPages {
       page: () => const OrderSuccessView(),
       binding: OrderSuccessBinding(),
       transition: Transition.fadeIn,
+    ),
+    GetPage(
+      name: _Paths.ORDER_DETAILS,
+      page: () => const OrderDetailsView(),
+      transition: Transition.rightToLeft,
     ),
     GetPage(
       name: _Paths.TOP_BRANDS,

@@ -231,7 +231,13 @@ class CategoryProductsView extends GetView<CategoryProductsController> {
             children: [
               _buildCircularAction(
                 icon: Iconsax.shopping_bag,
-                onTap: () => Get.toNamed(Routes.BAG),
+                onTap: () {
+                  if (!Get.isRegistered<BagController>()) {
+                    Get.put(BagController());
+                  }
+                  Get.find<BagController>().fetchCart(force: true);
+                  Get.toNamed(Routes.BAG);
+                },
               ),
               if (count > 0)
                 Positioned(

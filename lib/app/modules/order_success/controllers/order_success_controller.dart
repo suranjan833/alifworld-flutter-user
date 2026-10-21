@@ -3,22 +3,29 @@ import 'package:get/get.dart';
 import '../../../routes/app_pages.dart';
 
 class OrderSuccessController extends GetxController {
-  final orderId = '#ALF-98742'.obs;
-  final paymentId = 'pay_Rzp984210'.obs;
-  final paymentMethod = 'Razorpay Online'.obs;
+  final orderId = ''.obs;
+  final paymentId = ''.obs;
+  final paymentMethod = 'Cash on Delivery'.obs;
   final totalAmount = 0.0.obs;
   final itemCount = 1.obs;
   final deliveryAddress = ''.obs;
+
+  bool get isCod {
+    final pm = paymentMethod.value.toLowerCase();
+    return pm.contains('cod') || pm.contains('cash');
+  }
+
+  bool get showPaymentId => !isCod && paymentId.value.trim().isNotEmpty;
 
   @override
   void onInit() {
     super.onInit();
     final args = Get.arguments;
     if (args != null && args is Map<String, dynamic>) {
-      orderId.value = args['orderId'] as String? ?? '#ALF-98742';
-      paymentId.value = args['paymentId'] as String? ?? 'pay_Rzp984210';
+      orderId.value = args['orderId'] as String? ?? '';
+      paymentId.value = args['paymentId'] as String? ?? '';
       paymentMethod.value =
-          args['paymentMethod'] as String? ?? 'Razorpay Online';
+          args['paymentMethod'] as String? ?? 'Cash on Delivery';
       totalAmount.value = (args['totalAmount'] as num?)?.toDouble() ?? 0.0;
       itemCount.value = (args['itemCount'] as num?)?.toInt() ?? 1;
       deliveryAddress.value = args['address'] as String? ?? '';

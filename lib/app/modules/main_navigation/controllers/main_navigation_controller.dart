@@ -7,9 +7,10 @@ class MainNavigationController extends GetxController {
   void changeTab(int index) {
     currentIndex.value = index;
     if (index == 3) {
-      if (Get.isRegistered<BagController>()) {
-        Get.find<BagController>().fetchCart(showLoading: false);
+      if (!Get.isRegistered<BagController>()) {
+        Get.put(BagController());
       }
+      Get.find<BagController>().fetchCart(showLoading: false, force: true);
     }
   }
 }
