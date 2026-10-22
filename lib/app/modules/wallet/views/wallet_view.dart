@@ -687,6 +687,8 @@ class WalletView extends GetView<WalletController> {
               children: [
                 Text(
                   tx.displayTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.lato(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.bold,
@@ -711,12 +713,16 @@ class WalletView extends GetView<WalletController> {
                           color: AppColor.textSecondary,
                         ),
                       ),
-                      Text(
-                        tx.walletTitle,
-                        style: GoogleFonts.lato(
-                          fontSize: 11.sp,
-                          color: AppColor.primary,
-                          fontWeight: FontWeight.w600,
+                      Flexible(
+                        child: Text(
+                          tx.walletTitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.lato(
+                            fontSize: 11.sp,
+                            color: AppColor.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
@@ -725,6 +731,7 @@ class WalletView extends GetView<WalletController> {
               ],
             ),
           ),
+          SizedBox(width: 8.w),
           Text(
             tx.formattedAmount(symbol: controller.currencySymbol.value),
             style: GoogleFonts.lato(

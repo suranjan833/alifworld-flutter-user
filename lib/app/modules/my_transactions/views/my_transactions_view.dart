@@ -337,6 +337,8 @@ class MyTransactionsView extends GetView<MyTransactionsController> {
               children: [
                 Text(
                   tx.displayTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.lato(
                     fontSize: 14.5.sp,
                     fontWeight: FontWeight.bold,
@@ -361,12 +363,16 @@ class MyTransactionsView extends GetView<MyTransactionsController> {
                           color: AppColor.textSecondary,
                         ),
                       ),
-                      Text(
-                        tx.walletTitle,
-                        style: GoogleFonts.lato(
-                          fontSize: 11.5.sp,
-                          color: AppColor.primary,
-                          fontWeight: FontWeight.w600,
+                      Flexible(
+                        child: Text(
+                          tx.walletTitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.lato(
+                            fontSize: 11.5.sp,
+                            color: AppColor.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
@@ -375,6 +381,7 @@ class MyTransactionsView extends GetView<MyTransactionsController> {
               ],
             ),
           ),
+          SizedBox(width: 8.w),
           Text(
             tx.formattedAmount(symbol: controller.currencySymbol.value),
             style: GoogleFonts.lato(
