@@ -70,3 +70,5 @@ pubspec.lock
 dgc.ps1
 gppush.bat
 order-apis.txt
+mera_push.ps1
+mera_push.sh
