@@ -21,7 +21,7 @@ class CheckoutController extends GetxController {
   final isDirectBuy = false.obs;
 
   final selectedAddressIndex = 0.obs;
-  final selectedPaymentMethod = 'COD'.obs; // COD, bKash, Nagad
+  final selectedPaymentMethod = 'COD'.obs; // COD, Wallet
   final promoCodeController = TextEditingController();
   final appliedPromoCode = ''.obs;
   final isProcessingPayment = false.obs;
@@ -29,11 +29,113 @@ class CheckoutController extends GetxController {
 
   final addresses = <Map<String, dynamic>>[].obs;
 
-  double get finalPayable =>
+  // Wallets & Gateways (§3 & §4 of checkout_flow.txt)
+  final userWallets = <Map<String, dynamic>>[].obs;
+  final isLoadingWallets = false.obs;
+  final walletMaxPercent = 62.obs;
+  final enabledGateways = <String>['cod'].obs;
+
+  double get mainWalletBalance {
+    final w = userWallets.firstWhereOrNull(
+      (item) => item['kind'] == 'customer_main',
+    );
+    final minor = (w?['balanceMinor'] as num?)?.toDouble() ?? 0.0;
+    return minor / 100.0;
+  }
+
+  double get shoppingWalletBalance {
+    final w = userWallets.firstWhereOrNull(
+      (item) => item['kind'] == 'customer_shopping',
+    );
+    final minor = (w?['balanceMinor'] as num?)?.toDouble() ?? 0.0;
+    return minor / 100.0;
+  }
+
+  double get advanceWalletBalance {
+    final w = userWallets.firstWhereOrNull(
+      (item) => item['kind'] == 'customer_advanced_shopping',
+    );
+    final minor = (w?['balanceMinor'] as num?)?.toDouble() ?? 0.0;
+    return minor / 100.0;
+  }
+
+  double get combinedWalletBalance =>
+      mainWalletBalance + shoppingWalletBalance + advanceWalletBalance;
+
+  // Selected wallet kinds (default: customer_main)
+  final selectedWalletKinds = <String>{'customer_main'}.obs;
+
+  void toggleWalletKind(String kind) {
+    if (selectedWalletKinds.contains(kind)) {
+      selectedWalletKinds.remove(kind);
+    } else {
+      selectedWalletKinds.add(kind);
+    }
+    fetchQuote();
+  }
+
+  bool isWalletKindSelected(String kind) => selectedWalletKinds.contains(kind);
+
+  double get orderTotal =>
       (subtotal.value + deliveryFee.value + tax.value - discount.value).clamp(
         0.0,
         double.infinity,
       );
+
+  double get walletCap {
+    final total = orderTotal;
+    final totalMinor = (total * 100).round();
+    final capMinor = (totalMinor * walletMaxPercent.value / 100).floor();
+    return capMinor / 100.0;
+  }
+
+  double get mainWalletWillUse {
+    if (selectedPaymentMethod.value != 'Wallet' ||
+        !selectedWalletKinds.contains('customer_main')) {
+      return 0.0;
+    }
+    final cap = walletCap;
+    final use = mainWalletBalance >= cap ? cap : mainWalletBalance;
+    return (use * 100).floorToDouble() / 100.0;
+  }
+
+  double get shoppingWalletWillUse {
+    if (selectedPaymentMethod.value != 'Wallet' ||
+        !selectedWalletKinds.contains('customer_shopping')) {
+      return 0.0;
+    }
+    final cap = walletCap;
+    final remainingCap = (cap - mainWalletWillUse).clamp(0.0, double.infinity);
+    final use = shoppingWalletBalance >= remainingCap
+        ? remainingCap
+        : shoppingWalletBalance;
+    return (use * 100).floorToDouble() / 100.0;
+  }
+
+  double get advanceWalletWillUse {
+    if (selectedPaymentMethod.value != 'Wallet' ||
+        !selectedWalletKinds.contains('customer_advanced_shopping')) {
+      return 0.0;
+    }
+    final cap = walletCap;
+    final remainingCap =
+        (cap - mainWalletWillUse - shoppingWalletWillUse).clamp(0.0, double.infinity);
+    final use = advanceWalletBalance >= remainingCap
+        ? remainingCap
+        : advanceWalletBalance;
+    return (use * 100).floorToDouble() / 100.0;
+  }
+
+  double get walletDeductionAmount {
+    if (selectedPaymentMethod.value != 'Wallet') return 0.0;
+    return mainWalletWillUse + shoppingWalletWillUse + advanceWalletWillUse;
+  }
+
+  double get remainingPayable =>
+      (orderTotal - walletDeductionAmount).clamp(0.0, double.infinity);
+
+  double get finalPayable =>
+      selectedPaymentMethod.value == 'Wallet' ? remainingPayable : orderTotal;
 
   String? get selectedAddressId {
     if (addresses.isNotEmpty && selectedAddressIndex.value < addresses.length) {
@@ -41,21 +143,6 @@ class CheckoutController extends GetxController {
       if (id != null && id.isNotEmpty && !id.startsWith('addr_')) return id;
     }
     return null;
-  }
-
-  String _mapPaymentMethodToApi(String method) {
-    switch (method.toLowerCase()) {
-      case 'bkash':
-        return 'bkash';
-      case 'nagad':
-        return 'nagad';
-      case 'wallet':
-        return 'wallet';
-      case 'cod':
-      case 'cash on delivery':
-      default:
-        return 'cod';
-    }
   }
 
   @override
@@ -87,6 +174,8 @@ class CheckoutController extends GetxController {
       }
     }
     fetchUserAddresses();
+    fetchGateways();
+    fetchUserWallets();
     fetchQuote();
   }
 
@@ -104,6 +193,61 @@ class CheckoutController extends GetxController {
   void selectPaymentMethod(String method) {
     selectedPaymentMethod.value = method;
     fetchQuote();
+    if (method == 'Wallet') {
+      fetchUserWallets();
+    }
+  }
+
+  /// GET /payments/gateways - (§3 of checkout_flow.txt)
+  Future<void> fetchGateways() async {
+    try {
+      final res = await dioGet('payments/gateways');
+      if (res.statusCode == 200 && res.data != null) {
+        dynamic rawData = res.data;
+        if (rawData is Map && rawData.containsKey('data')) {
+          rawData = rawData['data'];
+        }
+        if (rawData is Map && rawData['items'] is List) {
+          final keys = (rawData['items'] as List)
+              .map((e) => e is Map ? e['key']?.toString() : null)
+              .whereType<String>()
+              .toList();
+          if (keys.isNotEmpty) {
+            enabledGateways.assignAll(keys);
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  /// GET /wallets - (§4 of checkout_flow.txt)
+  Future<void> fetchUserWallets() async {
+    isLoadingWallets.value = true;
+    try {
+      final res = await dioGet('wallets');
+      if (res.statusCode == 200 && res.data != null) {
+        dynamic rawData = res.data;
+        if (rawData is Map && rawData.containsKey('data')) {
+          rawData = rawData['data'];
+        }
+        if (rawData is Map) {
+          if (rawData['items'] is List) {
+            final list = (rawData['items'] as List)
+                .map((e) => Map<String, dynamic>.from(e as Map))
+                .toList();
+            userWallets.assignAll(list);
+          }
+          if (rawData['walletMaxPercent'] is num) {
+            walletMaxPercent.value = (rawData['walletMaxPercent'] as num)
+                .toInt();
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching user wallets: $e');
+    } finally {
+      isLoadingWallets.value = false;
+    }
   }
 
   /// 1. GET /addresses - Fetch saved addresses for user
@@ -190,11 +334,13 @@ class CheckoutController extends GetxController {
   /// 2. POST /checkout/quote - Fetch price quote from API
   Future<void> fetchQuote() async {
     try {
+      final isWallet = selectedPaymentMethod.value == 'Wallet';
       final reqData = <String, dynamic>{
-        'paymentMethod': _mapPaymentMethodToApi(selectedPaymentMethod.value),
+        'paymentMethod': isWallet ? 'wallet' : 'cod',
         if (selectedAddressId != null) 'addressId': selectedAddressId,
         if (appliedPromoCode.value.isNotEmpty)
           'couponCode': appliedPromoCode.value,
+        if (isWallet) 'walletKinds': selectedWalletKinds.toList(),
       };
 
       final response = await dioPost(
@@ -892,15 +1038,10 @@ class CheckoutController extends GetxController {
       return;
     }
 
-    if (selectedPaymentMethod.value == 'bKash' ||
-        selectedPaymentMethod.value == 'Nagad') {
-      openMobileBankingModal(selectedPaymentMethod.value);
-    } else {
-      _executePlaceOrder();
-    }
+    _executePlaceOrder();
   }
 
-  Future<void> _executePlaceOrder({String? gatewayPaymentId}) async {
+  Future<void> _executePlaceOrder() async {
     if (selectedAddressId == null || selectedAddressId!.isEmpty) {
       Get.snackbar(
         'Address Required',
@@ -913,7 +1054,8 @@ class CheckoutController extends GetxController {
     }
 
     isProcessingPayment.value = true;
-    final apiPayment = _mapPaymentMethodToApi(selectedPaymentMethod.value);
+    final isWallet = selectedPaymentMethod.value == 'Wallet';
+    final apiPayment = isWallet ? 'wallet' : 'cod';
     final idempotencyKey =
         'ALF_IDEMP_${DateTime.now().millisecondsSinceEpoch}_${selectedAddressId!}';
 
@@ -922,8 +1064,8 @@ class CheckoutController extends GetxController {
       'paymentMethod': apiPayment,
       if (appliedPromoCode.value.isNotEmpty)
         'couponCode': appliedPromoCode.value,
-      if (apiPayment == 'wallet') ...{
-        'walletKinds': ['customer_main'],
+      if (isWallet) ...{
+        'walletKinds': selectedWalletKinds.toList(),
         'remainderMethod': 'cod',
       },
       'returnUrl': 'https://alifworld.vercel.app/checkout/success',
@@ -949,6 +1091,7 @@ class CheckoutController extends GetxController {
         String orderId =
             '#ALF-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}';
         String? batchNumber;
+        String? paymentStatus;
         if (rawData is Map<String, dynamic>) {
           if (rawData['orders'] is List &&
               (rawData['orders'] as List).isNotEmpty) {
@@ -957,43 +1100,46 @@ class CheckoutController extends GetxController {
               orderId = firstOrder['orderNumber'].toString();
             }
           }
-          if (rawData['batch'] is Map &&
-              rawData['batch']['batchNumber'] != null) {
-            batchNumber = rawData['batch']['batchNumber'].toString();
-          }
-          if (orderId.startsWith('#ALF') && batchNumber != null) {
-            orderId = batchNumber;
-          }
-        }
-
-        String paymentId =
-            gatewayPaymentId ??
-            (apiPayment == 'cod'
-                ? ''
-                : '${apiPayment.toUpperCase()}_${DateTime.now().millisecondsSinceEpoch}');
-
-        _processSuccessfulOrder(
-          paymentId: paymentId,
-          paymentMethod: selectedPaymentMethod.value,
-          customOrderId: orderId,
-        );
-      } else {
-        // Handle error status
-        String errorMsg = 'Failed to place order. Please try again.';
-        if (response.data is Map<String, dynamic>) {
-          final data = response.data as Map<String, dynamic>;
-          if (data['message'] != null) {
-            errorMsg = data['message'].toString();
-          } else if (data['error'] != null) {
-            if (data['error'] is Map && data['error']['message'] != null) {
-              errorMsg = data['error']['message'].toString();
-            } else {
-              errorMsg = data['error'].toString();
+          if (rawData['batch'] is Map) {
+            final b = rawData['batch'] as Map;
+            if (b['batchNumber'] != null) {
+              batchNumber = b['batchNumber'].toString();
+            }
+            if (b['paymentStatus'] != null) {
+              paymentStatus = b['paymentStatus'].toString();
             }
           }
         }
 
-        if (response.statusCode == 401) {
+        final paymentLabel = isWallet
+            ? (remainingPayable > 0
+                  ? 'Pay from Wallet (COD Remainder)'
+                  : 'Alif Wallet')
+            : 'Cash on Delivery';
+
+        _processSuccessfulOrder(
+          paymentId: isWallet ? 'WALLET_DEBIT' : 'COD_PENDING',
+          paymentMethod: paymentLabel,
+          customOrderId: orderId,
+          batchNumber: batchNumber,
+          paymentStatus: paymentStatus,
+        );
+      } else {
+        // Handle error status per §7 of checkout_flow.txt
+        String errorCode = '';
+        String errorMsg = 'Failed to place order. Please try again.';
+        if (response.data is Map<String, dynamic>) {
+          final data = response.data as Map<String, dynamic>;
+          if (data['error'] is Map) {
+            final errObj = data['error'] as Map;
+            errorCode = errObj['code']?.toString() ?? '';
+            errorMsg = errObj['message']?.toString() ?? errorMsg;
+          } else if (data['message'] != null) {
+            errorMsg = data['message'].toString();
+          }
+        }
+
+        if (response.statusCode == 401 || errorCode == 'UNAUTHENTICATED') {
           Get.snackbar(
             'Login Required',
             'Please log in to your account to place an order',
@@ -1011,6 +1157,32 @@ class CheckoutController extends GetxController {
                 ),
               ),
             ),
+          );
+        } else if (errorCode == 'WALLET_INSUFFICIENT') {
+          await fetchUserWallets();
+          await fetchQuote();
+          Get.snackbar(
+            'Wallet Balance Changed',
+            'Your wallet balance has changed. Please review before placing order.',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: const Color(0xFFD97706),
+            colorText: Colors.white,
+          );
+        } else if (errorCode == 'CART_EMPTY') {
+          Get.snackbar(
+            'Cart is Empty',
+            'Your shopping bag is empty. Please add items to order.',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: AppColor.error,
+            colorText: Colors.white,
+          );
+        } else if (errorCode == 'INVENTORY_FAILED') {
+          Get.snackbar(
+            'Out of Stock',
+            'Some items are currently unavailable. Please adjust quantity.',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: AppColor.error,
+            colorText: Colors.white,
           );
         } else {
           Get.snackbar(
@@ -1035,190 +1207,12 @@ class CheckoutController extends GetxController {
     }
   }
 
-  void openMobileBankingModal(String gateway) {
-    final payableStr = '৳${finalPayable.toStringAsFixed(2)}';
-    final isBkash = gateway.toLowerCase() == 'bkash';
-
-    Get.bottomSheet(
-      Container(
-        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 38.r,
-                      height: 38.r,
-                      decoration: BoxDecoration(
-                        color: isBkash
-                            ? const Color(0xFFE2136E)
-                            : const Color(0xFFF7941D),
-                        borderRadius: BorderRadius.circular(10.r),
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.account_balance_wallet_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 10.w),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '$gateway Secure Payment',
-                          style: GoogleFonts.inter(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.bold,
-                            color: AppColor.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          'Alif Official Store',
-                          style: GoogleFonts.inter(
-                            fontSize: 12.sp,
-                            color: AppColor.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 10.w,
-                    vertical: 5.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Text(
-                    payableStr,
-                    style: GoogleFonts.inter(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.bold,
-                      color: AppColor.textPrimary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 18.h),
-            Text(
-              'Complete your purchase via $gateway wallet. You will be redirected to confirm.',
-              style: GoogleFonts.lato(
-                fontSize: 13.sp,
-                color: AppColor.textSecondary,
-              ),
-            ),
-            SizedBox(height: 20.h),
-            SizedBox(
-              width: double.infinity,
-              height: 48.h,
-              child: ElevatedButton(
-                onPressed: () {
-                  Get.back();
-                  _executeGatewayPayment(gateway);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isBkash
-                      ? const Color(0xFFE2136E)
-                      : const Color(0xFFF7941D),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                ),
-                child: Text(
-                  'Confirm & Pay $payableStr',
-                  style: GoogleFonts.inter(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: 10.h),
-          ],
-        ),
-      ),
-      isScrollControlled: true,
-    );
-  }
-
-  void _executeGatewayPayment(String gateway) {
-    isProcessingPayment.value = true;
-    final isBkash = gateway.toLowerCase() == 'bkash';
-
-    Get.dialog(
-      Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20.r),
-        ),
-        child: Padding(
-          padding: EdgeInsets.all(24.r),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: 48.r,
-                height: 48.r,
-                child: CircularProgressIndicator(
-                  color: isBkash
-                      ? const Color(0xFFE2136E)
-                      : const Color(0xFFF7941D),
-                  strokeWidth: 3.5,
-                ),
-              ),
-              SizedBox(height: 18.h),
-              Text(
-                'Connecting to $gateway Gateway',
-                style: GoogleFonts.inter(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppColor.textPrimary,
-                ),
-              ),
-              SizedBox(height: 6.h),
-              Text(
-                'Please do not refresh or close the app',
-                style: GoogleFonts.inter(
-                  fontSize: 12.5.sp,
-                  color: AppColor.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      barrierDismissible: false,
-    );
-
-    Timer(const Duration(milliseconds: 1200), () {
-      Get.back(); // close dialog
-      final gatewayId =
-          '${gateway.toUpperCase()}_${DateTime.now().millisecondsSinceEpoch}';
-      _executePlaceOrder(gatewayPaymentId: gatewayId);
-    });
-  }
-
   void _processSuccessfulOrder({
     required String paymentId,
     required String paymentMethod,
     String? customOrderId,
+    String? batchNumber,
+    String? paymentStatus,
   }) {
     final orderId =
         customOrderId ??
@@ -1237,6 +1231,8 @@ class CheckoutController extends GetxController {
       Routes.ORDER_SUCCESS,
       arguments: {
         'orderId': orderId,
+        'batchNumber': batchNumber ?? '',
+        'paymentStatus': paymentStatus ?? '',
         'paymentId': paymentId,
         'paymentMethod': paymentMethod,
         'totalAmount': finalPayable,

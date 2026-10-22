@@ -50,9 +50,17 @@ class CheckoutView extends GetView<CheckoutController> {
                     () => _buildSectionHeader(
                       'Delivery Address',
                       actionText: controller.addresses.isNotEmpty
-                          ? '+ Add New'
+                          ? (controller.addresses.length > 1
+                              ? 'Change'
+                              : '+ Add New')
                           : null,
-                      onAction: () => controller.openAddAddressModal(context),
+                      onAction: () {
+                        if (controller.addresses.length > 1) {
+                          _showAddressSelectionBottomSheet(context);
+                        } else {
+                          controller.openAddAddressModal(context);
+                        }
+                      },
                     ),
                   ),
                   SizedBox(height: 8.h),
@@ -148,72 +156,153 @@ class CheckoutView extends GetView<CheckoutController> {
                       );
                     }
 
-                    return RadioGroup<int>(
-                      groupValue: controller.selectedAddressIndex.value,
-                      onChanged: (val) => controller.selectAddress(val ?? 0),
-                      child: Column(
-                        children: List.generate(controller.addresses.length, (
-                          index,
-                        ) {
-                          final addr = controller.addresses[index];
-                          final isSelected =
-                              controller.selectedAddressIndex.value == index;
+                    final selectedIndex =
+                        controller.selectedAddressIndex.value;
+                    final validIndex =
+                        (selectedIndex >= 0 &&
+                                selectedIndex < controller.addresses.length)
+                            ? selectedIndex
+                            : 0;
+                    final addr = controller.addresses[validIndex];
+                    final name = addr['name'] as String? ?? '';
+                    final phone = addr['phone'] as String? ?? '';
+                    final type = addr['type'] as String? ?? 'Home';
+                    final addressText = addr['address'] as String? ?? '';
 
-                          return Padding(
-                            padding: EdgeInsets.only(bottom: 10.h),
-                            child: Material(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16.r),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(16.r),
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? AppColor.primary
-                                        : Colors.transparent,
-                                    width: 1.5.w,
-                                  ),
-                                ),
-                                child: RadioListTile<int>(
-                                  value: index,
-                                  activeColor: AppColor.primaryDark,
-                                  toggleable: false,
-                                  title: Row(
-                                    children: [
-                                      Text(
-                                        addr['type'] as String? ?? 'Home',
-                                        style: GoogleFonts.lato(
-                                          fontSize: 14.sp,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColor.textPrimary,
-                                        ),
-                                      ),
-                                      SizedBox(width: 8.w),
-                                      Text(
-                                        addr['phone'] as String? ?? '',
-                                        style: GoogleFonts.lato(
-                                          fontSize: 12.sp,
-                                          color: AppColor.textSecondary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  subtitle: Padding(
-                                    padding: EdgeInsets.only(top: 4.h),
-                                    child: Text(
-                                      addr['address'] as String? ?? '',
-                                      style: GoogleFonts.lato(
-                                        fontSize: 13.sp,
-                                        color: AppColor.textSecondary,
-                                        height: 1.3,
-                                      ),
-                                    ),
-                                  ),
+                    return InkWell(
+                      onTap: () => _showAddressSelectionBottomSheet(context),
+                      borderRadius: BorderRadius.circular(16.r),
+                      child: Container(
+                        padding: EdgeInsets.all(16.r),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16.r),
+                          border: Border.all(
+                            color: const Color(0xFFE2E8F0),
+                            width: 1.2,
+                          ),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x05000000),
+                              blurRadius: 6,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 40.r,
+                              height: 40.r,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFF6FF),
+                                borderRadius: BorderRadius.circular(10.r),
+                              ),
+                              child: Center(
+                                child: Icon(
+                                  Iconsax.location5,
+                                  color: AppColor.primaryDark,
+                                  size: 20.r,
                                 ),
                               ),
                             ),
-                          );
-                        }),
+                            SizedBox(width: 12.w),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 8.w,
+                                          vertical: 3.h,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF1F5F9),
+                                          borderRadius: BorderRadius.circular(6.r),
+                                        ),
+                                        child: Text(
+                                          type,
+                                          style: GoogleFonts.lato(
+                                            fontSize: 11.5.sp,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColor.textPrimary,
+                                          ),
+                                        ),
+                                      ),
+                                      if (phone.isNotEmpty) ...[
+                                        SizedBox(width: 8.w),
+                                        Text(
+                                          phone,
+                                          style: GoogleFonts.lato(
+                                            fontSize: 12.sp,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColor.textSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  if (name.isNotEmpty && name != 'Customer') ...[
+                                    SizedBox(height: 4.h),
+                                    Text(
+                                      name,
+                                      style: GoogleFonts.lato(
+                                        fontSize: 13.5.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColor.textPrimary,
+                                      ),
+                                    ),
+                                  ],
+                                  SizedBox(height: 4.h),
+                                  Text(
+                                    addressText,
+                                    style: GoogleFonts.lato(
+                                      fontSize: 13.sp,
+                                      color: AppColor.textPrimary,
+                                      height: 1.35,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(width: 8.w),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 10.w,
+                                vertical: 6.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(8.r),
+                                border: Border.all(
+                                  color: const Color(0xFFE2E8F0),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Change',
+                                    style: GoogleFonts.lato(
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColor.primaryDark,
+                                    ),
+                                  ),
+                                  SizedBox(width: 2.w),
+                                  Icon(
+                                    Icons.keyboard_arrow_right_rounded,
+                                    size: 16.r,
+                                    color: AppColor.primaryDark,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   }),
@@ -470,87 +559,122 @@ class CheckoutView extends GetView<CheckoutController> {
                       child: RadioGroup<String>(
                         groupValue: controller.selectedPaymentMethod.value,
                         onChanged: (val) =>
-                            controller.selectPaymentMethod(val ?? 'Razorpay'),
+                            controller.selectPaymentMethod(val ?? 'COD'),
                         child: Column(
                           children: [
-                            // bKash Option
+                            // 1. Pay from Wallet Option
                             _buildPaymentMethodTile(
-                              id: 'bKash',
-                              title: 'bKash Payment',
+                              id: 'Wallet',
+                              title: 'Pay from Wallet',
                               subtitle:
-                                  'Instant mobile payment via bKash wallet',
+                                  'Use your Main, Shopping or Advanced wallet balance',
+                              extraText: controller.combinedWalletBalance > 0
+                                  ? 'Combined balance: ৳${controller.combinedWalletBalance.toStringAsFixed(2)}'
+                                  : null,
                               iconWidget: Container(
-                                width: 32.r,
-                                height: 32.r,
+                                width: 36.r,
+                                height: 36.r,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFE2136E),
-                                  borderRadius: BorderRadius.circular(8.r),
+                                  color: const Color(0xFFFF630F),
+                                  borderRadius: BorderRadius.circular(10.r),
                                 ),
                                 child: const Center(
                                   child: Icon(
-                                    Icons.account_balance_wallet_rounded,
+                                    Icons.credit_card_rounded,
                                     color: Colors.white,
-                                    size: 18,
+                                    size: 20,
                                   ),
                                 ),
                               ),
                             ),
-                            const Divider(color: Color(0xFFF1F5F9), height: 16),
+                            if (controller.selectedPaymentMethod.value ==
+                                'Wallet') ...[
+                              SizedBox(height: 6.h),
+                              _buildWalletSelectionSection(),
+                            ],
 
-                            // Nagad Option
-                            _buildPaymentMethodTile(
-                              id: 'Nagad',
-                              title: 'Nagad Payment',
-                              subtitle:
-                                  'Instant mobile payment via Nagad wallet',
-                              iconWidget: Container(
-                                width: 32.r,
-                                height: 32.r,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF7941D),
-                                  borderRadius: BorderRadius.circular(8.r),
-                                ),
-                                child: const Center(
-                                  child: Icon(
-                                    Icons.account_balance_wallet_rounded,
-                                    color: Colors.white,
-                                    size: 18,
+                            // Remainder Method Tile when Wallet is active
+                            if (controller.selectedPaymentMethod.value ==
+                                    'Wallet' &&
+                                controller.remainingPayable > 0) ...[
+                              SizedBox(height: 12.h),
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  'Remaining ৳${controller.remainingPayable.toStringAsFixed(2)} — pay with',
+                                  style: GoogleFonts.lato(
+                                    fontSize: 13.5.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColor.textPrimary,
                                   ),
                                 ),
                               ),
-                            ),
+                              SizedBox(height: 8.h),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12.w,
+                                  vertical: 10.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(12.r),
+                                  border: Border.all(
+                                    color: const Color(0xFFE2E8F0),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 18.r,
+                                      height: 18.r,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: const Color(0xFF0284C7),
+                                          width: 5,
+                                        ),
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    SizedBox(width: 10.w),
+                                    Icon(
+                                      Iconsax.money_send,
+                                      size: 20.r,
+                                      color: AppColor.textPrimary,
+                                    ),
+                                    SizedBox(width: 8.w),
+                                    Text(
+                                      'Cash on Delivery',
+                                      style: GoogleFonts.lato(
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColor.textPrimary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+
                             const Divider(color: Color(0xFFF1F5F9), height: 16),
 
-                            // COD Option
+                            // 2. Standalone Cash on Delivery Option
                             _buildPaymentMethodTile(
                               id: 'COD',
                               title: 'Cash on Delivery (COD)',
                               subtitle: 'Pay cash upon receiving delivery',
-                              iconWidget: Icon(
-                                Iconsax.money_send,
-                                size: 24.r,
-                                color: AppColor.textPrimary,
-                              ),
-                            ),
-                            const Divider(color: Color(0xFFF1F5F9), height: 16),
-
-                            // Wallet Option
-                            _buildPaymentMethodTile(
-                              id: 'Wallet',
-                              title: 'Alif Wallet',
-                              subtitle: 'Pay using your account balance',
                               iconWidget: Container(
-                                width: 32.r,
-                                height: 32.r,
+                                width: 36.r,
+                                height: 36.r,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF6366F1),
-                                  borderRadius: BorderRadius.circular(8.r),
+                                  color: const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(10.r),
                                 ),
-                                child: const Center(
+                                child: Center(
                                   child: Icon(
-                                    Icons.account_balance_wallet_rounded,
-                                    color: Colors.white,
-                                    size: 18,
+                                    Iconsax.money_send,
+                                    size: 20.r,
+                                    color: AppColor.textPrimary,
                                   ),
                                 ),
                               ),
@@ -594,11 +718,13 @@ class CheckoutView extends GetView<CheckoutController> {
                                 : '৳${controller.deliveryFee.value.toStringAsFixed(2)}',
                             isGreen: controller.deliveryFee.value == 0,
                           ),
-                          SizedBox(height: 8.h),
-                          _buildDetailRow(
-                            'Estimated Tax',
-                            '৳${controller.tax.value.toStringAsFixed(2)}',
-                          ),
+                          if (controller.tax.value > 0) ...[
+                            SizedBox(height: 8.h),
+                            _buildDetailRow(
+                              'Estimated Tax',
+                              '৳${controller.tax.value.toStringAsFixed(2)}',
+                            ),
+                          ],
                           if (controller.discount.value > 0) ...[
                             SizedBox(height: 8.h),
                             _buildDetailRow(
@@ -607,14 +733,53 @@ class CheckoutView extends GetView<CheckoutController> {
                               isGreen: true,
                             ),
                           ],
+                          if (controller.selectedPaymentMethod.value ==
+                                  'Wallet' &&
+                              controller.walletDeductionAmount > 0) ...[
+                            SizedBox(height: 8.h),
+                            _buildDetailRow(
+                              'Wallet',
+                              '- ৳${controller.walletDeductionAmount.toStringAsFixed(2)}',
+                              isGreen: true,
+                            ),
+                          ],
                           SizedBox(height: 10.h),
                           const Divider(color: Color(0xFFF1F5F9), height: 1),
                           SizedBox(height: 10.h),
                           _buildDetailRow(
-                            'Total Amount',
+                            controller.selectedPaymentMethod.value == 'Wallet'
+                                ? 'Payable'
+                                : 'Total Amount',
                             '৳${controller.finalPayable.toStringAsFixed(2)}',
                             isBold: true,
                           ),
+                          if (controller.discount.value > 0) ...[
+                            SizedBox(height: 12.h),
+                            Container(
+                              width: double.infinity,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12.w,
+                                vertical: 8.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFDCFCE7),
+                                borderRadius: BorderRadius.circular(8.r),
+                                border: Border.all(
+                                  color: const Color(0xFFBBF7D0),
+                                ),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  'You will save ৳${controller.discount.value.toStringAsFixed(2)} on this order',
+                                  style: GoogleFonts.lato(
+                                    fontSize: 12.5.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFF15803D),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -671,15 +836,9 @@ class CheckoutView extends GetView<CheckoutController> {
                             : () => controller.placeOrder(),
                         style: ElevatedButton.styleFrom(
                           backgroundColor:
-                              controller.selectedPaymentMethod.value == 'bKash'
-                              ? const Color(0xFFE2136E)
-                              : (controller.selectedPaymentMethod.value ==
-                                        'Nagad'
-                                    ? const Color(0xFFF7941D)
-                                    : (controller.selectedPaymentMethod.value ==
-                                              'Wallet'
-                                          ? const Color(0xFF6366F1)
-                                          : AppColor.primary)),
+                              controller.selectedPaymentMethod.value == 'Wallet'
+                                  ? const Color(0xFFFF630F)
+                                  : AppColor.primary,
                           elevation: 0,
                           padding: EdgeInsets.symmetric(horizontal: 24.w),
                           shape: RoundedRectangleBorder(
@@ -697,17 +856,9 @@ class CheckoutView extends GetView<CheckoutController> {
                               )
                             : Text(
                                 controller.selectedPaymentMethod.value ==
-                                        'bKash'
-                                    ? 'Pay with bKash'
-                                    : (controller.selectedPaymentMethod.value ==
-                                              'Nagad'
-                                          ? 'Pay with Nagad'
-                                          : (controller
-                                                        .selectedPaymentMethod
-                                                        .value ==
-                                                    'Wallet'
-                                                ? 'Pay with Wallet'
-                                                : 'Place Order (COD)')),
+                                        'Wallet'
+                                    ? 'Place order'
+                                    : 'Place Order (COD)',
                                 style: GoogleFonts.lato(
                                   fontSize: 15.sp,
                                   fontWeight: FontWeight.bold,
@@ -763,6 +914,7 @@ class CheckoutView extends GetView<CheckoutController> {
     required String title,
     required String subtitle,
     required Widget iconWidget,
+    String? extraText,
   }) {
     final isSelected = controller.selectedPaymentMethod.value == id;
 
@@ -802,6 +954,17 @@ class CheckoutView extends GetView<CheckoutController> {
                       color: AppColor.textSecondary,
                     ),
                   ),
+                  if (extraText != null && extraText.isNotEmpty) ...[
+                    SizedBox(height: 3.h),
+                    Text(
+                      extraText,
+                      style: GoogleFonts.lato(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFFFF630F),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -809,6 +972,169 @@ class CheckoutView extends GetView<CheckoutController> {
         ),
       ),
     );
+  }
+
+  Widget _buildWalletKindRow({
+    required String kind,
+    required String title,
+    required double balance,
+    required double willUseAmount,
+  }) {
+    return Obx(() {
+      final isChecked = controller.isWalletKindSelected(kind);
+
+      return InkWell(
+        onTap: () => controller.toggleWalletKind(kind),
+        borderRadius: BorderRadius.circular(10.r),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10.r),
+            border: Border.all(
+              color:
+                  isChecked ? const Color(0xFFFF630F) : const Color(0xFFE5E7EB),
+              width: isChecked ? 1.5 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 20.r,
+                height: 20.r,
+                decoration: BoxDecoration(
+                  color: isChecked ? const Color(0xFFFF630F) : Colors.white,
+                  borderRadius: BorderRadius.circular(4.r),
+                  border: Border.all(
+                    color: isChecked
+                        ? const Color(0xFFFF630F)
+                        : const Color(0xFFD1D5DB),
+                    width: 1.5,
+                  ),
+                ),
+                child: isChecked
+                    ? const Center(
+                        child: Icon(Icons.check, size: 14, color: Colors.white),
+                      )
+                    : null,
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.lato(
+                        fontSize: 13.5.sp,
+                        fontWeight:
+                            isChecked ? FontWeight.bold : FontWeight.w600,
+                        color: AppColor.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      'Available: ৳${balance.toStringAsFixed(2)}',
+                      style: GoogleFonts.lato(
+                        fontSize: 11.5.sp,
+                        color: AppColor.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isChecked) ...[
+                Text(
+                  'Will use: ৳${willUseAmount.toStringAsFixed(2)}',
+                  style: GoogleFonts.lato(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFFFF630F),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    });
+  }
+
+  Widget _buildWalletSelectionSection() {
+    return Obx(() {
+      final maxPercent = controller.walletMaxPercent.value;
+      final remainingAmount = controller.remainingPayable;
+      final mainBal = controller.mainWalletBalance;
+      final shoppingBal = controller.shoppingWalletBalance;
+      final advanceBal = controller.advanceWalletBalance;
+
+      return Container(
+        margin: EdgeInsets.only(top: 8.h, bottom: 4.h),
+        padding: EdgeInsets.all(14.r),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFFBEB),
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(
+            color: const Color(0xFFFDE68A),
+            width: 1.2,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. Notice banner
+            Text(
+              'You can pay up to $maxPercent% of the order total from your wallets. The rest is payable on delivery.',
+              style: GoogleFonts.lato(
+                fontSize: 12.5.sp,
+                color: const Color(0xFF78350F),
+                fontWeight: FontWeight.w500,
+                height: 1.35,
+              ),
+            ),
+            SizedBox(height: 12.h),
+
+            // 2. Main Wallet Row
+            _buildWalletKindRow(
+              kind: 'customer_main',
+              title: 'Main Wallet',
+              balance: mainBal,
+              willUseAmount: controller.mainWalletWillUse,
+            ),
+            SizedBox(height: 8.h),
+
+            // 3. Shopping Wallet Row
+            _buildWalletKindRow(
+              kind: 'customer_shopping',
+              title: 'Shopping Wallet',
+              balance: shoppingBal,
+              willUseAmount: controller.shoppingWalletWillUse,
+            ),
+            SizedBox(height: 8.h),
+
+            // 4. Advanced Shopping Row
+            _buildWalletKindRow(
+              kind: 'customer_advanced_shopping',
+              title: 'Advanced Shopping',
+              balance: advanceBal,
+              willUseAmount: controller.advanceWalletWillUse,
+            ),
+
+            if (remainingAmount > 0) ...[
+              SizedBox(height: 12.h),
+              Text(
+                'Remaining ৳${remainingAmount.toStringAsFixed(2)} will be paid as Cash on Delivery.',
+                style: GoogleFonts.lato(
+                  fontSize: 12.5.sp,
+                  color: const Color(0xFF92400E),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildDetailRow(
@@ -839,6 +1165,223 @@ class CheckoutView extends GetView<CheckoutController> {
           ),
         ),
       ],
+    );
+  }
+
+  void _showAddressSelectionBottomSheet(BuildContext context) {
+    Get.bottomSheet(
+      Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.75,
+        ),
+        padding: EdgeInsets.only(
+          top: 16.h,
+          left: 20.w,
+          right: 20.w,
+          bottom: 24.h,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE2E8F0),
+                  borderRadius: BorderRadius.circular(2.r),
+                ),
+              ),
+            ),
+            SizedBox(height: 14.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Select Delivery Address',
+                  style: GoogleFonts.lato(
+                    fontSize: 17.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppColor.textPrimary,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Get.back(),
+                  icon: const Icon(Icons.close_rounded, size: 22),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  color: AppColor.textSecondary,
+                ),
+              ],
+            ),
+            SizedBox(height: 14.h),
+            Flexible(
+              child: Obx(
+                () => ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: controller.addresses.length,
+                  separatorBuilder: (context, index) => SizedBox(height: 10.h),
+                  itemBuilder: (context, index) {
+                    final addr = controller.addresses[index];
+                    final isSelected =
+                        controller.selectedAddressIndex.value == index;
+                    final name = addr['name'] as String? ?? '';
+                    final phone = addr['phone'] as String? ?? '';
+                    final type = addr['type'] as String? ?? 'Home';
+                    final addressText = addr['address'] as String? ?? '';
+
+                    return InkWell(
+                      onTap: () {
+                        controller.selectAddress(index);
+                        Get.back();
+                      },
+                      borderRadius: BorderRadius.circular(14.r),
+                      child: Container(
+                        padding: EdgeInsets.all(14.r),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? const Color(0xFFFFF7ED)
+                              : const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(14.r),
+                          border: Border.all(
+                            color: isSelected
+                                ? AppColor.primary
+                                : const Color(0xFFE2E8F0),
+                            width: isSelected ? 1.5 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              margin: EdgeInsets.only(top: 2.h),
+                              width: 20.r,
+                              height: 20.r,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: isSelected
+                                      ? AppColor.primary
+                                      : const Color(0xFF94A3B8),
+                                  width: isSelected ? 5.5 : 1.5,
+                                ),
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(width: 12.w),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 7.w,
+                                          vertical: 2.h,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: isSelected
+                                              ? const Color(0xFFFFEDD5)
+                                              : const Color(0xFFE2E8F0),
+                                          borderRadius:
+                                              BorderRadius.circular(6.r),
+                                        ),
+                                        child: Text(
+                                          type,
+                                          style: GoogleFonts.lato(
+                                            fontSize: 11.5.sp,
+                                            fontWeight: FontWeight.bold,
+                                            color: isSelected
+                                                ? AppColor.primaryDark
+                                                : AppColor.textPrimary,
+                                          ),
+                                        ),
+                                      ),
+                                      if (phone.isNotEmpty) ...[
+                                        SizedBox(width: 8.w),
+                                        Text(
+                                          phone,
+                                          style: GoogleFonts.lato(
+                                            fontSize: 12.sp,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColor.textSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  if (name.isNotEmpty &&
+                                      name != 'Customer') ...[
+                                    SizedBox(height: 3.h),
+                                    Text(
+                                      name,
+                                      style: GoogleFonts.lato(
+                                        fontSize: 13.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColor.textPrimary,
+                                      ),
+                                    ),
+                                  ],
+                                  SizedBox(height: 4.h),
+                                  Text(
+                                    addressText,
+                                    style: GoogleFonts.lato(
+                                      fontSize: 13.sp,
+                                      color: AppColor.textPrimary,
+                                      height: 1.35,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            SizedBox(height: 14.h),
+            SizedBox(
+              width: double.infinity,
+              height: 46.h,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Get.back();
+                  controller.openAddAddressModal(context);
+                },
+                icon: Icon(
+                  Iconsax.add,
+                  size: 18.r,
+                  color: AppColor.primaryDark,
+                ),
+                label: Text(
+                  'Add New Address',
+                  style: GoogleFonts.lato(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppColor.primaryDark,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: AppColor.primary, width: 1.2),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      isScrollControlled: true,
     );
   }
 }
