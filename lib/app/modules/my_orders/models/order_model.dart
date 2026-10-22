@@ -18,7 +18,12 @@ class OrderItemModel {
         json['product'] is Map<String, dynamic> ? json['product'] : null;
 
     double parsedPrice = 0.0;
-    if (json['priceMinor'] is num) {
+    if (json['unitPriceMinor'] is num) {
+      parsedPrice = (json['unitPriceMinor'] as num) / 100.0;
+    } else if (json['lineTotalMinor'] is num && (json['qty'] is num || json['quantity'] is num)) {
+      final q = (json['qty'] ?? json['quantity']) as num;
+      parsedPrice = (json['lineTotalMinor'] as num) / (q > 0 ? q * 100.0 : 100.0);
+    } else if (json['priceMinor'] is num) {
       parsedPrice = (json['priceMinor'] as num) / 100.0;
     } else if (json['price'] is num) {
       parsedPrice = (json['price'] as num).toDouble();
@@ -26,7 +31,8 @@ class OrderItemModel {
       parsedPrice = (prod!['priceMinor'] as num) / 100.0;
     }
 
-    String img = json['image']?.toString() ??
+    String img = json['thumbnailUrl']?.toString() ??
+        json['image']?.toString() ??
         json['thumbnail']?.toString() ??
         prod?['image']?.toString() ??
         '';
@@ -37,7 +43,8 @@ class OrderItemModel {
 
     return OrderItemModel(
       id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
-      name: json['name']?.toString() ??
+      name: json['productName']?.toString() ??
+          json['name']?.toString() ??
           json['title']?.toString() ??
           prod?['name']?.toString() ??
           'Product',
@@ -126,7 +133,9 @@ class OrderModel {
 
     // Parse created date
     String formattedDate = 'Recently';
-    final rawDate = json['createdAt']?.toString() ?? json['date']?.toString();
+    final rawDate = json['placedAt']?.toString() ??
+        json['createdAt']?.toString() ??
+        json['date']?.toString();
     if (rawDate != null && rawDate.isNotEmpty) {
       try {
         final dt = DateTime.parse(rawDate);
@@ -207,7 +216,24 @@ class OrderModel {
       );
     }
 
-    final addrObj = json['address'] is Map ? json['address'] as Map : null;
+    final addrObj = json['addressSnapshot'] is Map
+        ? json['addressSnapshot'] as Map
+        : (json['address'] is Map ? json['address'] as Map : null);
+
+    String? formattedAddress;
+    if (addrObj != null) {
+      final line = addrObj['addressLine']?.toString() ?? '';
+      final upazila = addrObj['upazila']?.toString() ?? '';
+      final district = addrObj['district']?.toString() ?? '';
+      final division = addrObj['division']?.toString() ?? '';
+      final postal = addrObj['postalCode']?.toString() ?? '';
+      final parts = [line, upazila, district, division, postal]
+          .where((p) => p.trim().isNotEmpty)
+          .toList();
+      if (parts.isNotEmpty) {
+        formattedAddress = parts.join(', ');
+      }
+    }
 
     return OrderModel(
       id: rawId,
@@ -224,7 +250,8 @@ class OrderModel {
           (json['batch'] is Map ? (json['batch'] as Map)['paymentMethod']?.toString() : null),
       paymentStatus: json['paymentStatus']?.toString() ??
           (json['batch'] is Map ? (json['batch'] as Map)['paymentStatus']?.toString() : null),
-      address: json['address']?.toString() ??
+      address: formattedAddress ??
+          json['address']?.toString() ??
           json['deliveryAddress']?.toString() ??
           addrObj?['addressLine']?.toString(),
       recipientName: addrObj?['fullName']?.toString() ??

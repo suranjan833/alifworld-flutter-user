@@ -39,7 +39,8 @@ class LoginController extends GetxController {
     final token = getBox.read(USER_TOKEN);
     final hasToken = token != null && token.toString().trim().isNotEmpty;
     final loggedInVal = getBox.read(IS_USER_LOGGED_IN);
-    final isLoggedIn = (loggedInVal == true || loggedInVal == 'true' || hasToken);
+    final isLoggedIn =
+        (loggedInVal == true || loggedInVal == 'true' || hasToken);
     if (isLoggedIn) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Get.offAllNamed(Routes.MAIN_NAVIGATION);
@@ -129,14 +130,20 @@ class LoginController extends GetxController {
           String msg = 'Invalid credentials. Please try again.';
           if (response.data is Map && response.data['message'] != null) {
             msg = response.data['message'].toString();
-          } else if (response.data is Map && response.data['error'] is Map && response.data['error']['message'] != null) {
+          } else if (response.data is Map &&
+              response.data['error'] is Map &&
+              response.data['error']['message'] != null) {
             msg = response.data['error']['message'].toString();
           }
           showSnack('Login Failed', msg, bg: Colors.red);
         }
       } catch (e) {
         isLoading.value = false;
-        showSnack('Login Error', 'Something went wrong. Please try again.', bg: Colors.red);
+        showSnack(
+          'Login Error',
+          'Something went wrong. Please try again.',
+          bg: Colors.red,
+        );
       }
     }
   }
@@ -156,10 +163,7 @@ class LoginController extends GetxController {
       try {
         final response = await dioPost(
           endUrl: 'auth/otp/request',
-          data: {
-            'phone': fullPhoneNumber,
-            'purpose': 'login',
-          },
+          data: {'phone': fullPhoneNumber, 'purpose': 'login'},
           isJson: true,
         );
 
@@ -197,7 +201,11 @@ class LoginController extends GetxController {
         }
       } catch (e) {
         isLoading.value = false;
-        showSnack('OTP Error', 'Something went wrong. Please try again.', bg: Colors.red);
+        showSnack(
+          'OTP Error',
+          'Something went wrong. Please try again.',
+          bg: Colors.red,
+        );
       }
     }
   }
@@ -227,7 +235,48 @@ class LoginController extends GetxController {
       isLoading.value = false;
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        _handleAuthSuccess(response.data);
+        dynamic dataMap = response.data;
+        if (dataMap is Map<String, dynamic> && dataMap.containsKey('data')) {
+          dataMap = dataMap['data'];
+        }
+
+        final bool isLoggedIn =
+            dataMap is Map<String, dynamic> &&
+            (dataMap['loggedIn'] == true ||
+                dataMap['loggedIn'] == 'true' ||
+                dataMap['token'] != null ||
+                dataMap['accessToken'] != null);
+
+        final String? regToken = dataMap is Map<String, dynamic>
+            ? dataMap['regToken']?.toString()
+            : null;
+
+        // If user is not yet registered (loggedIn: false and regToken present)
+        if (!isLoggedIn && regToken != null && regToken.isNotEmpty) {
+          // 1. Save verified phone number and regToken in storage
+          getBox.write(USER_PHONE, fullPhoneNumber);
+          getBox.write('reg_token', regToken);
+
+          showSnack(
+            'Phone Verified',
+            'Phone verified successfully! Please complete your registration.',
+            bg: Colors.black87,
+          );
+
+          // 2. Redirect user to Sign Up page with verified phone and regToken
+          Get.toNamed(
+            Routes.SIGNUP,
+            arguments: {
+              'phone': phoneController.text.trim(),
+              'fullPhoneNumber': fullPhoneNumber,
+              'country': selectedCountry.value,
+              'dialCode': selectedCountry.value.dialCode,
+              'regToken': regToken,
+            },
+          );
+        } else {
+          _handleAuthSuccess(response.data);
+        }
       } else {
         String msg = 'Invalid OTP code. Please try again.';
         if (response.data is Map && response.data['message'] != null) {
@@ -237,7 +286,11 @@ class LoginController extends GetxController {
       }
     } catch (e) {
       isLoading.value = false;
-      showSnack('Verification Error', 'Something went wrong. Please try again.', bg: Colors.red);
+      showSnack(
+        'Verification Error',
+        'Something went wrong. Please try again.',
+        bg: Colors.red,
+      );
     }
   }
 
@@ -245,7 +298,8 @@ class LoginController extends GetxController {
     if (responseData is Map<String, dynamic>) {
       final payload = responseData['data'] ?? responseData;
       if (payload is Map<String, dynamic>) {
-        final token = payload['token'] ?? payload['accessToken'] ?? payload['authtoken'];
+        final token =
+            payload['token'] ?? payload['accessToken'] ?? payload['authtoken'];
         if (token != null && token.toString().trim().isNotEmpty) {
           getBox.write(USER_TOKEN, token.toString().trim());
           getBox.write(IS_USER_LOGGED_IN, true);
@@ -254,10 +308,18 @@ class LoginController extends GetxController {
         }
         final user = payload['user'];
         if (user is Map<String, dynamic>) {
-          if (user['id'] != null) getBox.write(USER_ID, user['id'].toString());
-          if (user['name'] != null) getBox.write(USER_NAME, user['name'].toString());
-          if (user['email'] != null) getBox.write(USER_EMAIL, user['email'].toString());
-          if (user['phone'] != null) getBox.write(USER_PHONE, user['phone'].toString());
+          if (user['id'] != null) {
+            getBox.write(USER_ID, user['id'].toString());
+          }
+          if (user['name'] != null) {
+            getBox.write(USER_NAME, user['name'].toString());
+          }
+          if (user['email'] != null) {
+            getBox.write(USER_EMAIL, user['email'].toString());
+          }
+          if (user['phone'] != null) {
+            getBox.write(USER_PHONE, user['phone'].toString());
+          }
         }
       } else {
         getBox.write(IS_USER_LOGGED_IN, true);
@@ -266,11 +328,7 @@ class LoginController extends GetxController {
       getBox.write(IS_USER_LOGGED_IN, true);
     }
 
-    showSnack(
-      'Success',
-      'Logged in successfully!',
-      bg: Colors.black87,
-    );
+    showSnack('Success', 'Logged in successfully!', bg: Colors.black87);
     Get.offAllNamed(Routes.MAIN_NAVIGATION);
   }
 

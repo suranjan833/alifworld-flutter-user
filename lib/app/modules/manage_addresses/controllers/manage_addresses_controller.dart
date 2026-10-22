@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -108,9 +109,9 @@ class ManageAddressesController extends GetxController
 
   Future<void> setDefaultAddress(String addressId) async {
     try {
-      final res = await dioPatch(
-        endUrl: 'addresses/$addressId',
-        data: {'isDefault': true},
+      final res = await dioPost(
+        endUrl: 'addresses/$addressId/default',
+        data: {},
         isJson: true,
       );
       if (res.statusCode == 200 || res.statusCode == 201) {
@@ -330,7 +331,11 @@ class ManageAddressesController extends GetxController
                 SizedBox(height: 10.h),
                 TextField(
                   controller: phoneCtrl,
-                  keyboardType: TextInputType.phone,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(15),
+                  ],
                   decoration: const InputDecoration(
                     labelText: 'Phone Number (e.g. 017xxxxxxxx) *',
                     hintText: '01XXXXXXXXX',

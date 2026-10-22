@@ -41,11 +41,47 @@ class SignupController extends GetxController {
   final isConfirmPasswordVisible = false.obs;
   final isLoading = false.obs;
 
+  String _initialVerifiedPhone = '';
+
   @override
   void onInit() {
     super.onInit();
+    _handleIncomingArguments();
     emailController.addListener(_onEmailChanged);
     phoneController.addListener(_onPhoneChanged);
+  }
+
+  @override
+  void onReady() {
+    super.onReady();
+    _handleIncomingArguments();
+  }
+
+  void _handleIncomingArguments() {
+    final args = Get.arguments;
+    if (args is Map<String, dynamic>) {
+      final phone = args['phone']?.toString() ?? '';
+      final token = args['regToken']?.toString() ?? '';
+      final country = args['country'];
+
+      if (country is CountryModel) {
+        selectedCountry.value = country;
+      }
+
+      if (phone.isNotEmpty) {
+        _initialVerifiedPhone = phone;
+        if (phoneController.text != phone) {
+          phoneController.text = phone;
+        }
+        hasPhoneInput.value = true;
+      }
+
+      if (token.isNotEmpty) {
+        regToken.value = token;
+        isPhoneVerified.value = true;
+        isPhoneOtpSent.value = true;
+      }
+    }
   }
 
   void _onEmailChanged() {
@@ -69,7 +105,14 @@ class SignupController extends GetxController {
       hasPhoneInput.value = hasInput;
     }
     // If phone changes after verification, reset state
-    if (isPhoneVerified.value) {
+    if (isPhoneVerified.value &&
+        _initialVerifiedPhone.isNotEmpty &&
+        text != _initialVerifiedPhone) {
+      isPhoneVerified.value = false;
+      isPhoneOtpSent.value = false;
+      regToken.value = '';
+      _initialVerifiedPhone = '';
+    } else if (isPhoneVerified.value && _initialVerifiedPhone.isEmpty) {
       isPhoneVerified.value = false;
       isPhoneOtpSent.value = false;
       regToken.value = '';
@@ -92,9 +135,15 @@ class SignupController extends GetxController {
   }
 
   void selectCountry(CountryModel country) {
-    selectedCountry.value = country;
-    isPhoneVerified.value = false;
-    isPhoneOtpSent.value = false;
+    if (selectedCountry.value.dialCode != country.dialCode) {
+      selectedCountry.value = country;
+      if (isPhoneVerified.value) {
+        isPhoneVerified.value = false;
+        isPhoneOtpSent.value = false;
+        regToken.value = '';
+        _initialVerifiedPhone = '';
+      }
+    }
   }
 
   void togglePasswordVisibility() {
@@ -257,6 +306,7 @@ class SignupController extends GetxController {
         } else {
           regToken.value = 'verified';
         }
+        _initialVerifiedPhone = phoneController.text.trim();
         isPhoneVerified.value = true;
         showSnack('Phone Verified', 'Phone number verified successfully!', bg: Colors.green);
       } else {

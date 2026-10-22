@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -460,7 +461,11 @@ class CheckoutController extends GetxController {
                 // Phone Number
                 TextField(
                   controller: phoneCtrl,
-                  keyboardType: TextInputType.phone,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(15),
+                  ],
                   decoration: InputDecoration(
                     labelText: 'Phone Number (e.g. 017xxxxxxxx) *',
                     hintText: '01XXXXXXXXX',
