@@ -376,8 +376,8 @@ class CartModel {
 
     if (rawItems is List) {
       for (var e in rawItems) {
-        if (e is Map<String, dynamic>) {
-          parsedItems.add(CartItemModel.fromJson(e));
+        if (e is Map) {
+          parsedItems.add(CartItemModel.fromJson(Map<String, dynamic>.from(e)));
         }
       }
     }
@@ -385,8 +385,8 @@ class CartModel {
     final List<CartSellerGroupModel> parsedGroups = [];
     if (json['groups'] is List) {
       for (var g in json['groups']) {
-        if (g is Map<String, dynamic>) {
-          final group = CartSellerGroupModel.fromJson(g);
+        if (g is Map) {
+          final group = CartSellerGroupModel.fromJson(Map<String, dynamic>.from(g));
           parsedGroups.add(group);
           if (parsedItems.isEmpty && group.items.isNotEmpty) {
             parsedItems.addAll(group.items);

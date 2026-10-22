@@ -328,7 +328,7 @@ class CategoryProductsController extends GetxController {
     }
   }
 
-  void addToCart(ProductModel product) {
+  Future<void> addToCart(ProductModel product) async {
     if (!Get.isRegistered<BagController>()) {
       Get.put(BagController());
     }
@@ -338,7 +338,7 @@ class CategoryProductsController extends GetxController {
         ? product.variants!.first['id']?.toString()
         : null;
 
-    bagCtrl.addItemToBag({
+    await bagCtrl.addItemToBag({
       'id': product.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
       'productId': product.id ?? '',
       'variantId': vId,
@@ -349,6 +349,8 @@ class CategoryProductsController extends GetxController {
       'brand': product.brand ?? 'Alif',
       'slug': product.slug,
     });
+    await bagCtrl.fetchCart(showLoading: false, force: true);
+    bagCtrl.cartItems.refresh();
 
     Get.snackbar(
       'Added to Bag',

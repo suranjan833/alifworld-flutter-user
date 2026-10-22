@@ -270,7 +270,7 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
     }
   }
 
-  void addToBag() {
+  Future<void> addToBag() async {
     final p = product.value;
     if (p == null) return;
 
@@ -295,7 +295,9 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
       'variants': p.variants.map((v) => v.toJson()).toList(),
     };
 
-    bagCtrl.addItemToBag(itemPayload, quantity: selectedQuantity.value);
+    await bagCtrl.addItemToBag(itemPayload, quantity: selectedQuantity.value);
+    await bagCtrl.fetchCart(showLoading: false, force: true);
+    bagCtrl.cartItems.refresh();
   }
 
   void buyNow() {

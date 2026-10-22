@@ -129,11 +129,14 @@ class MyWishlistController extends GetxController with SkeletonLoadingMixin {
     );
   }
 
-  void addToBag(Map<String, dynamic> item) {
+  Future<void> addToBag(Map<String, dynamic> item) async {
     if (!Get.isRegistered<BagController>()) {
       Get.put(BagController());
     }
-    Get.find<BagController>().addItemToBag(item);
+    final bagCtrl = Get.find<BagController>();
+    await bagCtrl.addItemToBag(item);
+    await bagCtrl.fetchCart(showLoading: false, force: true);
+    bagCtrl.cartItems.refresh();
 
     Get.snackbar(
       'Added to Bag',

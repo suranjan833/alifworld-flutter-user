@@ -50,6 +50,8 @@ class BagController extends GetxController with SkeletonLoadingMixin {
       final mapData = Map<String, dynamic>.from(rawData);
       final model = CartModel.fromJson(mapData);
       cartItems.assignAll(model.items);
+      cartItems.refresh();
+      update();
     }
   }
 
@@ -125,6 +127,8 @@ class BagController extends GetxController with SkeletonLoadingMixin {
         }
 
         cartItems.assignAll(incomingItems);
+        cartItems.refresh();
+        update();
       } else {
         cartItems.clear();
       }
@@ -395,9 +399,10 @@ class BagController extends GetxController with SkeletonLoadingMixin {
         dynamic rawData = response.data;
         if (rawData is Map && rawData.containsKey('data')) {
           _updateCartFromData(rawData['data']);
-        } else {
-          await fetchCart(showLoading: false, force: true);
         }
+        await fetchCart(showLoading: false, force: true);
+        cartItems.refresh();
+        update();
         Get.snackbar(
           'Added to Bag',
           '${item['title'] ?? item['name'] ?? 'Item'} added to your bag',

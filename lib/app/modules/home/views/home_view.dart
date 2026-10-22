@@ -763,11 +763,14 @@ class HomeView extends GetView<HomeController> {
               right: 10.w,
               bottom: 10.h,
               child: GestureDetector(
-                onTap: () {
+                onTap: () async {
                   if (!Get.isRegistered<BagController>()) {
                     Get.put(BagController());
                   }
-                  Get.find<BagController>().addItemToBag(product);
+                  final bagCtrl = Get.find<BagController>();
+                  await bagCtrl.addItemToBag(product);
+                  await bagCtrl.fetchCart(showLoading: false, force: true);
+                  bagCtrl.cartItems.refresh();
                   Get.snackbar(
                     'Added to Bag',
                     '${product['title'] ?? product['name'] ?? "Item"} added to shopping bag',

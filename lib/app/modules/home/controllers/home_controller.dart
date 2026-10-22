@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/mixins/skeleton_loading_mixin.dart';
+import '../../bag/controllers/bag_controller.dart';
 import '../models/home_category_model.dart';
 import '../models/showcase_model.dart';
 
@@ -26,9 +27,25 @@ class HomeController extends GetxController with SkeletonLoadingMixin {
     });
   }
 
+  @override
+  void onReady() {
+    super.onReady();
+    _fetchCartOnHomeLoad();
+  }
+
+  void _fetchCartOnHomeLoad() {
+    try {
+      if (!Get.isRegistered<BagController>()) {
+        Get.put<BagController>(BagController(), permanent: true);
+      }
+      Get.find<BagController>().fetchCart(showLoading: false, force: true);
+    } catch (_) {}
+  }
+
   Future<void> loadHomeData() async {
     isLoading.value = true;
     try {
+      _fetchCartOnHomeLoad();
       await fetchCategories();
       await fetchShowcase();
     } finally {
