@@ -10,6 +10,10 @@ class WalletController extends GetxController {
   final isLoading = false.obs;
   final isTransactionsLoading = false.obs;
   final isLoadingMore = false.obs;
+  final isSubmittingAction = false.obs;
+  final isSingleWalletLoading = false.obs;
+  final activeSingleWallet = Rxn<WalletItemModel>();
+  final activeSingleTransactions = <WalletTransactionModel>[].obs;
 
   final wallets = <WalletItemModel>[].obs;
   final currencySymbol = '৳'.obs;
@@ -149,6 +153,141 @@ class WalletController extends GetxController {
       selectedWalletKind.value = kind;
     }
     fetchTransactions(refresh: true);
+  }
+
+  /// 3. GET /api/v1/wallets/{kind} - Fetch single wallet details & its specific transactions
+  Future<void> fetchSingleWallet(String kind) async {
+    if (!hasAuth || kind.isEmpty) return;
+
+    isSingleWalletLoading.value = true;
+    try {
+      final response = await dioGet('wallets/$kind?limit=20');
+      if (response.statusCode == 200 && response.data != null) {
+        dynamic rawData = response.data;
+        if (rawData is Map && rawData.containsKey('data')) {
+          rawData = rawData['data'];
+        }
+
+        if (rawData is Map<String, dynamic>) {
+          if (rawData['wallet'] is Map<String, dynamic>) {
+            activeSingleWallet.value = WalletItemModel.fromJson(
+              Map<String, dynamic>.from(rawData['wallet']),
+            );
+          }
+
+          if (rawData['transactions'] is Map<String, dynamic>) {
+            final txObj = rawData['transactions'] as Map<String, dynamic>;
+            final txList = (txObj['items'] as List<dynamic>?)
+                    ?.map((e) => WalletTransactionModel.fromJson(Map<String, dynamic>.from(e)))
+                    .toList() ??
+                [];
+            activeSingleTransactions.assignAll(txList);
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching single wallet ($kind): $e');
+    } finally {
+      isSingleWalletLoading.value = false;
+    }
+  }
+
+  /// POST /api/v1/advanced-shopping/deposit
+  Future<bool> depositAdvanceShopping(double amount) async {
+    if (amount <= 0) {
+      showSnack('Invalid Amount', 'Please enter a valid deposit amount', bg: Colors.red);
+      return false;
+    }
+
+    final amountMinor = (amount * 100).round();
+    final idempotencyKey = 'DEP_${DateTime.now().millisecondsSinceEpoch}';
+
+    isSubmittingAction.value = true;
+    try {
+      final res = await dioPost(
+        endUrl: 'advanced-shopping/deposit',
+        data: {'amountMinor': amountMinor},
+        isJson: true,
+        customHeaders: {'Idempotency-Key': idempotencyKey},
+      );
+
+      isSubmittingAction.value = false;
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        showSnack(
+          'Deposit Successful',
+          '${currencySymbol.value}${amount.toStringAsFixed(2)} added to Advance Shopping wallet',
+          bg: Colors.green,
+        );
+        await refreshAll();
+        return true;
+      } else {
+        String msg = 'Deposit failed. Please try again.';
+        if (res.data is Map && res.data['message'] != null) {
+          msg = res.data['message'].toString();
+        } else if (res.data is Map && res.data['error'] is Map && res.data['error']['message'] != null) {
+          msg = res.data['error']['message'].toString();
+        }
+        showSnack('Deposit Failed', msg, bg: Colors.red);
+        return false;
+      }
+    } catch (e) {
+      isSubmittingAction.value = false;
+      showSnack('Deposit Error', 'Something went wrong. Please try again.', bg: Colors.red);
+      return false;
+    }
+  }
+
+  /// POST /api/v1/advanced-shopping/withdraw
+  Future<bool> withdrawAdvanceShopping(double amount) async {
+    if (amount <= 0) {
+      showSnack('Invalid Amount', 'Please enter a valid withdrawal amount', bg: Colors.red);
+      return false;
+    }
+
+    final advWallet = wallets.firstWhereOrNull((w) => w.kind == 'customer_advanced_shopping');
+    if (advWallet != null && amount > advWallet.balance) {
+      showSnack(
+        'Insufficient Balance',
+        'Available Advance Shopping balance is ${currencySymbol.value}${advWallet.balance.toStringAsFixed(2)}',
+        bg: Colors.red,
+      );
+      return false;
+    }
+
+    final amountMinor = (amount * 100).round();
+
+    isSubmittingAction.value = true;
+    try {
+      final res = await dioPost(
+        endUrl: 'advanced-shopping/withdraw',
+        data: {'amountMinor': amountMinor},
+        isJson: true,
+      );
+
+      isSubmittingAction.value = false;
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        showSnack(
+          'Withdrawal Successful',
+          '${currencySymbol.value}${amount.toStringAsFixed(2)} withdrawn from Advance Shopping wallet',
+          bg: Colors.green,
+        );
+        await refreshAll();
+        return true;
+      } else {
+        String msg = 'Withdrawal failed. Please try again.';
+        if (res.data is Map && res.data['message'] != null) {
+          msg = res.data['message'].toString();
+        } else if (res.data is Map && res.data['error'] is Map && res.data['error']['message'] != null) {
+          msg = res.data['error']['message'].toString();
+        }
+        showSnack('Withdrawal Failed', msg, bg: Colors.red);
+        return false;
+      }
+    } catch (e) {
+      isSubmittingAction.value = false;
+      showSnack('Withdrawal Error', 'Something went wrong. Please try again.', bg: Colors.red);
+      return false;
+    }
   }
 
   void _loadFallbackWallets() {

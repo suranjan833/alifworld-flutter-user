@@ -84,7 +84,7 @@ class WalletView extends GetView<WalletController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // 1. Hero Balance Card
-                _buildHeroBalanceCard(),
+                _buildHeroBalanceCard(context),
 
                 SizedBox(height: 20.h),
 
@@ -116,12 +116,27 @@ class WalletView extends GetView<WalletController> {
                 SizedBox(height: 12.h),
 
                 // 2. Multi-Wallet Cards Carousel
-                _buildWalletsHorizontalList(),
+                _buildWalletsHorizontalList(context),
+
+                SizedBox(height: 20.h),
+
+                // 3. Advance Shopping Promotion Banner
+                _buildAdvanceShoppingBanner(context),
 
                 SizedBox(height: 24.h),
 
-                // 3. Transactions Section
+                // 4. Transactions Section
                 _buildTransactionsSection(),
+
+                SizedBox(height: 24.h),
+
+                // 5. Benefits & Perks
+                _buildWalletBenefitsSection(),
+
+                SizedBox(height: 24.h),
+
+                // 6. Wallet Security & FAQs
+                _buildWalletFaqSection(),
               ],
             ),
           ),
@@ -193,7 +208,7 @@ class WalletView extends GetView<WalletController> {
     );
   }
 
-  Widget _buildHeroBalanceCard() {
+  Widget _buildHeroBalanceCard(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
       child: Container(
@@ -321,13 +336,64 @@ class WalletView extends GetView<WalletController> {
                 ],
               ),
             ),
+            SizedBox(height: 16.h),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showDepositSheet(context),
+                    icon: Icon(Iconsax.add_circle, size: 16.r, color: Colors.white),
+                    label: Text(
+                      'Deposit',
+                      style: GoogleFonts.lato(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColor.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: EdgeInsets.symmetric(vertical: 10.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showWithdrawSheet(context),
+                    icon: Icon(Iconsax.export_1, size: 16.r, color: Colors.white),
+                    label: Text(
+                      'Withdraw',
+                      style: GoogleFonts.lato(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                      padding: EdgeInsets.symmetric(vertical: 10.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildWalletsHorizontalList() {
+  Widget _buildWalletsHorizontalList(BuildContext context) {
     return SizedBox(
       height: 136.h,
       child: Obx(
@@ -342,6 +408,7 @@ class WalletView extends GetView<WalletController> {
 
             return GestureDetector(
               onTap: () => controller.selectWalletFilter(w.kind),
+              onLongPress: () => _showWalletDetailsSheet(context, w),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 width: 148.w,
@@ -669,6 +736,841 @@ class WalletView extends GetView<WalletController> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showDepositSheet(BuildContext context) {
+    final amountController = TextEditingController();
+    final presets = [100.0, 500.0, 1000.0, 5000.0];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: EdgeInsets.only(
+          left: 20.w,
+          right: 20.w,
+          top: 20.h,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + 20.h,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+              ),
+            ),
+            SizedBox(height: 16.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Deposit Funds',
+                  style: GoogleFonts.lato(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppColor.textPrimary,
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Text(
+                    'Advance Shopping',
+                    style: GoogleFonts.lato(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF2563EB),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              'Add advance shopping funds for guaranteed discounts and fast checkout.',
+              style: GoogleFonts.lato(fontSize: 12.sp, color: AppColor.textSecondary),
+            ),
+            SizedBox(height: 16.h),
+            TextField(
+              controller: amountController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              style: GoogleFonts.lato(fontSize: 22.sp, fontWeight: FontWeight.bold),
+              decoration: InputDecoration(
+                prefixText: '${controller.currencySymbol.value} ',
+                prefixStyle: GoogleFonts.lato(
+                  fontSize: 22.sp,
+                  fontWeight: FontWeight.bold,
+                  color: AppColor.primary,
+                ),
+                hintText: '0.00',
+                filled: true,
+                fillColor: const Color(0xFFF8FAFC),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14.r),
+                  borderSide: BorderSide(color: Colors.grey.shade200),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14.r),
+                  borderSide: BorderSide(color: Colors.grey.shade200),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14.r),
+                  borderSide: const BorderSide(color: AppColor.primary, width: 1.5),
+                ),
+              ),
+            ),
+            SizedBox(height: 12.h),
+            Wrap(
+              spacing: 8.w,
+              children: presets.map((p) {
+                return ActionChip(
+                  label: Text('+${controller.currencySymbol.value}${p.toInt()}'),
+                  backgroundColor: const Color(0xFFF1F5F9),
+                  labelStyle: GoogleFonts.lato(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColor.textPrimary,
+                  ),
+                  onPressed: () {
+                    amountController.text = p.toStringAsFixed(0);
+                  },
+                );
+              }).toList(),
+            ),
+            SizedBox(height: 20.h),
+            SizedBox(
+              width: double.infinity,
+              height: 48.h,
+              child: Obx(
+                () => ElevatedButton(
+                  onPressed: controller.isSubmittingAction.value
+                      ? null
+                      : () async {
+                          final val = double.tryParse(amountController.text.trim()) ?? 0.0;
+                          final ok = await controller.depositAdvanceShopping(val);
+                          if (ok && ctx.mounted) {
+                            Navigator.of(ctx).pop();
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColor.primary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+                  ),
+                  child: controller.isSubmittingAction.value
+                      ? SizedBox(
+                          width: 20.r,
+                          height: 20.r,
+                          child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : Text(
+                          'Confirm Deposit',
+                          style: GoogleFonts.lato(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showWithdrawSheet(BuildContext context) {
+    final amountController = TextEditingController();
+    final advWallet = controller.wallets.firstWhereOrNull((w) => w.kind == 'customer_advanced_shopping');
+    final availableBal = advWallet?.balance ?? 0.0;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: EdgeInsets.only(
+          left: 20.w,
+          right: 20.w,
+          top: 20.h,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + 20.h,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+              ),
+            ),
+            SizedBox(height: 16.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Withdraw Funds',
+                  style: GoogleFonts.lato(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppColor.textPrimary,
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Text(
+                    'Advance Shopping',
+                    style: GoogleFonts.lato(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFFD97706),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8.h),
+            Row(
+              children: [
+                Text(
+                  'Available to withdraw: ',
+                  style: GoogleFonts.lato(fontSize: 12.sp, color: AppColor.textSecondary),
+                ),
+                Text(
+                  '${controller.currencySymbol.value} ${availableBal.toStringAsFixed(2)}',
+                  style: GoogleFonts.lato(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppColor.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 16.h),
+            TextField(
+              controller: amountController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              style: GoogleFonts.lato(fontSize: 22.sp, fontWeight: FontWeight.bold),
+              decoration: InputDecoration(
+                prefixText: '${controller.currencySymbol.value} ',
+                prefixStyle: GoogleFonts.lato(
+                  fontSize: 22.sp,
+                  fontWeight: FontWeight.bold,
+                  color: AppColor.primary,
+                ),
+                hintText: '0.00',
+                filled: true,
+                fillColor: const Color(0xFFF8FAFC),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14.r),
+                  borderSide: BorderSide(color: Colors.grey.shade200),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14.r),
+                  borderSide: BorderSide(color: Colors.grey.shade200),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14.r),
+                  borderSide: const BorderSide(color: AppColor.primary, width: 1.5),
+                ),
+              ),
+            ),
+            SizedBox(height: 12.h),
+            Row(
+              children: [
+                if (availableBal > 0)
+                  ActionChip(
+                    label: const Text('All Balance'),
+                    backgroundColor: const Color(0xFFF1F5F9),
+                    labelStyle: GoogleFonts.lato(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColor.textPrimary,
+                    ),
+                    onPressed: () {
+                      amountController.text = availableBal.toStringAsFixed(2);
+                    },
+                  ),
+              ],
+            ),
+            SizedBox(height: 20.h),
+            SizedBox(
+              width: double.infinity,
+              height: 48.h,
+              child: Obx(
+                () => ElevatedButton(
+                  onPressed: controller.isSubmittingAction.value
+                      ? null
+                      : () async {
+                          final val = double.tryParse(amountController.text.trim()) ?? 0.0;
+                          final ok = await controller.withdrawAdvanceShopping(val);
+                          if (ok && ctx.mounted) {
+                            Navigator.of(ctx).pop();
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0F172A),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+                  ),
+                  child: controller.isSubmittingAction.value
+                      ? SizedBox(
+                          width: 20.r,
+                          height: 20.r,
+                          child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : Text(
+                          'Confirm Withdrawal',
+                          style: GoogleFonts.lato(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showWalletDetailsSheet(BuildContext context, WalletItemModel wallet) {
+    controller.fetchSingleWallet(wallet.kind);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: EdgeInsets.all(20.r),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+              ),
+            ),
+            SizedBox(height: 18.h),
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(12.r),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: wallet.gradientColors,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(wallet.icon, color: Colors.white, size: 24.r),
+                ),
+                SizedBox(width: 14.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        wallet.title,
+                        style: GoogleFonts.lato(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColor.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 2.h),
+                      Text(
+                        'Category: ${wallet.shortTitle}',
+                        style: GoogleFonts.lato(
+                          fontSize: 12.sp,
+                          color: AppColor.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 20.h),
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(16.r),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(14.r),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Current Available Balance',
+                    style: GoogleFonts.lato(fontSize: 12.sp, color: AppColor.textSecondary),
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    '${controller.currencySymbol.value} ${wallet.balance.toStringAsFixed(2)}',
+                    style: GoogleFonts.lato(
+                      fontSize: 26.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColor.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 16.h),
+            Text(
+              'About this Wallet',
+              style: GoogleFonts.lato(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.bold,
+                color: AppColor.textPrimary,
+              ),
+            ),
+            SizedBox(height: 6.h),
+            Text(
+              wallet.description,
+              style: GoogleFonts.lato(
+                fontSize: 13.sp,
+                color: AppColor.textSecondary,
+                height: 1.4,
+              ),
+            ),
+            SizedBox(height: 20.h),
+            if (wallet.kind == 'customer_advanced_shopping') ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.of(ctx).pop();
+                        _showDepositSheet(context);
+                      },
+                      icon: Icon(Iconsax.add_circle, size: 16.r, color: Colors.white),
+                      label: Text(
+                        'Deposit',
+                        style: GoogleFonts.lato(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColor.primary,
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.of(ctx).pop();
+                        _showWithdrawSheet(context);
+                      },
+                      icon: Icon(Iconsax.export_1, size: 16.r, color: AppColor.textPrimary),
+                      label: Text(
+                        'Withdraw',
+                        style: GoogleFonts.lato(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColor.textPrimary,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        side: BorderSide(color: Colors.grey.shade300),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 10.h),
+            ],
+            SizedBox(height: 14.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Recent Transactions',
+                  style: GoogleFonts.lato(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppColor.textPrimary,
+                  ),
+                ),
+                Text(
+                  'Last 3 Entries',
+                  style: GoogleFonts.lato(
+                    fontSize: 11.sp,
+                    color: AppColor.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8.h),
+            Obx(() {
+              if (controller.isSingleWalletLoading.value) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                );
+              }
+              if (controller.activeSingleTransactions.isEmpty) {
+                return Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(vertical: 14.h),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Text(
+                    'No transaction history for this wallet',
+                    style: GoogleFonts.lato(fontSize: 12.sp, color: AppColor.textHint),
+                  ),
+                );
+              }
+              return Column(
+                children: controller.activeSingleTransactions.take(3).map((tx) {
+                  return Container(
+                    margin: EdgeInsets.only(bottom: 6.h),
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            tx.displayTitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.lato(
+                              fontSize: 12.5.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColor.textPrimary,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        Text(
+                          tx.formattedAmount(symbol: controller.currencySymbol.value),
+                          style: GoogleFonts.lato(
+                            fontSize: 12.5.sp,
+                            fontWeight: FontWeight.bold,
+                            color: tx.isCredit ? const Color(0xFF16A34A) : AppColor.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              );
+            }),
+            SizedBox(height: 12.h),
+            SizedBox(
+              width: double.infinity,
+              height: 44.h,
+              child: TextButton.icon(
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  controller.selectWalletFilter(wallet.kind);
+                },
+                icon: const Icon(Iconsax.filter, size: 16),
+                label: Text(
+                  'Filter Transactions by this Wallet',
+                  style: GoogleFonts.lato(fontSize: 13.5.sp, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAdvanceShoppingBanner(BuildContext context) {
+    final advWallet = controller.wallets.firstWhereOrNull((w) => w.kind == 'customer_advanced_shopping');
+    final bal = advWallet?.balance ?? 0.0;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: Container(
+        padding: EdgeInsets.all(16.r),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEFF6FF),
+          borderRadius: BorderRadius.circular(18.r),
+          border: Border.all(color: const Color(0xFFBFDBFE)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(10.r),
+              decoration: const BoxDecoration(
+                color: Color(0xFF3B82F6),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Iconsax.discount_shape, color: Colors.white, size: 20.r),
+            ),
+            SizedBox(width: 14.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Advance Shopping Balance',
+                    style: GoogleFonts.lato(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF1E3A8A),
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    '${controller.currencySymbol.value} ${bal.toStringAsFixed(2)} available with exclusive discounts.',
+                    style: GoogleFonts.lato(
+                      fontSize: 11.5.sp,
+                      color: const Color(0xFF3B82F6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 8.w),
+            ElevatedButton(
+              onPressed: () => _showDepositSheet(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2563EB),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+              ),
+              child: Text(
+                'Top Up',
+                style: GoogleFonts.lato(fontSize: 12.sp, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWalletBenefitsSection() {
+    final benefits = [
+      {
+        'title': 'Instant Zero-Fee Checkout',
+        'desc': 'Skip OTPs and gateway processing by paying directly from your Alif Wallets.',
+        'icon': Iconsax.flash_1,
+        'color': const Color(0xFFF59E0B),
+      },
+      {
+        'title': 'Guaranteed Advance Discounts',
+        'desc': 'Deposit funds in Advance Shopping to unlock exclusive tier savings.',
+        'icon': Iconsax.percentage_circle,
+        'color': const Color(0xFF3B82F6),
+      },
+      {
+        'title': 'Instant Refund Protection',
+        'desc': 'Cancelled or returned orders are refunded immediately back into your wallet balance.',
+        'icon': Iconsax.shield_tick,
+        'color': const Color(0xFF10B981),
+      },
+    ];
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Why Use Alif Wallet?',
+            style: GoogleFonts.lato(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.bold,
+              color: AppColor.textPrimary,
+            ),
+          ),
+          SizedBox(height: 12.h),
+          ...benefits.map((b) {
+            return Container(
+              margin: EdgeInsets.only(bottom: 10.h),
+              padding: EdgeInsets.all(14.r),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14.r),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(8.r),
+                    decoration: BoxDecoration(
+                      color: (b['color'] as Color).withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      b['icon'] as IconData,
+                      size: 18.r,
+                      color: b['color'] as Color,
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          b['title'] as String,
+                          style: GoogleFonts.lato(
+                            fontSize: 13.5.sp,
+                            fontWeight: FontWeight.bold,
+                            color: AppColor.textPrimary,
+                          ),
+                        ),
+                        SizedBox(height: 3.h),
+                        Text(
+                          b['desc'] as String,
+                          style: GoogleFonts.lato(
+                            fontSize: 11.5.sp,
+                            color: AppColor.textSecondary,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWalletFaqSection() {
+    final faqs = [
+      {
+        'q': 'How does Advance Shopping work?',
+        'a': 'Advance Shopping lets you pre-fund your purchases in exchange for special pricing. You can also withdraw funds at any time.',
+      },
+      {
+        'q': 'Can I withdraw my Cashback or Bonus balances?',
+        'a': 'Cashback and club bonuses are designated for shopping discounts across the platform and apply automatically at checkout.',
+      },
+      {
+        'q': 'Are my wallet balances safe?',
+        'a': 'Yes, all wallet transactions are secured with end-to-end encryption, transactional audits, and bank-grade data security.',
+      },
+    ];
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: Container(
+        padding: EdgeInsets.all(16.r),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(18.r),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Iconsax.info_circle, size: 20.r, color: AppColor.primary),
+                SizedBox(width: 8.w),
+                Text(
+                  'Wallet Help & FAQs',
+                  style: GoogleFonts.lato(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppColor.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12.h),
+            ...faqs.map((f) {
+              return Padding(
+                padding: EdgeInsets.only(bottom: 10.h),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      f['q']!,
+                      style: GoogleFonts.lato(
+                        fontSize: 12.5.sp,
+                        fontWeight: FontWeight.bold,
+                        color: AppColor.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      f['a']!,
+                      style: GoogleFonts.lato(
+                        fontSize: 11.5.sp,
+                        color: AppColor.textSecondary,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ),
       ),
     );
   }
