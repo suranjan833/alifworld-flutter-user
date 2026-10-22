@@ -103,6 +103,14 @@ class OrderSuccessView extends GetView<OrderSuccessController> {
                     SizedBox(height: 10.h),
                     Obx(
                       () => _buildInfoRow(
+                        'Payment Status',
+                        controller.formattedPaymentStatus,
+                        isStatus: true,
+                      ),
+                    ),
+                    SizedBox(height: 10.h),
+                    Obx(
+                      () => _buildInfoRow(
                         'Total Amount',
                         '৳${controller.totalAmount.value.toStringAsFixed(2)}',
                         isHighlight: true,
@@ -206,9 +214,15 @@ class OrderSuccessView extends GetView<OrderSuccessController> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value, {bool isHighlight = false}) {
+  Widget _buildInfoRow(
+    String label,
+    String value, {
+    bool isHighlight = false,
+    bool isStatus = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
@@ -217,14 +231,52 @@ class OrderSuccessView extends GetView<OrderSuccessController> {
             color: AppColor.textSecondary,
           ),
         ),
-        Text(
-          value,
-          style: GoogleFonts.lato(
-            fontSize: isHighlight ? 15.sp : 13.5.sp,
-            fontWeight: isHighlight ? FontWeight.w800 : FontWeight.bold,
-            color: isHighlight ? AppColor.primaryDark : AppColor.textPrimary,
+        SizedBox(width: 12.w),
+        if (isStatus)
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 3.h),
+            decoration: BoxDecoration(
+              color: value.toLowerCase().contains('partially')
+                  ? const Color(0xFFFFFBEB)
+                  : (value.toLowerCase().contains('paid')
+                      ? const Color(0xFFDCFCE7)
+                      : const Color(0xFFF1F5F9)),
+              borderRadius: BorderRadius.circular(6.r),
+              border: Border.all(
+                color: value.toLowerCase().contains('partially')
+                    ? const Color(0xFFFDE68A)
+                    : (value.toLowerCase().contains('paid')
+                        ? const Color(0xFFBBF7D0)
+                        : const Color(0xFFE2E8F0)),
+              ),
+            ),
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: GoogleFonts.lato(
+                fontSize: 12.5.sp,
+                fontWeight: FontWeight.bold,
+                color: value.toLowerCase().contains('partially')
+                    ? const Color(0xFFB45309)
+                    : (value.toLowerCase().contains('paid')
+                        ? const Color(0xFF15803D)
+                        : AppColor.textPrimary),
+              ),
+            ),
+          )
+        else
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: GoogleFonts.lato(
+                fontSize: isHighlight ? 15.sp : 13.5.sp,
+                fontWeight: isHighlight ? FontWeight.w800 : FontWeight.bold,
+                color:
+                    isHighlight ? AppColor.primaryDark : AppColor.textPrimary,
+              ),
+            ),
           ),
-        ),
       ],
     );
   }
