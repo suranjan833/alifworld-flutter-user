@@ -302,7 +302,19 @@ class MyOrdersView extends GetView<MyOrdersController> {
           SizedBox(height: 12.h),
 
           // Items Preview
-          ...items.map(
+          if (items.isEmpty)
+            Padding(
+              padding: EdgeInsets.only(bottom: 8.h),
+              child: Text(
+                '${order.itemCount} item${order.itemCount > 1 ? 's' : ''}',
+                style: GoogleFonts.lato(
+                  fontSize: 13.sp,
+                  color: AppColor.textSecondary,
+                ),
+              ),
+            )
+          else
+            ...items.map(
             (item) => Padding(
               padding: EdgeInsets.only(bottom: 8.h),
               child: Row(

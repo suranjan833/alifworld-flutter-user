@@ -143,6 +143,9 @@ class MyOrdersController extends GetxController with SkeletonLoadingMixin {
         if (rawData is Map<String, dynamic> && rawData.containsKey('data')) {
           rawData = rawData['data'];
         }
+        if (rawData is Map<String, dynamic> && rawData.containsKey('order')) {
+          rawData = rawData['order'];
+        }
         if (rawData is Map<String, dynamic>) {
           final updated = OrderModel.fromJson(rawData);
           // Sync into local list if exists
@@ -189,22 +192,9 @@ class MyOrdersController extends GetxController with SkeletonLoadingMixin {
         );
         if (idx != -1) {
           final existing = orders[idx];
-          orders[idx] = OrderModel(
-            id: existing.id,
-            orderId: existing.orderId,
-            date: existing.date,
+          orders[idx] = existing.copyWith(
             status: 'Cancelled',
-            totalAmount: existing.totalAmount,
-            subtotal: existing.subtotal,
-            shippingFee: existing.shippingFee,
-            discount: existing.discount,
-            itemCount: existing.itemCount,
-            items: existing.items,
-            paymentMethod: existing.paymentMethod,
-            paymentStatus: existing.paymentStatus,
-            address: existing.address,
-            recipientName: existing.recipientName,
-            phone: existing.phone,
+            backendStatus: 'cancelled',
           );
           orders.refresh();
         }

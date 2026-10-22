@@ -20,6 +20,7 @@ class OrderDetailsView extends StatefulWidget {
 
 class _OrderDetailsViewState extends State<OrderDetailsView> {
   late final Rx<OrderModel> orderRx;
+  final isLoading = false.obs;
   final isCancelling = false.obs;
 
   @override
@@ -32,18 +33,12 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
       initialOrder = Get.arguments as OrderModel;
     } else if (Get.arguments is Map<String, dynamic>) {
       initialOrder = OrderModel.fromJson(Get.arguments as Map<String, dynamic>);
+    } else if (Get.arguments is String) {
+      initialOrder = OrderModel.placeholder(id: Get.arguments as String);
+    } else if (Get.parameters['id'] != null) {
+      initialOrder = OrderModel.placeholder(id: Get.parameters['id']!);
     } else {
-      initialOrder = OrderModel(
-        id: 'demo',
-        orderId: 'ORD-20261021-DXSUWY',
-        date: '21 Oct 2026',
-        status: 'In Progress',
-        totalAmount: 1698.70,
-        paymentMethod: 'Cash on Delivery',
-        address: 'House #12, Road #4, Dhanmondi, Dhaka',
-        recipientName: 'Mohan Biswas',
-        phone: '+880 1700-000001',
-      );
+      initialOrder = OrderModel.placeholder();
     }
 
     orderRx = initialOrder.obs;
@@ -57,16 +52,26 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
   Future<void> _syncLatestOrderDetails() async {
     final cur = orderRx.value;
     final lookupId = cur.id.isNotEmpty ? cur.id : cur.orderId;
-    if (lookupId.isEmpty || lookupId == 'demo') return;
+    if (lookupId.isEmpty || lookupId == '#ALF-PENDING') return;
+
+    if (cur.items.isEmpty) {
+      isLoading.value = true;
+    }
 
     if (!Get.isRegistered<MyOrdersController>()) {
       Get.put(MyOrdersController());
     }
 
-    final fresh =
-        await Get.find<MyOrdersController>().fetchOrderDetails(lookupId);
-    if (fresh != null && mounted) {
-      orderRx.value = fresh;
+    try {
+      final fresh =
+          await Get.find<MyOrdersController>().fetchOrderDetails(lookupId);
+      if (fresh != null && mounted) {
+        orderRx.value = fresh;
+      }
+    } finally {
+      if (mounted) {
+        isLoading.value = false;
+      }
     }
   }
 
@@ -115,6 +120,14 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
       ),
       body: Obx(() {
         final o = orderRx.value;
+
+        if (isLoading.value && o.items.isEmpty) {
+          return const Center(
+            child: CircularProgressIndicator(
+              color: AppColor.primary,
+            ),
+          );
+        }
 
         return SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
@@ -563,9 +576,13 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
 
   /// 3. Delivery Address Card
   Widget _buildDeliveryAddressCard(OrderModel o) {
-    final addr = o.address ?? 'Customer Delivery Address, Bangladesh';
-    final name = o.recipientName ?? 'Recipient Customer';
-    final phone = o.phone ?? '';
+    final addr = o.address?.trim().isNotEmpty == true
+        ? o.address!
+        : 'Customer Delivery Address';
+    final name = o.recipientName?.trim().isNotEmpty == true
+        ? o.recipientName!
+        : 'Customer';
+    final phone = o.phone?.trim() ?? '';
 
     return Container(
       width: double.infinity,
@@ -679,6 +696,23 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
               ),
             ],
           ),
+          if (o.sellerName != null && o.sellerName!.isNotEmpty) ...[
+            SizedBox(height: 8.h),
+            Row(
+              children: [
+                Icon(Iconsax.shop, size: 15.r, color: AppColor.primaryDark),
+                SizedBox(width: 6.w),
+                Text(
+                  'Seller: ${o.sellerName}',
+                  style: GoogleFonts.inter(
+                    fontSize: 12.5.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColor.primaryDark,
+                  ),
+                ),
+              ],
+            ),
+          ],
           SizedBox(height: 14.h),
           if (items.isEmpty)
             Text(
@@ -737,6 +771,17 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
+                            if (item.variantName.isNotEmpty &&
+                                item.variantName != item.name) ...[
+                              SizedBox(height: 2.h),
+                              Text(
+                                item.variantName,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12.sp,
+                                  color: AppColor.textSecondary,
+                                ),
+                              ),
+                            ],
                             SizedBox(height: 4.h),
                             Row(
                               children: [
@@ -762,7 +807,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                       ),
                       SizedBox(width: 8.w),
                       Text(
-                        '৳${(item.price * item.quantity).toStringAsFixed(2)}',
+                        '৳${(item.lineTotal > 0 ? item.lineTotal : item.price * item.quantity).toStringAsFixed(2)}',
                         style: GoogleFonts.inter(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.bold,
@@ -779,6 +824,36 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                 ],
               );
             }),
+          if (o.openBoxDelivery) ...[
+            SizedBox(height: 12.h),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: BorderRadius.circular(6.r),
+                border: Border.all(color: const Color(0xFFBBF7D0)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Iconsax.box_tick,
+                    size: 14.r,
+                    color: const Color(0xFF16A34A),
+                  ),
+                  SizedBox(width: 6.w),
+                  Text(
+                    'Open Box Delivery Available',
+                    style: GoogleFonts.inter(
+                      fontSize: 11.5.sp,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF16A34A),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -786,8 +861,6 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
 
   /// 5. Payment & Price Summary Card
   Widget _buildPriceSummaryCard(OrderModel o) {
-    final method = o.paymentMethod ?? 'Cash on Delivery';
-
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(18.r),
@@ -824,16 +897,77 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                   color: AppColor.textSecondary,
                 ),
               ),
-              Text(
-                method,
-                style: GoogleFonts.inter(
-                  fontSize: 13.5.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColor.textPrimary,
+              Expanded(
+                child: Text(
+                  o.formattedPaymentMethod,
+                  textAlign: TextAlign.end,
+                  style: GoogleFonts.inter(
+                    fontSize: 13.5.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColor.textPrimary,
+                  ),
                 ),
               ),
             ],
           ),
+          if (o.paymentStatus != null && o.paymentStatus!.isNotEmpty) ...[
+            SizedBox(height: 10.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Payment Status',
+                  style: GoogleFonts.inter(
+                    fontSize: 13.sp,
+                    color: AppColor.textSecondary,
+                  ),
+                ),
+                Container(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 10.w, vertical: 3.h),
+                  decoration: BoxDecoration(
+                    color: o.formattedPaymentStatus
+                            .toLowerCase()
+                            .contains('partially')
+                        ? const Color(0xFFFFFBEB)
+                        : (o.formattedPaymentStatus
+                                .toLowerCase()
+                                .contains('paid')
+                            ? const Color(0xFFDCFCE7)
+                            : const Color(0xFFF1F5F9)),
+                    borderRadius: BorderRadius.circular(6.r),
+                    border: Border.all(
+                      color: o.formattedPaymentStatus
+                              .toLowerCase()
+                              .contains('partially')
+                          ? const Color(0xFFFDE68A)
+                          : (o.formattedPaymentStatus
+                                  .toLowerCase()
+                                  .contains('paid')
+                              ? const Color(0xFFBBF7D0)
+                              : const Color(0xFFE2E8F0)),
+                    ),
+                  ),
+                  child: Text(
+                    o.formattedPaymentStatus,
+                    style: GoogleFonts.inter(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.bold,
+                      color: o.formattedPaymentStatus
+                              .toLowerCase()
+                              .contains('partially')
+                          ? const Color(0xFFB45309)
+                          : (o.formattedPaymentStatus
+                                  .toLowerCase()
+                                  .contains('paid')
+                              ? const Color(0xFF15803D)
+                              : AppColor.textPrimary),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
           SizedBox(height: 10.h),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -901,6 +1035,29 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
               ],
             ),
           ],
+          if (o.walletPaid > 0) ...[
+            SizedBox(height: 10.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Paid from Wallet',
+                  style: GoogleFonts.inter(
+                    fontSize: 13.sp,
+                    color: const Color(0xFF16A34A),
+                  ),
+                ),
+                Text(
+                  '-৳${o.walletPaid.toStringAsFixed(2)}',
+                  style: GoogleFonts.inter(
+                    fontSize: 13.5.sp,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF16A34A),
+                  ),
+                ),
+              ],
+            ),
+          ],
           SizedBox(height: 14.h),
           const Divider(color: Color(0xFFF1F5F9), height: 1),
           SizedBox(height: 14.h),
@@ -908,7 +1065,9 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Total Payable',
+                o.walletPaid > 0 && o.remainingPayable > 0
+                    ? 'Total Amount'
+                    : 'Total Payable',
                 style: GoogleFonts.inter(
                   fontSize: 15.sp,
                   fontWeight: FontWeight.bold,
@@ -925,6 +1084,30 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
               ),
             ],
           ),
+          if (o.walletPaid > 0 && o.remainingPayable > 0) ...[
+            SizedBox(height: 10.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Due on Delivery (COD)',
+                  style: GoogleFonts.inter(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFFB45309),
+                  ),
+                ),
+                Text(
+                  '৳${o.remainingPayable.toStringAsFixed(2)}',
+                  style: GoogleFonts.inter(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFFB45309),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
