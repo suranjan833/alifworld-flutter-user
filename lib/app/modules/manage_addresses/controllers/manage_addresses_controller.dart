@@ -192,7 +192,7 @@ class ManageAddressesController extends GetxController
     final nameCtrl = TextEditingController();
     final phoneCtrl = TextEditingController();
     final streetCtrl = TextEditingController();
-    final postalCodeCtrl = TextEditingController(text: '1205');
+    final postalCodeCtrl = TextEditingController();
     final searchCtrl = TextEditingController();
     final isSaving = false.obs;
     final isSearching = false.obs;
@@ -510,33 +510,38 @@ class ManageAddressesController extends GetxController
                         ),
                       ],
                     ),
-                    child: ListView.separated(
-                      shrinkWrap: true,
-                      itemCount: searchResults.length,
-                      separatorBuilder: (_, _) =>
-                          Divider(height: 1, color: AppColor.border),
-                      itemBuilder: (context, idx) {
-                        final hit = searchResults[idx];
-                        final areaName =
-                            hit['area']?['name'] ?? hit['name'] ?? '';
-                        final zoneName = hit['zone']?['name'] ?? '';
-                        final cityName = hit['city']?['name'] ?? '';
-                        final breadcrumb = [areaName, zoneName, cityName]
-                            .where((s) => s.toString().trim().isNotEmpty)
-                            .join(' › ');
-                        return ListTile(
-                          dense: true,
-                          title: Text(
-                            breadcrumb,
-                            style: GoogleFonts.lato(
-                              fontSize: 13.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColor.textPrimary,
+                    child: Material(
+                      color: AppColor.white,
+                      borderRadius: BorderRadius.circular(12.r),
+                      clipBehavior: Clip.antiAlias,
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: searchResults.length,
+                        separatorBuilder: (_, _) =>
+                            Divider(height: 1, color: AppColor.border),
+                        itemBuilder: (context, idx) {
+                          final hit = searchResults[idx];
+                          final areaName =
+                              hit['area']?['name'] ?? hit['name'] ?? '';
+                          final zoneName = hit['zone']?['name'] ?? '';
+                          final cityName = hit['city']?['name'] ?? '';
+                          final breadcrumb = [areaName, zoneName, cityName]
+                              .where((s) => s.toString().trim().isNotEmpty)
+                              .join(' › ');
+                          return ListTile(
+                            dense: true,
+                            title: Text(
+                              breadcrumb,
+                              style: GoogleFonts.lato(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColor.textPrimary,
+                              ),
                             ),
-                          ),
-                          onTap: () => selectSearchResult(hit),
-                        );
-                      },
+                            onTap: () => selectSearchResult(hit),
+                          );
+                        },
+                      ),
                     ),
                   );
                 }),
@@ -706,7 +711,8 @@ class ManageAddressesController extends GetxController
                   controller: postalCodeCtrl,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: 'Postal Code (e.g. 1205)',
+                    labelText: 'Postal Code *',
+                    hintText: 'Enter postal code',
                     labelStyle: GoogleFonts.lato(fontSize: 13.sp),
                     filled: true,
                     fillColor: const Color(0xFFF8F9FA),
@@ -729,14 +735,12 @@ class ManageAddressesController extends GetxController
                               final name = nameCtrl.text.trim();
                               final rawPhone = phoneCtrl.text.trim();
                               final street = streetCtrl.text.trim();
-                              final postal =
-                                  postalCodeCtrl.text.trim().isNotEmpty
-                                      ? postalCodeCtrl.text.trim()
-                                      : '1000';
+                              final postal = postalCodeCtrl.text.trim();
 
                               if (name.isEmpty ||
                                   rawPhone.isEmpty ||
-                                  street.isEmpty) {
+                                  street.isEmpty ||
+                                  postal.isEmpty) {
                                 Get.snackbar(
                                   'Missing Information',
                                   'Please fill in all required fields',
@@ -747,15 +751,9 @@ class ManageAddressesController extends GetxController
                                 return;
                               }
 
-                              var phone = rawPhone.replaceAll(
-                                  RegExp(r'[\s\-\(\)]'), '');
-                              if (phone.startsWith('+880')) {
+                              var phone = rawPhone.replaceAll(RegExp(r'\D'), '');
+                              if (phone.startsWith('880')) {
                                 phone = phone.substring(3);
-                              } else if (phone.startsWith('880')) {
-                                phone = phone.substring(2);
-                              } else if (phone.length == 10 &&
-                                  phone.startsWith('1')) {
-                                phone = '0$phone';
                               }
 
                               if (phone.length != 11) {
