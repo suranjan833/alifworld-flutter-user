@@ -179,7 +179,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
         'Only ${item.maxStock} items available in stock',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: const Color(0xFFF59E0B),
-        colorText: Colors.white,
+        colorText: AppColor.white,
         duration: const Duration(seconds: 2),
       );
       return;
@@ -222,7 +222,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
             errMsg,
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: AppColor.error,
-            colorText: Colors.white,
+            colorText: AppColor.white,
             duration: const Duration(seconds: 2),
           );
         }
@@ -294,7 +294,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
       '${removed.title} removed from bag',
       snackPosition: SnackPosition.BOTTOM,
       backgroundColor: AppColor.textPrimary,
-      colorText: Colors.white,
+      colorText: AppColor.white,
       duration: const Duration(seconds: 2),
     );
   }
@@ -315,14 +315,14 @@ class BagController extends GetxController with SkeletonLoadingMixin {
         'Please log in to add items to your shopping bag',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColor.error,
-        colorText: Colors.white,
+        colorText: AppColor.white,
         duration: const Duration(seconds: 3),
         mainButton: TextButton(
           onPressed: () => Get.toNamed(Routes.LOGIN),
           child: const Text(
             'LOG IN',
             style: TextStyle(
-              color: Colors.white,
+              color: AppColor.white,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -379,7 +379,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
         'Please select an available variant on product page',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColor.error,
-        colorText: Colors.white,
+        colorText: AppColor.white,
       );
       return;
     }
@@ -408,7 +408,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
           '${item['title'] ?? item['name'] ?? 'Item'} added to your bag',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: const Color(0xFF16A34A),
-          colorText: Colors.white,
+          colorText: AppColor.white,
           duration: const Duration(seconds: 2),
         );
       } else {
@@ -426,7 +426,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
           errMsg,
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: AppColor.error,
-          colorText: Colors.white,
+          colorText: AppColor.white,
         );
       }
     } catch (_) {
@@ -441,7 +441,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
           'Network error while adding to bag',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: AppColor.error,
-          colorText: Colors.white,
+          colorText: AppColor.white,
         );
       }
     } finally {
@@ -469,7 +469,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
             'All items removed from your shopping bag',
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: AppColor.textPrimary,
-            colorText: Colors.white,
+            colorText: AppColor.white,
             duration: const Duration(seconds: 2),
           );
         }
@@ -492,7 +492,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
         'Please add items to your bag before checking out',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColor.error,
-        colorText: Colors.white,
+        colorText: AppColor.white,
       );
       return;
     }
@@ -549,7 +549,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
           '${item.title} only has ${item.maxStock} items available',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: AppColor.error,
-          colorText: Colors.white,
+          colorText: AppColor.white,
           duration: const Duration(seconds: 3),
         );
         return false;

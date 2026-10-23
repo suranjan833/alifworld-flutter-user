@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class AppColor {
   AppColor._();
 
-  // Primary Theme Colors (Royal Blue from logo)
+  // Primary Theme Colors
   static const Color primary = Color(0xFFFF621C);
   static const Color primaryLight = Color(0xFFEBF1FA);
   static const Color primaryDark = Color(0xFF284880);
@@ -40,5 +40,11 @@ class AppColor {
   // Common Colors
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);
+  static const Color black87 = Colors.black87;
   static const Color transparent = Colors.transparent;
+  static const MaterialColor grey = Colors.grey;
+  static const MaterialColor red = Colors.red;
+  static const MaterialColor green = Colors.green;
+  static const MaterialColor teal = Colors.teal;
+  static const MaterialColor blue = Colors.blue;
 }

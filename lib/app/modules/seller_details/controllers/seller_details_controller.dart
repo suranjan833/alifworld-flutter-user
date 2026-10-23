@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../data/config/app_color.dart';
@@ -76,7 +75,7 @@ class SellerDetailsController extends GetxController {
           : 'You unfollowed ${seller['name']}',
       snackPosition: SnackPosition.BOTTOM,
       backgroundColor: AppColor.textPrimary,
-      colorText: Colors.white,
+      colorText: AppColor.white,
       duration: const Duration(seconds: 2),
     );
   }

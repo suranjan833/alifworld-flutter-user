@@ -17,7 +17,7 @@ class MyTransactionsView extends GetView<MyTransactionsController> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColor.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
@@ -177,7 +177,7 @@ class MyTransactionsView extends GetView<MyTransactionsController> {
                 style: GoogleFonts.lato(
                   fontSize: 15.sp,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: AppColor.white,
                 ),
               ),
             ),
@@ -189,7 +189,7 @@ class MyTransactionsView extends GetView<MyTransactionsController> {
 
   Widget _buildFilterChips() {
     return Container(
-      color: Colors.white,
+      color: AppColor.white,
       padding: EdgeInsets.symmetric(vertical: 10.h),
       child: SizedBox(
         height: 36.h,
@@ -232,7 +232,7 @@ class MyTransactionsView extends GetView<MyTransactionsController> {
                         fontWeight:
                             isSelected ? FontWeight.bold : FontWeight.w500,
                         color: isSelected
-                            ? Colors.white
+                            ? AppColor.white
                             : AppColor.textPrimary,
                       ),
                     ),
@@ -296,12 +296,12 @@ class MyTransactionsView extends GetView<MyTransactionsController> {
       margin: EdgeInsets.only(bottom: 10.h),
       padding: EdgeInsets.all(14.r),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColor.white,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: const Color(0xFFF1F5F9)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: AppColor.black.withValues(alpha: 0.02),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

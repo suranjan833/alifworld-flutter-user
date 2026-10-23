@@ -29,7 +29,7 @@ class SplashView extends GetView<SplashController> {
                   colors: [
                     AppColor.primary.withValues(alpha: 0.18),
                     AppColor.primaryLight.withValues(alpha: 0.05),
-                    Colors.transparent,
+                    AppColor.transparent,
                   ],
                 ),
               ),
@@ -47,7 +47,7 @@ class SplashView extends GetView<SplashController> {
                   colors: [
                     AppColor.primary.withValues(alpha: 0.15),
                     AppColor.primaryLight.withValues(alpha: 0.04),
-                    Colors.transparent,
+                    AppColor.transparent,
                   ],
                 ),
               ),

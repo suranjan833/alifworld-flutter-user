@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../data/config/app_color.dart';
@@ -107,7 +106,7 @@ class MyWishlistController extends GetxController with SkeletonLoadingMixin {
       'Item removed from wishlist',
       snackPosition: SnackPosition.BOTTOM,
       backgroundColor: AppColor.textPrimary,
-      colorText: Colors.white,
+      colorText: AppColor.white,
       duration: const Duration(seconds: 2),
     );
   }
@@ -124,7 +123,7 @@ class MyWishlistController extends GetxController with SkeletonLoadingMixin {
       'All items removed from your wishlist',
       snackPosition: SnackPosition.BOTTOM,
       backgroundColor: AppColor.textPrimary,
-      colorText: Colors.white,
+      colorText: AppColor.white,
       duration: const Duration(seconds: 2),
     );
   }
@@ -143,7 +142,7 @@ class MyWishlistController extends GetxController with SkeletonLoadingMixin {
       '${item['title']} moved to bag',
       snackPosition: SnackPosition.BOTTOM,
       backgroundColor: AppColor.primary,
-      colorText: Colors.white,
+      colorText: AppColor.white,
       duration: const Duration(seconds: 2),
     );
   }

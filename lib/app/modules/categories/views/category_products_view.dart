@@ -28,7 +28,7 @@ class CategoryProductsView extends GetView<CategoryProductsController> {
         top: false,
         child: RefreshIndicator(
           color: AppColor.primary,
-          backgroundColor: Colors.white,
+          backgroundColor: AppColor.white,
           onRefresh: controller.refreshProducts,
           child: Obx(
             () => controller.isLoading.value
@@ -141,8 +141,8 @@ class CategoryProductsView extends GetView<CategoryProductsController> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: Colors.white,
-      surfaceTintColor: Colors.white,
+      backgroundColor: AppColor.white,
+      surfaceTintColor: AppColor.white,
       elevation: 0,
       scrolledUnderElevation: 0,
       leading: IconButton(
@@ -255,7 +255,7 @@ class CategoryProductsView extends GetView<CategoryProductsController> {
                             count > 9 ? BoxShape.rectangle : BoxShape.circle,
                         borderRadius:
                             count > 9 ? BorderRadius.circular(10.r) : null,
-                        border: Border.all(color: Colors.white, width: 1.5.r),
+                        border: Border.all(color: AppColor.white, width: 1.5.r),
                       ),
                       constraints: BoxConstraints(
                         minWidth: 16.r,
@@ -267,7 +267,7 @@ class CategoryProductsView extends GetView<CategoryProductsController> {
                           style: GoogleFonts.inter(
                             fontSize: 9.sp,
                             fontWeight: FontWeight.w800,
-                            color: Colors.white,
+                            color: AppColor.white,
                             height: 1.1,
                           ),
                         ),
@@ -310,7 +310,7 @@ class CategoryProductsView extends GetView<CategoryProductsController> {
     return Container(
       width: 84.w,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColor.white,
         border: Border(
           right: BorderSide(color: const Color(0xFFF1F5F9), width: 1.r),
         ),
@@ -337,7 +337,7 @@ class CategoryProductsView extends GetView<CategoryProductsController> {
                 decoration: BoxDecoration(
                   color: isSelected
                       ? const Color(0xFFFFF7E6)
-                      : Colors.transparent,
+                      : AppColor.transparent,
                   borderRadius: BorderRadius.circular(14.r),
                 ),
                 child: Column(
@@ -349,7 +349,7 @@ class CategoryProductsView extends GetView<CategoryProductsController> {
                       height: 38.r,
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? Colors.white
+                            ? AppColor.white
                             : const Color(0xFFF6F7F9),
                         shape: BoxShape.circle,
                         boxShadow: isSelected
@@ -433,12 +433,12 @@ class CategoryProductsView extends GetView<CategoryProductsController> {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColor.white,
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(color: const Color(0xFFE9ECF1), width: 1.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
+              color: AppColor.black.withValues(alpha: 0.03),
               blurRadius: 6.r,
               offset: Offset(0, 2.h),
             ),
@@ -552,12 +552,12 @@ class CategoryProductsView extends GetView<CategoryProductsController> {
       child: Container(
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColor.white,
           borderRadius: BorderRadius.circular(16.r),
           border: Border.all(color: const Color(0xFFF1F3F7), width: 1.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: AppColor.black.withValues(alpha: 0.04),
               blurRadius: 10.r,
               offset: Offset(0, 4.h),
             ),
@@ -634,11 +634,11 @@ class CategoryProductsView extends GetView<CategoryProductsController> {
                             decoration: BoxDecoration(
                               color: isWishlisted
                                   ? const Color(0xFFFFF7E6)
-                                  : Colors.white,
+                                  : AppColor.white,
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.06),
+                                  color: AppColor.black.withValues(alpha: 0.06),
                                   blurRadius: 5.r,
                                 ),
                               ],
@@ -680,7 +680,7 @@ class CategoryProductsView extends GetView<CategoryProductsController> {
                           child: Icon(
                             Icons.add_rounded,
                             size: 20.r,
-                            color: Colors.white,
+                            color: AppColor.white,
                           ),
                         ),
                       ),

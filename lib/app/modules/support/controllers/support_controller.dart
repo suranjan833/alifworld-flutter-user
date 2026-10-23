@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../data/config/app_color.dart';
@@ -35,7 +34,7 @@ class SupportController extends GetxController with SkeletonLoadingMixin {
       'Connecting to support agent...',
       snackPosition: SnackPosition.BOTTOM,
       backgroundColor: AppColor.primary,
-      colorText: Colors.black,
+      colorText: AppColor.black,
     );
   }
 }

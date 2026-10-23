@@ -136,7 +136,7 @@ class MainNavigationView extends GetView<MainNavigationController> {
                     color: const Color(0xFFFF5A00),
                     shape: count > 9 ? BoxShape.rectangle : BoxShape.circle,
                     borderRadius: count > 9 ? BorderRadius.circular(10.r) : null,
-                    border: Border.all(color: Colors.white, width: 1.5.r),
+                    border: Border.all(color: AppColor.white, width: 1.5.r),
                     boxShadow: [
                       BoxShadow(
                         color: const Color(0xFFFF5A00).withValues(alpha: 0.35),
@@ -155,7 +155,7 @@ class MainNavigationView extends GetView<MainNavigationController> {
                       style: GoogleFonts.inter(
                         fontSize: 9.5.sp,
                         fontWeight: FontWeight.w800,
-                        color: Colors.white,
+                        color: AppColor.white,
                         height: 1.1,
                       ),
                     ),
@@ -170,8 +170,8 @@ class MainNavigationView extends GetView<MainNavigationController> {
       return Expanded(
         child: InkWell(
           onTap: () => controller.changeTab(index),
-          splashColor: Colors.transparent,
-          highlightColor: Colors.transparent,
+          splashColor: AppColor.transparent,
+          highlightColor: AppColor.transparent,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

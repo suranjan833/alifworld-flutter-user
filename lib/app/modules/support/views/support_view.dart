@@ -15,7 +15,7 @@ class SupportView extends GetView<SupportController> {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F5F7),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColor.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
@@ -45,7 +45,7 @@ class SupportView extends GetView<SupportController> {
             Container(
               padding: EdgeInsets.all(16.r),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColor.white,
                 borderRadius: BorderRadius.circular(16.r),
               ),
               child: Row(
@@ -119,7 +119,7 @@ class SupportView extends GetView<SupportController> {
                   return Container(
                     margin: EdgeInsets.only(bottom: 10.h),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColor.white,
                       borderRadius: BorderRadius.circular(12.r),
                     ),
                     child: ExpansionTile(

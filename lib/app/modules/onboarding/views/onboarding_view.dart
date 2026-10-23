@@ -142,7 +142,7 @@ class OnboardingView extends GetView<OnboardingController> {
                         onPressed: controller.onNextPressed,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColor.primary,
-                          foregroundColor: Colors.white,
+                          foregroundColor: AppColor.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14.r),
@@ -153,7 +153,7 @@ class OnboardingView extends GetView<OnboardingController> {
                           style: GoogleFonts.lato(
                             fontSize: 16.sp,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: AppColor.white,
                           ),
                         ),
                       ),

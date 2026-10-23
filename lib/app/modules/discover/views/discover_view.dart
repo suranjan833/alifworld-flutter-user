@@ -177,7 +177,7 @@ class DiscoverView extends GetView<DiscoverController> {
               shape: BoxShape.circle,
               color: accent,
               border: Border.all(
-                color: isSelected ? AppColor.primary : Colors.transparent,
+                color: isSelected ? AppColor.primary : AppColor.transparent,
                 width: 2.r,
               ),
             ),
@@ -186,7 +186,7 @@ class DiscoverView extends GetView<DiscoverController> {
                 category['image'] as String,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) => Container(
-                  color: Colors.grey.shade300,
+                  color: AppColor.grey.shade300,
                   child: Icon(
                     Iconsax.image,
                     size: 18.r,
@@ -245,10 +245,10 @@ class DiscoverView extends GetView<DiscoverController> {
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16.r),
-              color: Colors.black,
+              color: AppColor.black,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: AppColor.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -263,12 +263,12 @@ class DiscoverView extends GetView<DiscoverController> {
                 height: double.infinity,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) => Container(
-                  color: Colors.grey.shade900,
+                  color: AppColor.grey.shade900,
                   child: Center(
                     child: Icon(
                       Iconsax.image,
                       size: 32.r,
-                      color: Colors.grey.shade500,
+                      color: AppColor.grey.shade500,
                     ),
                   ),
                 ),
@@ -286,8 +286,8 @@ class DiscoverView extends GetView<DiscoverController> {
                       begin: Alignment.bottomCenter,
                       end: Alignment.topCenter,
                       colors: [
-                        Colors.black.withValues(alpha: 0.8),
-                        Colors.transparent,
+                        AppColor.black.withValues(alpha: 0.8),
+                        AppColor.transparent,
                       ],
                     ),
                   ),
@@ -304,7 +304,7 @@ class DiscoverView extends GetView<DiscoverController> {
                       style: GoogleFonts.montserrat(
                         fontSize: 18.sp,
                         fontWeight: FontWeight.w900,
-                        color: Colors.white,
+                        color: AppColor.white,
                         letterSpacing: 0.8,
                         height: 1.2,
                       ),
@@ -323,7 +323,7 @@ class DiscoverView extends GetView<DiscoverController> {
                   style: GoogleFonts.lato(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: AppColor.white,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -349,7 +349,7 @@ class DiscoverView extends GetView<DiscoverController> {
                     backgroundImage: NetworkImage(
                       post['sellerAvatar'] as String,
                     ),
-                    backgroundColor: Colors.grey.shade200,
+                    backgroundColor: AppColor.grey.shade200,
                   ),
                   SizedBox(width: 6.w),
                   Expanded(
@@ -376,7 +376,7 @@ class DiscoverView extends GetView<DiscoverController> {
                   Icon(
                     isLiked ? Iconsax.heart5 : Iconsax.heart,
                     size: 14.r,
-                    color: isLiked ? Colors.red : AppColor.textPrimary,
+                    color: isLiked ? AppColor.red : AppColor.textPrimary,
                   ),
                   SizedBox(width: 4.w),
                   Text(

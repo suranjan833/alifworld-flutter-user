@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../data/config/app_color.dart';
@@ -44,7 +43,7 @@ class ShoppingListController extends GetxController
         'Item added to shopping list',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColor.textPrimary,
-        colorText: Colors.white,
+        colorText: AppColor.white,
       );
     }
   }

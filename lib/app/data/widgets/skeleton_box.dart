@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../config/app_color.dart';
 
 /// A lightweight, dependency-free shimmer skeleton box.
 ///
@@ -83,9 +84,9 @@ class _SkeletonShimmerState extends State<SkeletonShimmer>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Colors.white.withValues(alpha: 0),
-                Colors.white.withValues(alpha: 0.55),
-                Colors.white.withValues(alpha: 0),
+                AppColor.white.withValues(alpha: 0),
+                AppColor.white.withValues(alpha: 0.55),
+                AppColor.white.withValues(alpha: 0),
               ],
               stops: const [0.35, 0.5, 0.65],
             ).createShader(rect);
@@ -128,7 +129,7 @@ class _SkeletonTile extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColor.white,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: const Color(0xFFF1F3F7), width: 1.r),
       ),
@@ -200,7 +201,7 @@ class _SkeletonCard extends StatelessWidget {
       width: width,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColor.white,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(color: const Color(0xFFF1F3F7), width: 1.r),
       ),
@@ -400,7 +401,7 @@ class _SkeletonCartItem extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColor.white,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: const Color(0xFFF1F3F7), width: 1.r),
       ),
@@ -489,7 +490,7 @@ class SkeletonHome extends StatelessWidget {
             margin: EdgeInsets.symmetric(horizontal: 16.w),
             padding: EdgeInsets.all(14.w),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColor.white,
               borderRadius: BorderRadius.circular(22.r),
               border: Border.all(color: const Color(0xFFECEFF3)),
             ),
@@ -537,7 +538,7 @@ class SkeletonHome extends StatelessWidget {
             margin: EdgeInsets.symmetric(horizontal: 16.w),
             padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 12.w),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColor.white,
               borderRadius: BorderRadius.circular(20.r),
               border: Border.all(color: const Color(0xFFECEFF3)),
             ),
@@ -711,7 +712,7 @@ class CategoryProductsSkeleton extends StatelessWidget {
           Container(
             width: 84.w,
             decoration: const BoxDecoration(
-              color: Colors.white,
+              color: AppColor.white,
               border: Border(
                 right: BorderSide(color: Color(0xFFF1F5F9), width: 1),
               ),

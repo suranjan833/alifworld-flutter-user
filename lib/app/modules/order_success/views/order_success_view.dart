@@ -63,11 +63,11 @@ class OrderSuccessView extends GetView<OrderSuccessController> {
                 width: double.infinity,
                 padding: EdgeInsets.all(20.r),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColor.white,
                   borderRadius: BorderRadius.circular(20.r),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.02),
+                      color: AppColor.black.withValues(alpha: 0.02),
                       blurRadius: 10,
                       offset: const Offset(0, 2),
                     ),
@@ -179,7 +179,7 @@ class OrderSuccessView extends GetView<OrderSuccessController> {
                     style: GoogleFonts.lato(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppColor.white,
                     ),
                   ),
                 ),

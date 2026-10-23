@@ -14,7 +14,7 @@ class SellerDetailsView extends GetView<SellerDetailsController> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColor.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
@@ -45,7 +45,7 @@ class SellerDetailsView extends GetView<SellerDetailsController> {
 
               return Container(
                 width: double.infinity,
-                color: Colors.white,
+                color: AppColor.white,
                 padding: EdgeInsets.all(20.r),
                 child: Column(
                   children: [
@@ -117,7 +117,7 @@ class SellerDetailsView extends GetView<SellerDetailsController> {
                               fontWeight: FontWeight.bold,
                               color: controller.isFollowing.value
                                   ? AppColor.textSecondary
-                                  : Colors.white,
+                                  : AppColor.white,
                             ),
                           ),
                         ),
@@ -160,7 +160,7 @@ class SellerDetailsView extends GetView<SellerDetailsController> {
 
               return Container(
                 width: double.infinity,
-                color: Colors.white,
+                color: AppColor.white,
                 padding: EdgeInsets.all(20.r),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -191,7 +191,7 @@ class SellerDetailsView extends GetView<SellerDetailsController> {
             // 3. Products Grid
             Container(
               width: double.infinity,
-              color: Colors.white,
+              color: AppColor.white,
               padding: EdgeInsets.all(20.r),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,10 +264,10 @@ class SellerDetailsView extends GetView<SellerDetailsController> {
                                                   (context, error, stackTrace) =>
                                                       Icon(Icons.image,
                                                           size: 32.r,
-                                                          color: Colors.grey),
+                                                          color: AppColor.grey),
                                             )
                                           : Icon(Icons.image,
-                                              size: 32.r, color: Colors.grey),
+                                              size: 32.r, color: AppColor.grey),
                                     ),
                                   ),
                                   Padding(

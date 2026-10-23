@@ -18,7 +18,7 @@ class WalletView extends GetView<WalletController> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColor.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
@@ -198,7 +198,7 @@ class WalletView extends GetView<WalletController> {
                 style: GoogleFonts.lato(
                   fontSize: 15.sp,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: AppColor.white,
                 ),
               ),
             ),
@@ -223,7 +223,7 @@ class WalletView extends GetView<WalletController> {
           borderRadius: BorderRadius.circular(20.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
+              color: AppColor.black.withValues(alpha: 0.12),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),
@@ -240,7 +240,7 @@ class WalletView extends GetView<WalletController> {
                     Container(
                       padding: EdgeInsets.all(8.r),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.1),
+                        color: AppColor.white.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10.r),
                       ),
                       child: Icon(
@@ -268,7 +268,7 @@ class WalletView extends GetView<WalletController> {
                       vertical: 4.h,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.12),
+                      color: AppColor.white.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(20.r),
                     ),
                     child: Row(
@@ -278,7 +278,7 @@ class WalletView extends GetView<WalletController> {
                           'History',
                           style: GoogleFonts.lato(
                             fontSize: 12.sp,
-                            color: Colors.white,
+                            color: AppColor.white,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -286,7 +286,7 @@ class WalletView extends GetView<WalletController> {
                         Icon(
                           Icons.chevron_right_rounded,
                           size: 16.r,
-                          color: Colors.white,
+                          color: AppColor.white,
                         ),
                       ],
                     ),
@@ -301,7 +301,7 @@ class WalletView extends GetView<WalletController> {
                 style: GoogleFonts.lato(
                   fontSize: 32.sp,
                   fontWeight: FontWeight.w800,
-                  color: Colors.white,
+                  color: AppColor.white,
                   letterSpacing: -0.5,
                 ),
               ),
@@ -310,7 +310,7 @@ class WalletView extends GetView<WalletController> {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.08),
+                color: AppColor.white.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(10.r),
               ),
               child: Row(
@@ -342,18 +342,18 @@ class WalletView extends GetView<WalletController> {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () => _showDepositSheet(context),
-                    icon: Icon(Iconsax.add_circle, size: 16.r, color: Colors.white),
+                    icon: Icon(Iconsax.add_circle, size: 16.r, color: AppColor.white),
                     label: Text(
                       'Deposit',
                       style: GoogleFonts.lato(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: AppColor.white,
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColor.primary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColor.white,
                       elevation: 0,
                       padding: EdgeInsets.symmetric(vertical: 10.h),
                       shape: RoundedRectangleBorder(
@@ -366,18 +366,18 @@ class WalletView extends GetView<WalletController> {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () => _showWithdrawSheet(context),
-                    icon: Icon(Iconsax.export_1, size: 16.r, color: Colors.white),
+                    icon: Icon(Iconsax.export_1, size: 16.r, color: AppColor.white),
                     label: Text(
                       'Withdraw',
                       style: GoogleFonts.lato(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: AppColor.white,
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                      foregroundColor: AppColor.white,
+                      side: BorderSide(color: AppColor.white.withValues(alpha: 0.3)),
                       padding: EdgeInsets.symmetric(vertical: 10.h),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.r),
@@ -426,7 +426,7 @@ class WalletView extends GetView<WalletController> {
                       : null,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
+                      color: AppColor.black.withValues(alpha: 0.08),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
@@ -442,12 +442,12 @@ class WalletView extends GetView<WalletController> {
                         Container(
                           padding: EdgeInsets.all(6.r),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
+                            color: AppColor.white.withValues(alpha: 0.15),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             w.icon,
-                            color: Colors.white,
+                            color: AppColor.white,
                             size: 16.r,
                           ),
                         ),
@@ -466,7 +466,7 @@ class WalletView extends GetView<WalletController> {
                               style: GoogleFonts.lato(
                                 fontSize: 9.sp,
                                 fontWeight: FontWeight.w800,
-                                color: Colors.white,
+                                color: AppColor.white,
                               ),
                             ),
                           ),
@@ -482,7 +482,7 @@ class WalletView extends GetView<WalletController> {
                           style: GoogleFonts.lato(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white.withValues(alpha: 0.85),
+                            color: AppColor.white.withValues(alpha: 0.85),
                           ),
                         ),
                         SizedBox(height: 2.h),
@@ -491,7 +491,7 @@ class WalletView extends GetView<WalletController> {
                           style: GoogleFonts.lato(
                             fontSize: 16.sp,
                             fontWeight: FontWeight.w800,
-                            color: Colors.white,
+                            color: AppColor.white,
                           ),
                         ),
                       ],
@@ -646,12 +646,12 @@ class WalletView extends GetView<WalletController> {
       margin: EdgeInsets.only(bottom: 10.h),
       padding: EdgeInsets.all(14.r),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColor.white,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: const Color(0xFFF1F5F9)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: AppColor.black.withValues(alpha: 0.02),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -754,7 +754,7 @@ class WalletView extends GetView<WalletController> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColor.transparent,
       builder: (ctx) => Container(
         padding: EdgeInsets.only(
           left: 20.w,
@@ -763,7 +763,7 @@ class WalletView extends GetView<WalletController> {
           bottom: MediaQuery.of(ctx).viewInsets.bottom + 20.h,
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColor.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
         ),
         child: Column(
@@ -775,7 +775,7 @@ class WalletView extends GetView<WalletController> {
                 width: 40.w,
                 height: 4.h,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: AppColor.grey.shade300,
                   borderRadius: BorderRadius.circular(10.r),
                 ),
               ),
@@ -831,11 +831,11 @@ class WalletView extends GetView<WalletController> {
                 fillColor: const Color(0xFFF8FAFC),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14.r),
-                  borderSide: BorderSide(color: Colors.grey.shade200),
+                  borderSide: BorderSide(color: AppColor.grey.shade200),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14.r),
-                  borderSide: BorderSide(color: Colors.grey.shade200),
+                  borderSide: BorderSide(color: AppColor.grey.shade200),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14.r),
@@ -884,14 +884,14 @@ class WalletView extends GetView<WalletController> {
                       ? SizedBox(
                           width: 20.r,
                           height: 20.r,
-                          child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          child: const CircularProgressIndicator(color: AppColor.white, strokeWidth: 2),
                         )
                       : Text(
                           'Confirm Deposit',
                           style: GoogleFonts.lato(
                             fontSize: 15.sp,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: AppColor.white,
                           ),
                         ),
                 ),
@@ -911,7 +911,7 @@ class WalletView extends GetView<WalletController> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColor.transparent,
       builder: (ctx) => Container(
         padding: EdgeInsets.only(
           left: 20.w,
@@ -920,7 +920,7 @@ class WalletView extends GetView<WalletController> {
           bottom: MediaQuery.of(ctx).viewInsets.bottom + 20.h,
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColor.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
         ),
         child: Column(
@@ -932,7 +932,7 @@ class WalletView extends GetView<WalletController> {
                 width: 40.w,
                 height: 4.h,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: AppColor.grey.shade300,
                   borderRadius: BorderRadius.circular(10.r),
                 ),
               ),
@@ -1000,11 +1000,11 @@ class WalletView extends GetView<WalletController> {
                 fillColor: const Color(0xFFF8FAFC),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14.r),
-                  borderSide: BorderSide(color: Colors.grey.shade200),
+                  borderSide: BorderSide(color: AppColor.grey.shade200),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14.r),
-                  borderSide: BorderSide(color: Colors.grey.shade200),
+                  borderSide: BorderSide(color: AppColor.grey.shade200),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14.r),
@@ -1053,14 +1053,14 @@ class WalletView extends GetView<WalletController> {
                       ? SizedBox(
                           width: 20.r,
                           height: 20.r,
-                          child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          child: const CircularProgressIndicator(color: AppColor.white, strokeWidth: 2),
                         )
                       : Text(
                           'Confirm Withdrawal',
                           style: GoogleFonts.lato(
                             fontSize: 15.sp,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: AppColor.white,
                           ),
                         ),
                 ),
@@ -1077,11 +1077,11 @@ class WalletView extends GetView<WalletController> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColor.transparent,
       builder: (ctx) => Container(
         padding: EdgeInsets.all(20.r),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColor.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
         ),
         child: Column(
@@ -1093,7 +1093,7 @@ class WalletView extends GetView<WalletController> {
                 width: 40.w,
                 height: 4.h,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: AppColor.grey.shade300,
                   borderRadius: BorderRadius.circular(10.r),
                 ),
               ),
@@ -1111,7 +1111,7 @@ class WalletView extends GetView<WalletController> {
                     ),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(wallet.icon, color: Colors.white, size: 24.r),
+                  child: Icon(wallet.icon, color: AppColor.white, size: 24.r),
                 ),
                 SizedBox(width: 14.w),
                 Expanded(
@@ -1146,7 +1146,7 @@ class WalletView extends GetView<WalletController> {
               decoration: BoxDecoration(
                 color: const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(14.r),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: AppColor.grey.shade200),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1195,13 +1195,13 @@ class WalletView extends GetView<WalletController> {
                         Navigator.of(ctx).pop();
                         _showDepositSheet(context);
                       },
-                      icon: Icon(Iconsax.add_circle, size: 16.r, color: Colors.white),
+                      icon: Icon(Iconsax.add_circle, size: 16.r, color: AppColor.white),
                       label: Text(
                         'Deposit',
                         style: GoogleFonts.lato(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: AppColor.white,
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
@@ -1229,7 +1229,7 @@ class WalletView extends GetView<WalletController> {
                       ),
                       style: OutlinedButton.styleFrom(
                         padding: EdgeInsets.symmetric(vertical: 12.h),
-                        side: BorderSide(color: Colors.grey.shade300),
+                        side: BorderSide(color: AppColor.grey.shade300),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                       ),
                     ),
@@ -1366,7 +1366,7 @@ class WalletView extends GetView<WalletController> {
                 color: Color(0xFF3B82F6),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Iconsax.discount_shape, color: Colors.white, size: 20.r),
+              child: Icon(Iconsax.discount_shape, color: AppColor.white, size: 20.r),
             ),
             SizedBox(width: 14.w),
             Expanded(
@@ -1397,7 +1397,7 @@ class WalletView extends GetView<WalletController> {
               onPressed: () => _showDepositSheet(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF2563EB),
-                foregroundColor: Colors.white,
+                foregroundColor: AppColor.white,
                 elevation: 0,
                 padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
@@ -1454,9 +1454,9 @@ class WalletView extends GetView<WalletController> {
               margin: EdgeInsets.only(bottom: 10.h),
               padding: EdgeInsets.all(14.r),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColor.white,
                 borderRadius: BorderRadius.circular(14.r),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: AppColor.grey.shade200),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,

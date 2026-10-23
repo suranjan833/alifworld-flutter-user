@@ -5,6 +5,7 @@ import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/models/wallet_model.dart';
 import '../../../routes/app_pages.dart';
+import '../../../data/config/app_color.dart';
 
 class WalletController extends GetxController {
   final isLoading = false.obs;
@@ -195,7 +196,7 @@ class WalletController extends GetxController {
   /// POST /api/v1/advanced-shopping/deposit
   Future<bool> depositAdvanceShopping(double amount) async {
     if (amount <= 0) {
-      showSnack('Invalid Amount', 'Please enter a valid deposit amount', bg: Colors.red);
+      showSnack('Invalid Amount', 'Please enter a valid deposit amount', bg: AppColor.red);
       return false;
     }
 
@@ -216,7 +217,7 @@ class WalletController extends GetxController {
         showSnack(
           'Deposit Successful',
           '${currencySymbol.value}${amount.toStringAsFixed(2)} added to Advance Shopping wallet',
-          bg: Colors.green,
+          bg: AppColor.green,
         );
         await refreshAll();
         return true;
@@ -227,12 +228,12 @@ class WalletController extends GetxController {
         } else if (res.data is Map && res.data['error'] is Map && res.data['error']['message'] != null) {
           msg = res.data['error']['message'].toString();
         }
-        showSnack('Deposit Failed', msg, bg: Colors.red);
+        showSnack('Deposit Failed', msg, bg: AppColor.red);
         return false;
       }
     } catch (e) {
       isSubmittingAction.value = false;
-      showSnack('Deposit Error', 'Something went wrong. Please try again.', bg: Colors.red);
+      showSnack('Deposit Error', 'Something went wrong. Please try again.', bg: AppColor.red);
       return false;
     }
   }
@@ -240,7 +241,7 @@ class WalletController extends GetxController {
   /// POST /api/v1/advanced-shopping/withdraw
   Future<bool> withdrawAdvanceShopping(double amount) async {
     if (amount <= 0) {
-      showSnack('Invalid Amount', 'Please enter a valid withdrawal amount', bg: Colors.red);
+      showSnack('Invalid Amount', 'Please enter a valid withdrawal amount', bg: AppColor.red);
       return false;
     }
 
@@ -249,7 +250,7 @@ class WalletController extends GetxController {
       showSnack(
         'Insufficient Balance',
         'Available Advance Shopping balance is ${currencySymbol.value}${advWallet.balance.toStringAsFixed(2)}',
-        bg: Colors.red,
+        bg: AppColor.red,
       );
       return false;
     }
@@ -269,7 +270,7 @@ class WalletController extends GetxController {
         showSnack(
           'Withdrawal Successful',
           '${currencySymbol.value}${amount.toStringAsFixed(2)} withdrawn from Advance Shopping wallet',
-          bg: Colors.green,
+          bg: AppColor.green,
         );
         await refreshAll();
         return true;
@@ -280,12 +281,12 @@ class WalletController extends GetxController {
         } else if (res.data is Map && res.data['error'] is Map && res.data['error']['message'] != null) {
           msg = res.data['error']['message'].toString();
         }
-        showSnack('Withdrawal Failed', msg, bg: Colors.red);
+        showSnack('Withdrawal Failed', msg, bg: AppColor.red);
         return false;
       }
     } catch (e) {
       isSubmittingAction.value = false;
-      showSnack('Withdrawal Error', 'Something went wrong. Please try again.', bg: Colors.red);
+      showSnack('Withdrawal Error', 'Something went wrong. Please try again.', bg: AppColor.red);
       return false;
     }
   }

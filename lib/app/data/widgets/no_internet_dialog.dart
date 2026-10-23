@@ -36,7 +36,7 @@ void showNoInternetDialog({
 
   Get.dialog(
     Dialog(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColor.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24.r),
       ),
@@ -120,7 +120,7 @@ void showNoInternetDialog({
                               'No active internet detected. Please check Wi-Fi / Mobile Data.',
                               snackPosition: SnackPosition.BOTTOM,
                               backgroundColor: AppColor.error,
-                              colorText: Colors.white,
+                              colorText: AppColor.white,
                               duration: const Duration(seconds: 2),
                             );
                           }
@@ -138,7 +138,7 @@ void showNoInternetDialog({
                           height: 20.r,
                           child: const CircularProgressIndicator(
                             strokeWidth: 2.2,
-                            color: Colors.white,
+                            color: AppColor.white,
                           ),
                         )
                       : Text(
@@ -146,7 +146,7 @@ void showNoInternetDialog({
                           style: GoogleFonts.inter(
                             fontSize: 14.5.sp,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: AppColor.white,
                           ),
                         ),
                 ),
@@ -241,13 +241,13 @@ class NoInternetWidget extends StatelessWidget {
                 onPressed: () async {
                   await onRetry!();
                 },
-                icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 18),
+                icon: const Icon(Icons.refresh_rounded, color: AppColor.white, size: 18),
                 label: Text(
                   'Retry',
                   style: GoogleFonts.inter(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: AppColor.white,
                   ),
                 ),
                 style: ElevatedButton.styleFrom(

@@ -31,7 +31,7 @@ class HomeView extends GetView<HomeController> {
             : SafeArea(
                 child: RefreshIndicator(
                   color: AppColor.primary,
-                  backgroundColor: Colors.white,
+                  backgroundColor: AppColor.white,
                   onRefresh: controller.refreshData,
                   child: CustomScrollView(
                     physics: const AlwaysScrollableScrollPhysics(
@@ -164,10 +164,10 @@ class HomeView extends GetView<HomeController> {
                                                   Container(
                                                     width: 100.w,
                                                     height: 80.h,
-                                                    color: Colors.grey.shade700,
+                                                    color: AppColor.grey.shade700,
                                                     child: const Icon(
                                                       Iconsax.shopping_bag,
-                                                      color: Colors.white,
+                                                      color: AppColor.white,
                                                     ),
                                                   ),
                                         ),
@@ -208,7 +208,7 @@ class HomeView extends GetView<HomeController> {
                                                           fontSize: 10.sp,
                                                           fontWeight:
                                                               FontWeight.w900,
-                                                          color: Colors.white,
+                                                          color: AppColor.white,
                                                         ),
                                                       ),
                                                       SizedBox(width: 2.w),
@@ -216,7 +216,7 @@ class HomeView extends GetView<HomeController> {
                                                         Icons
                                                             .north_east_rounded,
                                                         size: 12.r,
-                                                        color: Colors.white,
+                                                        color: AppColor.white,
                                                       ),
                                                     ],
                                                   ),
@@ -240,7 +240,7 @@ class HomeView extends GetView<HomeController> {
                                                 vertical: 3.h,
                                               ),
                                               decoration: BoxDecoration(
-                                                color: Colors.white.withValues(
+                                                color: AppColor.white.withValues(
                                                   alpha: 0.15,
                                                 ),
                                                 borderRadius:
@@ -250,7 +250,7 @@ class HomeView extends GetView<HomeController> {
                                                 'Offer auto-applies at checkout',
                                                 style: GoogleFonts.lato(
                                                   fontSize: 9.sp,
-                                                  color: Colors.white
+                                                  color: AppColor.white
                                                       .withValues(alpha: 0.9),
                                                 ),
                                               ),
@@ -448,7 +448,7 @@ class HomeView extends GetView<HomeController> {
       margin: EdgeInsets.symmetric(horizontal: 16.w),
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColor.white,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(color: const Color(0xFFECEEF2)),
       ),
@@ -515,7 +515,7 @@ class HomeView extends GetView<HomeController> {
               style: GoogleFonts.lato(
                 fontSize: 12.5.sp,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: AppColor.white,
               ),
             ),
           ),
@@ -555,11 +555,11 @@ class HomeView extends GetView<HomeController> {
                       margin: EdgeInsets.only(right: 14.w),
                       padding: EdgeInsets.all(10.w),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColor.white,
                         borderRadius: BorderRadius.circular(16.r),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
+                            color: AppColor.black.withValues(alpha: 0.04),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -620,11 +620,11 @@ class HomeView extends GetView<HomeController> {
         width: 160.w,
         margin: EdgeInsets.only(right: 14.w),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColor.white,
           borderRadius: BorderRadius.circular(16.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: AppColor.black.withValues(alpha: 0.04),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -645,11 +645,11 @@ class HomeView extends GetView<HomeController> {
                       child: Container(
                         padding: EdgeInsets.all(6.w),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColor.white,
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.06),
+                              color: AppColor.black.withValues(alpha: 0.06),
                               blurRadius: 6,
                             ),
                           ],
@@ -657,7 +657,7 @@ class HomeView extends GetView<HomeController> {
                         child: Icon(
                           isFav ? Iconsax.heart5 : Iconsax.heart,
                           size: 16.r,
-                          color: isFav ? Colors.red : AppColor.textSecondary,
+                          color: isFav ? AppColor.red : AppColor.textSecondary,
                         ),
                       ),
                     ),
@@ -684,7 +684,7 @@ class HomeView extends GetView<HomeController> {
                       },
                       errorBuilder: (context, error, stackTrace) => Container(
                         height: 90.h,
-                        color: Colors.grey.shade100,
+                        color: AppColor.grey.shade100,
                         child: Icon(
                           Iconsax.image,
                           size: 32.r,
@@ -776,7 +776,7 @@ class HomeView extends GetView<HomeController> {
                     '${product['title'] ?? product['name'] ?? "Item"} added to shopping bag',
                     snackPosition: SnackPosition.BOTTOM,
                     backgroundColor: AppColor.primary,
-                    colorText: Colors.white,
+                    colorText: AppColor.white,
                     duration: const Duration(seconds: 2),
                   );
                 },
@@ -797,7 +797,7 @@ class HomeView extends GetView<HomeController> {
                   ),
                   child: Icon(
                     Icons.add_rounded,
-                    color: Colors.white,
+                    color: AppColor.white,
                     size: 20.r,
                   ),
                 ),
@@ -814,11 +814,11 @@ class HomeView extends GetView<HomeController> {
       margin: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
       padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 12.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColor.white,
         borderRadius: BorderRadius.circular(22.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: AppColor.black.withValues(alpha: 0.05),
             blurRadius: 14,
             offset: const Offset(0, 4),
           ),
@@ -907,7 +907,7 @@ class HomeView extends GetView<HomeController> {
                                     ? BorderRadius.circular(10.r)
                                     : null,
                                 border: Border.all(
-                                  color: Colors.white,
+                                  color: AppColor.white,
                                   width: 1.2.r,
                                 ),
                               ),
@@ -921,7 +921,7 @@ class HomeView extends GetView<HomeController> {
                                   style: GoogleFonts.inter(
                                     fontSize: 8.5.sp,
                                     fontWeight: FontWeight.w800,
-                                    color: Colors.white,
+                                    color: AppColor.white,
                                     height: 1.1,
                                   ),
                                 ),
@@ -969,7 +969,7 @@ class HomeView extends GetView<HomeController> {
           Container(
             height: 44.h,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColor.white,
               borderRadius: BorderRadius.circular(22.r),
               border: Border.all(color: const Color(0xFFE2E8F0)),
             ),
@@ -1005,7 +1005,7 @@ class HomeView extends GetView<HomeController> {
                   child: const Center(
                     child: Icon(
                       Icons.search_rounded,
-                      color: Colors.white,
+                      color: AppColor.white,
                       size: 22,
                     ),
                   ),
@@ -1097,12 +1097,12 @@ class HomeView extends GetView<HomeController> {
       margin: EdgeInsets.symmetric(horizontal: 16.w),
       padding: EdgeInsets.symmetric(vertical: 10.h),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.95),
+        color: AppColor.white.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(20.r),
         border: Border.all(color: const Color(0xFFECEEF2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppColor.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -1231,7 +1231,7 @@ class HomeView extends GetView<HomeController> {
     final isSelected = controller.selectedCategoryIndex.value == index;
 
     // Dynamic tap color from API (defaults to black if null / nothing coming)
-    final tapColor = controller.showcase.value?.navTapColor ?? Colors.black;
+    final tapColor = controller.showcase.value?.navTapColor ?? AppColor.black;
     final idleColor =
         controller.showcase.value?.navIdleColor ?? const Color(0xFF6B7280);
 
@@ -1249,7 +1249,7 @@ class HomeView extends GetView<HomeController> {
               decoration: BoxDecoration(
                 color: isSelected
                     ? tapColor.withValues(alpha: 0.08)
-                    : Colors.transparent,
+                    : AppColor.transparent,
                 shape: BoxShape.circle,
               ),
               child: Center(
@@ -1282,7 +1282,7 @@ class HomeView extends GetView<HomeController> {
               height: 2.5.h,
               width: 22.w,
               decoration: BoxDecoration(
-                color: isSelected ? tapColor : Colors.transparent,
+                color: isSelected ? tapColor : AppColor.transparent,
                 borderRadius: BorderRadius.circular(2.r),
               ),
             ),
@@ -1303,7 +1303,7 @@ class HomeView extends GetView<HomeController> {
         border: Border.all(color: const Color(0xFFE5E7EB), width: 1.w),
       ),
       child: Material(
-        color: Colors.transparent,
+        color: AppColor.transparent,
         borderRadius: BorderRadius.circular(16.r),
         child: InkWell(
           borderRadius: BorderRadius.circular(16.r),
@@ -1345,7 +1345,7 @@ class HomeView extends GetView<HomeController> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColor.transparent,
       builder: (context) {
         return Container(
           padding: EdgeInsets.only(
@@ -1355,7 +1355,7 @@ class HomeView extends GetView<HomeController> {
             bottom: MediaQuery.of(context).viewInsets.bottom + 24.h,
           ),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColor.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
           ),
           child: Column(
@@ -1369,7 +1369,7 @@ class HomeView extends GetView<HomeController> {
                   height: 4.h,
                   margin: EdgeInsets.only(bottom: 16.h),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: AppColor.grey.shade300,
                     borderRadius: BorderRadius.circular(2.r),
                   ),
                 ),
@@ -1441,12 +1441,12 @@ class HomeView extends GetView<HomeController> {
                                   height: 18.r,
                                   child: const CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: Colors.white,
+                                    color: AppColor.white,
                                   ),
                                 )
                               : Icon(
                                   Iconsax.gps,
-                                  color: Colors.white,
+                                  color: AppColor.white,
                                   size: 18.r,
                                 ),
                         ),
@@ -1490,7 +1490,7 @@ class HomeView extends GetView<HomeController> {
               // Divider with OR
               Row(
                 children: [
-                  Expanded(child: Divider(color: Colors.grey.shade300)),
+                  Expanded(child: Divider(color: AppColor.grey.shade300)),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 12.w),
                     child: Text(
@@ -1502,7 +1502,7 @@ class HomeView extends GetView<HomeController> {
                       ),
                     ),
                   ),
-                  Expanded(child: Divider(color: Colors.grey.shade300)),
+                  Expanded(child: Divider(color: AppColor.grey.shade300)),
                 ],
               ),
 
@@ -1579,7 +1579,7 @@ class HomeView extends GetView<HomeController> {
                           style: GoogleFonts.lato(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                            color: AppColor.white,
                           ),
                         ),
                       ),

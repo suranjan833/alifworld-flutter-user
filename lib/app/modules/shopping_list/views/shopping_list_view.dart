@@ -18,7 +18,7 @@ class ShoppingListView extends GetView<ShoppingListController> {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F5F7),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColor.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
@@ -49,7 +49,7 @@ class ShoppingListView extends GetView<ShoppingListController> {
         children: [
           // Input row
           Container(
-            color: Colors.white,
+            color: AppColor.white,
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
             child: Row(
               children: [
@@ -107,13 +107,13 @@ class ShoppingListView extends GetView<ShoppingListController> {
                   return Padding(
                     padding: EdgeInsets.only(bottom: 10.h),
                     child: Material(
-                      color: Colors.white,
+                      color: AppColor.white,
                       borderRadius: BorderRadius.circular(12.r),
                       child: ListTile(
                         leading: Checkbox(
                           value: item.isCompleted,
                           activeColor: AppColor.primary,
-                          checkColor: Colors.black,
+                          checkColor: AppColor.black,
                           onChanged: (val) => controller.toggleItem(index),
                         ),
                         title: Text(

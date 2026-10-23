@@ -24,7 +24,7 @@ class CategoriesView extends GetView<CategoriesController> {
       body: SafeArea(
         child: RefreshIndicator(
           color: AppColor.primary,
-          backgroundColor: Colors.white,
+          backgroundColor: AppColor.white,
           onRefresh: controller.refreshCategories,
           child: Obx(
             () => controller.isLoading.value
@@ -141,10 +141,10 @@ class CategoriesView extends GetView<CategoriesController> {
         decoration: BoxDecoration(
           color: accent,
           borderRadius: BorderRadius.circular(20.r),
-          border: Border.all(color: Colors.white, width: 1.r),
+          border: Border.all(color: AppColor.white, width: 1.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: AppColor.black.withValues(alpha: 0.05),
               blurRadius: 14.r,
               offset: Offset(0, 6.h),
             ),
@@ -162,7 +162,7 @@ class CategoriesView extends GetView<CategoriesController> {
                 height: 96.r,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.45),
+                  color: AppColor.white.withValues(alpha: 0.45),
                 ),
                 padding: EdgeInsets.all(6.r),
                 child: ClipOval(
@@ -170,7 +170,7 @@ class CategoriesView extends GetView<CategoriesController> {
                     imageUrl,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => Container(
-                      color: Colors.grey.shade300,
+                      color: AppColor.grey.shade300,
                       child: Icon(
                         Iconsax.image,
                         size: 22.r,
@@ -208,7 +208,7 @@ class CategoriesView extends GetView<CategoriesController> {
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.85),
+                  color: AppColor.white.withValues(alpha: 0.85),
                   borderRadius: BorderRadius.circular(20.r),
                 ),
                 child: Text(
@@ -236,7 +236,7 @@ class CategoriesView extends GetView<CategoriesController> {
                 child: Icon(
                   Icons.arrow_outward_rounded,
                   size: 13.r,
-                  color: Colors.white,
+                  color: AppColor.white,
                 ),
               ),
             ),

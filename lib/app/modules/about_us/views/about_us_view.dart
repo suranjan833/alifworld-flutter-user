@@ -14,7 +14,7 @@ class AboutUsView extends GetView<AboutUsController> {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F5F7),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColor.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
@@ -45,11 +45,11 @@ class AboutUsView extends GetView<AboutUsController> {
               width: double.infinity,
               padding: EdgeInsets.all(24.r),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColor.white,
                 borderRadius: BorderRadius.circular(20.r),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.02),
+                    color: AppColor.black.withValues(alpha: 0.02),
                     blurRadius: 10,
                     offset: const Offset(0, 2),
                   ),
@@ -70,7 +70,7 @@ class AboutUsView extends GetView<AboutUsController> {
                         style: GoogleFonts.lato(
                           fontSize: 38.sp,
                           fontWeight: FontWeight.w900,
-                          color: Colors.black,
+                          color: AppColor.black,
                         ),
                       ),
                     ),
@@ -129,7 +129,7 @@ class AboutUsView extends GetView<AboutUsController> {
                   margin: EdgeInsets.only(bottom: 10.h),
                   padding: EdgeInsets.all(16.r),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColor.white,
                     borderRadius: BorderRadius.circular(16.r),
                   ),
                   child: Row(

@@ -61,7 +61,7 @@ class CountryPickerDialog extends GetView<CountryPickerController> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColor.transparent,
       builder: (_) =>
           CountryPickerDialog(selectedCountry: current, onSelect: onSelect),
     );
@@ -189,7 +189,7 @@ class CountryPickerDialog extends GetView<CountryPickerController> {
                     final isSelected = selectedCountry.code == country.code;
 
                     return Material(
-                      color: Colors.transparent,
+                      color: AppColor.transparent,
                       child: ListTile(
                         dense: true,
                         contentPadding: EdgeInsets.symmetric(horizontal: 8.w),

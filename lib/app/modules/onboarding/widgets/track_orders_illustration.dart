@@ -36,7 +36,7 @@ class _TrackOrdersPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final whiteFill = Paint()
-      ..color = Colors.white
+      ..color = AppColor.white
       ..style = PaintingStyle.fill;
 
     final yellowFill = Paint()
@@ -112,7 +112,7 @@ class _TrackOrdersPainter extends CustomPainter {
       Offset(cx + 8, cy + 86),
       6.0,
       Paint()
-        ..color = Colors.white
+        ..color = AppColor.white
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.2,
     );
@@ -238,7 +238,7 @@ class _TrackOrdersPainter extends CustomPainter {
     textPainter.text = TextSpan(
       text: '₹',
       style: TextStyle(
-        color: Colors.white,
+        color: AppColor.white,
         fontSize: 16.sp,
         fontWeight: FontWeight.w900,
       ),

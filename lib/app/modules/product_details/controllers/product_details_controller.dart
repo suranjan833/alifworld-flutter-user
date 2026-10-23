@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../data/config/app_color.dart';
@@ -224,8 +223,8 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
         'Maximum Stock Reached',
         'Only $maxStock units available',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.black87,
-        colorText: Colors.white,
+        backgroundColor: AppColor.black87,
+        colorText: AppColor.white,
       );
     }
   }
@@ -251,7 +250,7 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
           : 'Item removed from wishlist',
       snackPosition: SnackPosition.BOTTOM,
       backgroundColor: AppColor.textPrimary,
-      colorText: Colors.white,
+      colorText: AppColor.white,
       duration: const Duration(seconds: 2),
     );
 

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../data/config/app_color.dart';
@@ -357,7 +356,7 @@ class CategoryProductsController extends GetxController {
       '${product.title ?? "Item"} added to bag',
       snackPosition: SnackPosition.BOTTOM,
       backgroundColor: AppColor.primary,
-      colorText: Colors.white,
+      colorText: AppColor.white,
       duration: const Duration(seconds: 2),
     );
   }

@@ -17,7 +17,7 @@ class MyWishlistView extends GetView<MyWishlistController> {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F5F7),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColor.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
@@ -92,11 +92,11 @@ class MyWishlistView extends GetView<MyWishlistController> {
               onTap: () => Get.toNamed(Routes.PRODUCT_DETAILS, arguments: item),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColor.white,
                   borderRadius: BorderRadius.circular(16.r),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.02),
+                      color: AppColor.black.withValues(alpha: 0.02),
                       blurRadius: 10,
                       offset: const Offset(0, 2),
                     ),
@@ -190,7 +190,7 @@ class MyWishlistView extends GetView<MyWishlistController> {
                                 style: GoogleFonts.lato(
                                   fontSize: 12.sp,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  color: AppColor.white,
                                 ),
                               ),
                             ),

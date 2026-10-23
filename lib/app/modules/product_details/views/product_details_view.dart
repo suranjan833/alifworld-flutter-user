@@ -17,7 +17,7 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColor.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
@@ -90,7 +90,7 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                               count > 9 ? BoxShape.rectangle : BoxShape.circle,
                           borderRadius:
                               count > 9 ? BorderRadius.circular(10.r) : null,
-                          border: Border.all(color: Colors.white, width: 1.5.r),
+                          border: Border.all(color: AppColor.white, width: 1.5.r),
                         ),
                         constraints: BoxConstraints(
                           minWidth: 16.r,
@@ -102,7 +102,7 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                             style: GoogleFonts.inter(
                               fontSize: 9.sp,
                               fontWeight: FontWeight.w800,
-                              color: Colors.white,
+                              color: AppColor.white,
                               height: 1.1,
                             ),
                           ),
@@ -172,7 +172,7 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                     ),
                     child: const Text(
                       'Back to Catalog',
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: AppColor.white),
                     ),
                   ),
                 ],
@@ -236,7 +236,7 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
 
       return Container(
         width: double.infinity,
-        color: Colors.white,
+        color: AppColor.white,
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
         child: Column(
           children: [
@@ -377,7 +377,7 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
 
       return Container(
         width: double.infinity,
-        color: Colors.white,
+        color: AppColor.white,
         padding: EdgeInsets.all(20.r),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -507,7 +507,7 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
 
       return Container(
         width: double.infinity,
-        color: Colors.white,
+        color: AppColor.white,
         margin: EdgeInsets.only(bottom: 10.h),
         padding: EdgeInsets.all(20.r),
         child: Column(
@@ -564,7 +564,7 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
   Widget _buildQuantityCard() {
     return Container(
       width: double.infinity,
-      color: Colors.white,
+      color: AppColor.white,
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -625,7 +625,7 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
 
       return Container(
         width: double.infinity,
-        color: Colors.white,
+        color: AppColor.white,
         padding: EdgeInsets.all(20.r),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -690,7 +690,7 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
   Widget _buildDescriptionCard() {
     return Container(
       width: double.infinity,
-      color: Colors.white,
+      color: AppColor.white,
       padding: EdgeInsets.all(20.r),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -732,7 +732,7 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
 
       return Container(
         width: double.infinity,
-        color: Colors.white,
+        color: AppColor.white,
         padding: EdgeInsets.all(20.r),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -838,7 +838,7 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColor.white,
         border: Border(
           top: BorderSide(color: const Color(0xFFE2E8F0), width: 1.w),
         ),
@@ -891,7 +891,7 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                   style: GoogleFonts.lato(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: AppColor.white,
                   ),
                 ),
               ),

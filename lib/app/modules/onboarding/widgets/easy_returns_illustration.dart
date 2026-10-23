@@ -34,7 +34,7 @@ class _EasyReturnsPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final whiteFill = Paint()
-      ..color = Colors.white
+      ..color = AppColor.white
       ..style = PaintingStyle.fill;
 
     final yellowBoxFill = Paint()
@@ -175,7 +175,7 @@ class _EasyReturnsPainter extends CustomPainter {
     logoPath.cubicTo(cx + 10, cy + 18, cx + 16, cy + 16, cx + 22, cy + 22);
     logoPath.cubicTo(cx + 26, cy + 26, cx + 30, cy + 18, cx + 34, cy + 22);
     final logoPaint = Paint()
-      ..color = Colors.white
+      ..color = AppColor.white
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3.2
       ..strokeCap = StrokeCap.round;
@@ -196,7 +196,7 @@ class _EasyReturnsPainter extends CustomPainter {
     canvas.drawPath(
       checkPath,
       Paint()
-        ..color = Colors.white
+        ..color = AppColor.white
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.6
         ..strokeCap = StrokeCap.round

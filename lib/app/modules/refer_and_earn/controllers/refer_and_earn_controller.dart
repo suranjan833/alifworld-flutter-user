@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
@@ -24,7 +23,7 @@ class ReferAndEarnController extends GetxController
       'Referral code copied to clipboard',
       snackPosition: SnackPosition.BOTTOM,
       backgroundColor: AppColor.textPrimary,
-      colorText: Colors.white,
+      colorText: AppColor.white,
       duration: const Duration(seconds: 2),
     );
   }

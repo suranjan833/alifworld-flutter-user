@@ -30,7 +30,7 @@ class TopBrandsView extends GetView<TopBrandsController> {
             Expanded(
               child: RefreshIndicator(
                 color: AppColor.primary,
-                backgroundColor: Colors.white,
+                backgroundColor: AppColor.white,
                 onRefresh: controller.fetchBrands,
                 child: Obx(() {
                   if (controller.isLoading.value) {
@@ -54,8 +54,8 @@ class TopBrandsView extends GetView<TopBrandsController> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: Colors.white,
-      surfaceTintColor: Colors.white,
+      backgroundColor: AppColor.white,
+      surfaceTintColor: AppColor.white,
       elevation: 0,
       scrolledUnderElevation: 0,
       leading: IconButton(
@@ -102,7 +102,7 @@ class TopBrandsView extends GetView<TopBrandsController> {
 
   Widget _buildSearchBar() {
     return Container(
-      color: Colors.white,
+      color: AppColor.white,
       padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 14.h),
       child: Container(
         height: 48.h,
@@ -171,19 +171,19 @@ class TopBrandsView extends GetView<TopBrandsController> {
   Widget _buildBrandCard(BrandModel brand) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColor.white,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(color: const Color(0xFFE5E7EB), width: 1.w),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppColor.black.withValues(alpha: 0.04),
             blurRadius: 10.r,
             offset: Offset(0, 4.h),
           ),
         ],
       ),
       child: Material(
-        color: Colors.transparent,
+        color: AppColor.transparent,
         borderRadius: BorderRadius.circular(16.r),
         child: InkWell(
           borderRadius: BorderRadius.circular(16.r),
@@ -269,7 +269,7 @@ class TopBrandsView extends GetView<TopBrandsController> {
           return Container(
             padding: EdgeInsets.all(10.w),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColor.white,
               borderRadius: BorderRadius.circular(16.r),
               border: Border.all(color: const Color(0xFFE5E7EB), width: 1.w),
             ),
@@ -340,7 +340,7 @@ class TopBrandsView extends GetView<TopBrandsController> {
               onPressed: controller.clearSearch,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColor.primary,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColor.white,
                 padding: EdgeInsets.symmetric(
                   horizontal: 20.w,
                   vertical: 10.h,

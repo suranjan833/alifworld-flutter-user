@@ -15,7 +15,7 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F5F7),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColor.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
@@ -45,7 +45,7 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
               width: double.infinity,
               padding: EdgeInsets.all(24.r),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColor.white,
                 borderRadius: BorderRadius.circular(20.r),
               ),
               child: Column(
@@ -122,7 +122,7 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColor.primary,
-                            foregroundColor: Colors.white,
+                            foregroundColor: AppColor.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10.r),

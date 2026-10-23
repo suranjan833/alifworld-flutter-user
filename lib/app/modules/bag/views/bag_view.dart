@@ -24,7 +24,7 @@ class BagView extends GetView<BagController> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColor.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         title: Column(
@@ -150,14 +150,14 @@ class BagView extends GetView<BagController> {
                           icon: Icon(
                             Iconsax.shop,
                             size: 18.r,
-                            color: Colors.white,
+                            color: AppColor.white,
                           ),
                           label: Text(
                             'Explore Products',
                             style: GoogleFonts.lato(
                               fontSize: 14.5.sp,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: AppColor.white,
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
@@ -208,7 +208,7 @@ class BagView extends GetView<BagController> {
                         width: double.infinity,
                         padding: EdgeInsets.all(16.r),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColor.white,
                           borderRadius: BorderRadius.circular(16.r),
                           border: Border.all(
                             color: const Color(0xFFE2E8F0),
@@ -268,10 +268,10 @@ class BagView extends GetView<BagController> {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColor.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: AppColor.black.withValues(alpha: 0.05),
                     offset: const Offset(0, -3),
                     blurRadius: 10,
                   ),
@@ -315,13 +315,13 @@ class BagView extends GetView<BagController> {
                           style: GoogleFonts.lato(
                             fontSize: 15.sp,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: AppColor.white,
                           ),
                         ),
                         label: const Icon(
                           Iconsax.arrow_right_3,
                           size: 18,
-                          color: Colors.white,
+                          color: AppColor.white,
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColor.primary,
@@ -393,19 +393,19 @@ class BagView extends GetView<BagController> {
           color: AppColor.error.withValues(alpha: 0.9),
           borderRadius: BorderRadius.circular(16.r),
         ),
-        child: const Icon(Iconsax.trash, color: Colors.white),
+        child: const Icon(Iconsax.trash, color: AppColor.white),
       ),
       onDismissed: (_) => controller.removeItem(index),
       child: Container(
         margin: EdgeInsets.only(bottom: 12.h),
         padding: EdgeInsets.all(12.r),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColor.white,
           borderRadius: BorderRadius.circular(16.r),
           border: Border.all(color: const Color(0xFFE2E8F0)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
+              color: AppColor.black.withValues(alpha: 0.02),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -656,7 +656,7 @@ class BagView extends GetView<BagController> {
               'Clear',
               style: GoogleFonts.lato(
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: AppColor.white,
               ),
             ),
           ),

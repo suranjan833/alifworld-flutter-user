@@ -14,7 +14,7 @@ class PrivacyPolicyView extends GetView<PrivacyPolicyController> {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F5F7),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColor.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
@@ -59,7 +59,7 @@ class PrivacyPolicyView extends GetView<PrivacyPolicyController> {
                 margin: EdgeInsets.only(bottom: 12.h),
                 padding: EdgeInsets.all(16.r),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColor.white,
                   borderRadius: BorderRadius.circular(16.r),
                 ),
                 child: Column(

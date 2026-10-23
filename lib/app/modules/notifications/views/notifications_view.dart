@@ -16,7 +16,7 @@ class NotificationsView extends GetView<NotificationsController> {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F5F7),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColor.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
@@ -70,11 +70,11 @@ class NotificationsView extends GetView<NotificationsController> {
               margin: EdgeInsets.only(bottom: 12.h),
               padding: EdgeInsets.all(16.r),
               decoration: BoxDecoration(
-                color: isRead ? Colors.white : const Color(0xFFFFFBEB),
+                color: isRead ? AppColor.white : const Color(0xFFFFFBEB),
                 borderRadius: BorderRadius.circular(16.r),
                 border: Border.all(
                   color: isRead
-                      ? Colors.transparent
+                      ? AppColor.transparent
                       : AppColor.primary.withValues(alpha: 0.3),
                 ),
               ),
