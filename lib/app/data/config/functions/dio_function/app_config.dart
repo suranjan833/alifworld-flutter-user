@@ -76,16 +76,20 @@ void SHOW_SNACKBAR({int? duration, String? message, bool? isSuccess}) {
 }
 
 void showSnack(String title, String msg, {Color bg = AppColor.black}) {
-  Get.showSnackbar(
-    GetSnackBar(
-      title: title,
-      message: msg,
-      duration: const Duration(seconds: 2),
-      backgroundColor: bg,
-      snackPosition: SnackPosition.TOP,
-      margin: const EdgeInsets.all(12),
-      borderRadius: 8,
-    ),
+  try {
+    if (Get.isSnackbarOpen) {
+      Get.closeCurrentSnackbar();
+    }
+  } catch (_) {}
+  Get.snackbar(
+    title,
+    msg,
+    snackPosition: SnackPosition.TOP,
+    backgroundColor: bg,
+    colorText: AppColor.white,
+    margin: const EdgeInsets.all(12),
+    borderRadius: 8,
+    duration: const Duration(seconds: 3),
   );
 }
 

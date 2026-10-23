@@ -220,16 +220,23 @@ class MyOrdersView extends GetView<MyOrdersController> {
 
   Widget _buildOrderCard(OrderModel order) {
     final items = order.items;
-    final status = order.status;
+    final displayStatus = order.displayStatus;
+    final s = (order.backendStatus.isNotEmpty ? order.backendStatus : order.status).toLowerCase().trim();
 
     Color statusColor;
     Color statusBg;
-    if (status == 'Delivered') {
+    if (s == 'delivered' || s == 'completed') {
       statusColor = const Color(0xFF16A34A);
       statusBg = const Color(0xFFDCFCE7);
-    } else if (status == 'In Progress') {
+    } else if (s == 'out_for_delivery' || s.contains('out for delivery')) {
+      statusColor = const Color(0xFFEA580C);
+      statusBg = const Color(0xFFFFEDD5);
+    } else if (s == 'handed_over' || s == 'packed' || s == 'shipped' || s == 'in progress') {
       statusColor = const Color(0xFFD97706);
       statusBg = const Color(0xFFFEF3C7);
+    } else if (s == 'confirmed' || s == 'pending' || s == 'placed') {
+      statusColor = const Color(0xFF2563EB);
+      statusBg = const Color(0xFFDBEAFE);
     } else {
       statusColor = AppColor.error;
       statusBg = const Color(0xFFFEE2E2);
@@ -280,20 +287,44 @@ class MyOrdersView extends GetView<MyOrdersController> {
                   ),
                 ],
               ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
-                decoration: BoxDecoration(
-                  color: statusBg,
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Text(
-                  status,
-                  style: GoogleFonts.lato(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.bold,
-                    color: statusColor,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                    decoration: BoxDecoration(
+                      color: statusBg,
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Text(
+                      displayStatus,
+                      style: GoogleFonts.lato(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.bold,
+                        color: statusColor,
+                      ),
+                    ),
                   ),
-                ),
+                  if (order.openBoxDelivery && order.deliveryOtp != null && order.deliveryOtp!.isNotEmpty) ...[
+                    SizedBox(height: 4.h),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF7ED),
+                        borderRadius: BorderRadius.circular(6.r),
+                        border: Border.all(color: const Color(0xFFFDBA74), width: 0.8),
+                      ),
+                      child: Text(
+                        'OTP: ${order.deliveryOtp}',
+                        style: GoogleFonts.inter(
+                          fontSize: 10.5.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColor.primaryDark,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ],
           ),

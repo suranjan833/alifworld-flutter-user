@@ -264,16 +264,65 @@ class OrderModel {
     }
   }
 
+  String get displayStatus {
+    final s = (backendStatus.isNotEmpty ? backendStatus : status).toLowerCase().trim();
+    switch (s) {
+      case 'confirmed':
+        return 'Order Confirmed';
+      case 'packed':
+        return 'Shipped';
+      case 'handed_over':
+        return 'Handed Over';
+      case 'out_for_delivery':
+        return 'Out for Delivery';
+      case 'delivered':
+      case 'completed':
+        return 'Delivered';
+      case 'cancelled':
+      case 'rejected':
+        return 'Cancelled';
+      case 'pending':
+      case 'placed':
+        return 'Order Placed';
+      default:
+        return status;
+    }
+  }
+
+  String get statusDescription {
+    final s = (backendStatus.isNotEmpty ? backendStatus : status).toLowerCase().trim();
+    switch (s) {
+      case 'confirmed':
+        return 'We have confirmed your order';
+      case 'packed':
+        return 'Package is packed and ready for delivery';
+      case 'handed_over':
+        return 'Handed over to the nearest delivery zone';
+      case 'out_for_delivery':
+        return 'Delivery partner is on the way to your address';
+      case 'delivered':
+      case 'completed':
+        return 'Package has been delivered to you';
+      case 'cancelled':
+      case 'rejected':
+        return 'Order has been cancelled';
+      case 'pending':
+      case 'placed':
+      default:
+        return 'We have received your order';
+    }
+  }
+
   /// Active timeline stage index (0: Placed, 1: Shipped, 2: Nearest Zone, 3: Out for Delivery, 4: Delivered)
   int get trackingStage {
-    final s = (backendStatus.isNotEmpty ? backendStatus : status).toLowerCase();
+    final s = (backendStatus.isNotEmpty ? backendStatus : status).toLowerCase().trim();
     if (s == 'delivered' || s == 'completed') return 4;
     if (s.contains('out for delivery') || s == 'out_for_delivery') return 3;
-    if (s.contains('zone') || s.contains('hub') || s.contains('nearest')) return 2;
-    if (s.contains('shipped') || s.contains('transit') || s.contains('dispatched')) {
+    if (s.contains('zone') || s.contains('hub') || s.contains('nearest') || s == 'handed_over') return 2;
+    if (s.contains('shipped') || s.contains('transit') || s.contains('dispatched') || s == 'packed') {
       return 1;
     }
-    if (s.contains('pending') || s.contains('placed') || s.contains('received')) {
+    if (s.contains('confirmed') || s.contains('pending') || s.contains('placed') || s.contains('received')) {
       return 0;
     }
     return 0;
@@ -398,14 +447,21 @@ class OrderModel {
 
     String? formattedAddress;
     if (addrObj != null) {
-      final line = addrObj['addressLine']?.toString() ?? addrObj['street']?.toString() ?? '';
-      final area = addrObj['area']?.toString() ?? addrObj['upazila']?.toString() ?? '';
-      final zone = addrObj['zone']?.toString() ?? '';
-      final city = addrObj['city']?.toString() ?? addrObj['district']?.toString() ?? '';
+      String cleanVal(dynamic v) {
+        if (v == null) return '';
+        var str = v.toString().trim();
+        while (str.startsWith('"') && str.endsWith('"') && str.length >= 2) {
+          str = str.substring(1, str.length - 1).trim();
+        }
+        return str.replaceAll('"', '').trim();
+      }
 
-
-      final division = addrObj['division']?.toString() ?? '';
-      final postal = addrObj['postalCode']?.toString() ?? '';
+      final line = cleanVal(addrObj['addressLine'] ?? addrObj['street']);
+      final area = cleanVal(addrObj['area'] ?? addrObj['upazila']);
+      final zone = cleanVal(addrObj['zone']);
+      final city = cleanVal(addrObj['city'] ?? addrObj['district']);
+      final division = cleanVal(addrObj['division']);
+      final postal = cleanVal(addrObj['postalCode']);
       final parts = [line, area, zone, city, division, postal]
           .where((p) => p.trim().isNotEmpty)
           .toList();
@@ -457,8 +513,8 @@ class OrderModel {
           json['customerName']?.toString(),
       phone: addrObj?['phone']?.toString() ?? json['phone']?.toString(),
       sellerName: sName,
-      openBoxDelivery: json['openBoxDelivery'] == true,
-      deliveryOtp: json['deliveryOtp']?.toString(),
+      openBoxDelivery: json['openBoxDelivery'] == true || json['open_box_delivery'] == true,
+      deliveryOtp: json['deliveryOtp']?.toString() ?? json['delivery_otp']?.toString(),
       timeline: parsedTimeline,
     );
   }

@@ -145,6 +145,9 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                 _buildOrderHeaderCard(o),
                 SizedBox(height: 14.h),
 
+                // Open Box Delivery & OTP Card (when enabled)
+                _buildOpenBoxOtpCard(o),
+
                 // 2. Premium Tracking Timeline Card
                 _buildTimelineCard(o),
                 SizedBox(height: 14.h),
@@ -176,14 +179,24 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
   Widget _buildOrderHeaderCard(OrderModel o) {
     Color statusBg;
     Color statusColor;
-    String statusLabel = o.status;
+    final statusLabel = o.displayStatus;
 
-    if (o.status == 'Delivered') {
+    final s = (o.backendStatus.isNotEmpty ? o.backendStatus : o.status).toLowerCase().trim();
+    if (s.contains('deliver') || s == 'completed') {
       statusBg = const Color(0xFFDCFCE7);
       statusColor = const Color(0xFF16A34A);
-    } else if (o.status == 'Cancelled') {
+    } else if (s.contains('cancel') || s == 'rejected') {
       statusBg = const Color(0xFFFEE2E2);
       statusColor = AppColor.error;
+    } else if (s == 'out_for_delivery') {
+      statusBg = const Color(0xFFFFEDD5);
+      statusColor = const Color(0xFFEA580C);
+    } else if (s == 'handed_over') {
+      statusBg = const Color(0xFFE0E7FF);
+      statusColor = const Color(0xFF4338CA);
+    } else if (s == 'packed') {
+      statusBg = const Color(0xFFEDE9FE);
+      statusColor = const Color(0xFF7C3AED);
     } else {
       statusBg = const Color(0xFFFEF3C7);
       statusColor = const Color(0xFFD97706);
@@ -288,6 +301,222 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
               ),
             ],
           ),
+          SizedBox(height: 10.h),
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 9.h),
+            decoration: BoxDecoration(
+              color: statusBg.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  s == 'out_for_delivery'
+                      ? Iconsax.routing
+                      : (s == 'handed_over'
+                          ? Iconsax.location
+                          : (s == 'packed'
+                              ? Iconsax.truck_fast
+                              : (s == 'confirmed'
+                                  ? Iconsax.tick_circle
+                                  : (s == 'delivered'
+                                      ? Iconsax.box_tick
+                                      : Iconsax.info_circle)))),
+                  size: 16.r,
+                  color: statusColor,
+                ),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Text(
+                    o.statusDescription,
+                    style: GoogleFonts.inter(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w600,
+                      color: statusColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Open Box Delivery OTP Card
+  Widget _buildOpenBoxOtpCard(OrderModel o) {
+    if (!o.openBoxDelivery) return const SizedBox.shrink();
+
+    final otp = o.deliveryOtp ?? '';
+
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.only(bottom: 14.h),
+      padding: EdgeInsets.all(16.r),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7ED),
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(
+          color: AppColor.primary.withValues(alpha: 0.4),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColor.primary.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8.r),
+                decoration: BoxDecoration(
+                  color: AppColor.primary.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Iconsax.security_safe,
+                  size: 20.r,
+                  color: AppColor.primaryDark,
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'OPEN BOX DELIVERY',
+                      style: GoogleFonts.inter(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.8,
+                        color: AppColor.primaryDark,
+                      ),
+                    ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      'Delivery Verification OTP',
+                      style: GoogleFonts.inter(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.bold,
+                        color: AppColor.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDCFCE7),
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Text(
+                  'Enabled',
+                  style: GoogleFonts.inter(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF16A34A),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 14.h),
+          if (otp.isNotEmpty) ...[
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+              decoration: BoxDecoration(
+                color: AppColor.white,
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: const Color(0xFFFED7AA)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Share this OTP with rider:',
+                        style: GoogleFonts.inter(
+                          fontSize: 11.sp,
+                          color: AppColor.textSecondary,
+                        ),
+                      ),
+                      SizedBox(height: 4.h),
+                      Text(
+                        otp.split('').join('  '),
+                        style: GoogleFonts.sourceCodePro(
+                          fontSize: 24.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColor.primaryDark,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                    ],
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: otp));
+                      Get.snackbar(
+                        'OTP Copied',
+                        'Delivery OTP copied to clipboard',
+                        snackPosition: SnackPosition.BOTTOM,
+                        backgroundColor: AppColor.textPrimary,
+                        colorText: AppColor.white,
+                        duration: const Duration(seconds: 2),
+                      );
+                    },
+                    icon: Icon(Iconsax.copy, size: 14.r, color: AppColor.primaryDark),
+                    label: Text(
+                      'Copy',
+                      style: GoogleFonts.inter(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.bold,
+                        color: AppColor.primaryDark,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFFEDD5),
+                      elevation: 0,
+                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 10.h),
+          ],
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.info_outline_rounded, size: 14.r, color: AppColor.textSecondary),
+              SizedBox(width: 6.w),
+              Expanded(
+                child: Text(
+                  'Open and verify all items in presence of the delivery partner before sharing this OTP to complete delivery.',
+                  style: GoogleFonts.inter(
+                    fontSize: 11.5.sp,
+                    color: AppColor.textSecondary,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -298,10 +527,13 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
     final currentStage = o.trackingStage; // 0..4
     final isCancelled = o.status == 'Cancelled';
 
+    final s = (o.backendStatus.isNotEmpty ? o.backendStatus : o.status).toLowerCase().trim();
     final timelineSteps = [
       _TimelineItemData(
-        title: 'Order Placed',
-        subtitle: 'We have received and verified your order',
+        title: s == 'confirmed' ? 'Order Confirmed' : 'Order Placed',
+        subtitle: s == 'confirmed'
+            ? 'We have confirmed your order'
+            : 'We have received and verified your order',
         icon: Iconsax.document_text,
         isCompleted: !isCancelled && currentStage >= 0,
         isActive: !isCancelled && currentStage == 0,
@@ -309,7 +541,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
       ),
       _TimelineItemData(
         title: 'Shipped',
-        subtitle: 'Package dispatched from fulfillment warehouse',
+        subtitle: 'Package is packed and dispatched',
         icon: Iconsax.truck_fast,
         isCompleted: !isCancelled && currentStage >= 1,
         isActive: !isCancelled && currentStage == 1,
@@ -317,7 +549,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
       ),
       _TimelineItemData(
         title: 'Handed Over to Nearest Delivery Zone',
-        subtitle: 'Package arrived at your regional distribution hub',
+        subtitle: 'Handed over to the nearest delivery zone',
         icon: Iconsax.location,
         isCompleted: !isCancelled && currentStage >= 2,
         isActive: !isCancelled && currentStage == 2,

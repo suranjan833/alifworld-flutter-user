@@ -263,7 +263,7 @@ class LoginView extends GetView<LoginController> {
                             keyboardType: TextInputType.phone,
                             inputFormatters: [
                               FilteringTextInputFormatter.digitsOnly,
-                              LengthLimitingTextInputFormatter(11),
+                              LengthLimitingTextInputFormatter(15),
                             ],
                             onChanged: (_) => controller.validatePhone(),
                             validator: controller.validatePhoneInput,

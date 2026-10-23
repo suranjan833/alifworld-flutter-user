@@ -86,8 +86,8 @@ class LoginController extends GetxController {
       return 'Please enter your phone number';
     }
     final cleanDigits = value.replaceAll(RegExp(r'\D'), '');
-    if (cleanDigits.length != 11) {
-      return 'Phone number must be exactly 11 digits';
+    if (cleanDigits.length < 10 || cleanDigits.length > 15) {
+      return 'Please enter a valid phone number (at least 10 digits)';
     }
     return null;
   }
@@ -98,7 +98,11 @@ class LoginController extends GetxController {
 
   String get serverPhoneNumber {
     String clean = phoneController.text.trim().replaceAll(RegExp(r'\D'), '');
-    if (clean.startsWith('0')) {
+    final dialDigits = selectedCountry.value.dialCode.replaceAll(RegExp(r'\D'), '');
+    if (clean.startsWith(dialDigits)) {
+      clean = clean.substring(dialDigits.length);
+    }
+    while (clean.startsWith('0')) {
       clean = clean.substring(1);
     }
     return '${selectedCountry.value.dialCode}$clean';
@@ -175,59 +179,63 @@ class LoginController extends GetxController {
       return;
     }
 
-    if (formKey.currentState?.validate() ?? false) {
-      isLoading.value = true;
+    if (formKey.currentState != null && !formKey.currentState!.validate()) {
+      return;
+    }
 
-      final serverPhone = serverPhoneNumber;
+    isLoading.value = true;
+    final serverPhone = serverPhoneNumber;
 
+    try {
+      final response = await dioPost(
+        endUrl: 'auth/otp/request',
+        data: {'phone': serverPhone, 'purpose': 'login'},
+        isJson: true,
+      );
 
-      try {
-        final response = await dioPost(
-          endUrl: 'auth/otp/request',
-          data: {'phone': serverPhone, 'purpose': 'login'},
-          isJson: true,
-        );
+      isLoading.value = false;
 
-        isLoading.value = false;
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        isOtpSent.value = true;
 
-        if (response.statusCode == 200 || response.statusCode == 201) {
-          isOtpSent.value = true;
-
-          String? devCode;
-          if (response.data is Map<String, dynamic>) {
-            final resData = response.data as Map<String, dynamic>;
-            final payload = resData['data'] is Map<String, dynamic>
-                ? resData['data'] as Map<String, dynamic>
-                : resData;
-            devCode = payload['devCode']?.toString();
-          }
-
-          if (devCode != null && devCode.isNotEmpty) {
-            otpController.text = devCode;
-          }
-
-          showSnack(
-            'OTP Sent',
-            devCode != null
-                ? 'Verification code ($devCode) copied to OTP section.'
-                : 'An OTP has been sent to ${phoneController.text.trim()}',
-            bg: AppColor.black87,
-          );
-        } else {
-          String msg = 'Unable to send OTP. Please try again.';
-          if (response.data is Map && response.data['message'] != null) {
-            msg = response.data['message'].toString();
-          }
-          showSnack('OTP Error', msg, bg: AppColor.red);
+        String? devCode;
+        if (response.data is Map<String, dynamic>) {
+          final resData = response.data as Map<String, dynamic>;
+          final payload = resData['data'] is Map<String, dynamic>
+              ? resData['data'] as Map<String, dynamic>
+              : resData;
+          devCode = payload['devCode']?.toString();
         }
-      } catch (e) {
-        isLoading.value = false;
+
+        if (devCode != null && devCode.isNotEmpty) {
+          otpController.text = devCode;
+        }
+
         showSnack(
-          'OTP Error',
-          'Something went wrong. Please try again.',
-          bg: AppColor.red,
+          'OTP Sent',
+          devCode != null
+              ? 'Verification code ($devCode) copied to OTP section.'
+              : 'An OTP has been sent to ${phoneController.text.trim()}',
+          bg: AppColor.black87,
         );
+      } else {
+        String msg = 'Unable to send OTP. Please try again.';
+        if (response.data is Map && response.data['message'] != null) {
+          msg = response.data['message'].toString();
+        } else if (response.data is Map &&
+            response.data['error'] is Map &&
+            response.data['error']['message'] != null) {
+          msg = response.data['error']['message'].toString();
+        }
+        showSnack('OTP Error', msg, bg: AppColor.red);
       }
+    } catch (e) {
+      isLoading.value = false;
+      showSnack(
+        'OTP Error',
+        'Something went wrong. Please try again.',
+        bg: AppColor.red,
+      );
     }
   }
 
@@ -302,6 +310,10 @@ class LoginController extends GetxController {
         String msg = 'Invalid OTP code. Please try again.';
         if (response.data is Map && response.data['message'] != null) {
           msg = response.data['message'].toString();
+        } else if (response.data is Map &&
+            response.data['error'] is Map &&
+            response.data['error']['message'] != null) {
+          msg = response.data['error']['message'].toString();
         }
         showSnack('Verification Failed', msg, bg: AppColor.red);
       }

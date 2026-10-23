@@ -181,8 +181,8 @@ class SignupController extends GetxController {
       return 'Please enter your phone number';
     }
     final cleanDigits = value.replaceAll(RegExp(r'\D'), '');
-    if (cleanDigits.length != 11) {
-      return 'Phone number must be exactly 11 digits';
+    if (cleanDigits.length < 10 || cleanDigits.length > 15) {
+      return 'Please enter a valid phone number (at least 10 digits)';
     }
     return null;
   }
@@ -209,7 +209,11 @@ class SignupController extends GetxController {
 
   String get serverPhoneNumber {
     String clean = phoneController.text.trim().replaceAll(RegExp(r'\D'), '');
-    if (clean.startsWith('0')) {
+    final dialDigits = selectedCountry.value.dialCode.replaceAll(RegExp(r'\D'), '');
+    if (clean.startsWith(dialDigits)) {
+      clean = clean.substring(dialDigits.length);
+    }
+    while (clean.startsWith('0')) {
       clean = clean.substring(1);
     }
     return '${selectedCountry.value.dialCode}$clean';
