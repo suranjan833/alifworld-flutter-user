@@ -129,36 +129,43 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
           );
         }
 
-        return SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Order Status Header Card
-              _buildOrderHeaderCard(o),
-              SizedBox(height: 14.h),
+        return RefreshIndicator(
+          onRefresh: _syncLatestOrderDetails,
+          color: AppColor.primary,
+          backgroundColor: AppColor.white,
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Order Status Header Card
+                _buildOrderHeaderCard(o),
+                SizedBox(height: 14.h),
 
-              // 2. Premium Tracking Timeline Card
-              _buildTimelineCard(o),
-              SizedBox(height: 14.h),
+                // 2. Premium Tracking Timeline Card
+                _buildTimelineCard(o),
+                SizedBox(height: 14.h),
 
-              // 3. Delivery Address Card
-              _buildDeliveryAddressCard(o),
-              SizedBox(height: 14.h),
+                // 3. Delivery Address Card
+                _buildDeliveryAddressCard(o),
+                SizedBox(height: 14.h),
 
-              // 4. Ordered Items Card
-              _buildOrderedItemsCard(o),
-              SizedBox(height: 14.h),
+                // 4. Ordered Items Card
+                _buildOrderedItemsCard(o),
+                SizedBox(height: 14.h),
 
-              // 5. Payment & Price Summary Card
-              _buildPriceSummaryCard(o),
-              SizedBox(height: 20.h),
+                // 5. Payment & Price Summary Card
+                _buildPriceSummaryCard(o),
+                SizedBox(height: 20.h),
 
-              // 6. Support & Cancel Actions
-              _buildActionButtons(context, o),
-              SizedBox(height: 24.h),
-            ],
+                // 6. Support & Cancel Actions
+                _buildActionButtons(context, o),
+                SizedBox(height: 24.h),
+              ],
+            ),
           ),
         );
       }),
