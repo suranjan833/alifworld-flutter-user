@@ -243,6 +243,43 @@ class CheckoutView extends GetView<CheckoutController> {
                                           ),
                                         ),
                                       ],
+                                      const Spacer(),
+                                      InkWell(
+                                        onTap: () {
+                                          controller.openAddAddressModal(
+                                            context,
+                                            address: addr,
+                                          );
+                                        },
+                                        borderRadius:
+                                            BorderRadius.circular(6.r),
+                                        child: Padding(
+                                          padding: EdgeInsets.all(4.r),
+                                          child: Icon(
+                                            Iconsax.edit_2,
+                                            size: 16.r,
+                                            color: AppColor.primaryDark,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 4.w),
+                                      InkWell(
+                                        onTap: () => controller
+                                            .confirmDeleteAddress(
+                                          context,
+                                          addr['id']?.toString() ?? '',
+                                        ),
+                                        borderRadius:
+                                            BorderRadius.circular(6.r),
+                                        child: Padding(
+                                          padding: EdgeInsets.all(4.r),
+                                          child: Icon(
+                                            Iconsax.trash,
+                                            size: 16.r,
+                                            color: AppColor.error,
+                                          ),
+                                        ),
+                                      ),
                                     ],
                                   ),
                                   if (name.isNotEmpty && name != 'Customer') ...[
@@ -1314,6 +1351,44 @@ class CheckoutView extends GetView<CheckoutController> {
                                           ),
                                         ),
                                       ],
+                                      const Spacer(),
+                                      InkWell(
+                                        onTap: () {
+                                          Get.back();
+                                          controller.openAddAddressModal(
+                                            context,
+                                            address: addr,
+                                          );
+                                        },
+                                        borderRadius:
+                                            BorderRadius.circular(6.r),
+                                        child: Padding(
+                                          padding: EdgeInsets.all(4.r),
+                                          child: Icon(
+                                            Iconsax.edit_2,
+                                            size: 16.r,
+                                            color: AppColor.primaryDark,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 4.w),
+                                      InkWell(
+                                        onTap: () => controller
+                                            .confirmDeleteAddress(
+                                          context,
+                                          addr['id']?.toString() ?? '',
+                                        ),
+                                        borderRadius:
+                                            BorderRadius.circular(6.r),
+                                        child: Padding(
+                                          padding: EdgeInsets.all(4.r),
+                                          child: Icon(
+                                            Iconsax.trash,
+                                            size: 16.r,
+                                            color: AppColor.error,
+                                          ),
+                                        ),
+                                      ),
                                     ],
                                   ),
                                   if (name.isNotEmpty &&

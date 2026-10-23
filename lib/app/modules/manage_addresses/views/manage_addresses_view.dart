@@ -196,13 +196,19 @@ class ManageAddressesView extends GetView<ManageAddressesController> {
                   color: AppColor.textSecondary,
                 ),
                 onSelected: (val) {
-                  if (val == 'default') {
+                  if (val == 'edit') {
+                    controller.openAddressSheet(context, address: address);
+                  } else if (val == 'default') {
                     controller.setDefaultAddress(address.id);
                   } else if (val == 'delete') {
-                    controller.deleteAddress(address.id);
+                    controller.confirmDeleteAddress(context, address.id);
                   }
                 },
                 itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'edit',
+                    child: Text('Edit Address'),
+                  ),
                   if (!address.isDefault)
                     const PopupMenuItem(
                       value: 'default',
@@ -248,6 +254,80 @@ class ManageAddressesView extends GetView<ManageAddressesController> {
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w500,
                   color: AppColor.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 20, color: Color(0xFFF1F5F9)),
+          Row(
+            children: [
+              if (!address.isDefault)
+                InkWell(
+                  onTap: () => controller.setDefaultAddress(address.id),
+                  borderRadius: BorderRadius.circular(6.r),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Iconsax.tick_circle, size: 15.r, color: AppColor.textSecondary),
+                        SizedBox(width: 4.w),
+                        Text(
+                          'Set Default',
+                          style: GoogleFonts.lato(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColor.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              const Spacer(),
+              InkWell(
+                onTap: () => controller.openAddressSheet(context, address: address),
+                borderRadius: BorderRadius.circular(6.r),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Iconsax.edit_2, size: 15.r, color: AppColor.primaryDark),
+                      SizedBox(width: 4.w),
+                      Text(
+                        'Edit',
+                        style: GoogleFonts.lato(
+                          fontSize: 12.5.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColor.primaryDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(width: 8.w),
+              InkWell(
+                onTap: () => controller.confirmDeleteAddress(context, address.id),
+                borderRadius: BorderRadius.circular(6.r),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Iconsax.trash, size: 15.r, color: AppColor.error),
+                      SizedBox(width: 4.w),
+                      Text(
+                        'Delete',
+                        style: GoogleFonts.lato(
+                          fontSize: 12.5.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColor.error,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],

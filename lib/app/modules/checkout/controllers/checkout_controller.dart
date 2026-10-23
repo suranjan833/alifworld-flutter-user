@@ -425,14 +425,83 @@ class CheckoutController extends GetxController {
     } catch (_) {}
   }
 
-  /// Open modal to dynamically add an address with Bangladesh Geo Hierarchy
-  void openAddAddressModal(BuildContext context) {
-    final nameCtrl = TextEditingController();
-    final phoneCtrl = TextEditingController();
-    final streetCtrl = TextEditingController();
-    final postalCodeCtrl = TextEditingController();
+  Future<void> deleteAddress(String addressId) async {
+    try {
+      final res = await dioDelete('addresses/$addressId');
+      if (res.statusCode == 200 || res.statusCode == 204) {
+        addresses.removeWhere((addr) => addr['id'] == addressId);
+        if (selectedAddressIndex.value >= addresses.length) {
+          selectedAddressIndex.value = addresses.isNotEmpty ? 0 : 0;
+        }
+        await fetchUserAddresses();
+        fetchQuote();
+        Get.snackbar(
+          'Address Removed',
+          'Address has been removed',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: AppColor.error,
+          colorText: AppColor.white,
+          duration: const Duration(seconds: 2),
+        );
+      } else {
+        Get.snackbar(
+          'Error',
+          'Failed to remove address',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: AppColor.error,
+          colorText: AppColor.white,
+        );
+      }
+    } catch (_) {
+      Get.snackbar(
+        'Error',
+        'Connection error while removing address',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColor.error,
+        colorText: AppColor.white,
+      );
+    }
+  }
+
+  void confirmDeleteAddress(BuildContext context, String addressId) {
+    Get.defaultDialog(
+      title: 'Delete Address',
+      titleStyle: GoogleFonts.lato(
+        fontSize: 18.sp,
+        fontWeight: FontWeight.bold,
+        color: AppColor.textPrimary,
+      ),
+      middleText: 'Are you sure you want to remove this delivery address?',
+      middleTextStyle: GoogleFonts.lato(
+        fontSize: 14.sp,
+        color: AppColor.textSecondary,
+      ),
+      textConfirm: 'Delete',
+      textCancel: 'Cancel',
+      confirmTextColor: AppColor.white,
+      buttonColor: AppColor.error,
+      cancelTextColor: AppColor.textPrimary,
+      onConfirm: () {
+        Get.back();
+        deleteAddress(addressId);
+      },
+    );
+  }
+
+  /// Open modal to dynamically add or edit an address with Bangladesh Geo Hierarchy
+  void openAddAddressModal(BuildContext context, {Map<String, dynamic>? address}) {
+    final isEditing = address != null;
+    final nameCtrl = TextEditingController(text: isEditing ? (address['name']?.toString() ?? '') : '');
+    final phoneCtrl = TextEditingController(text: isEditing ? (address['phone']?.toString() ?? '') : '');
+    final streetCtrl = TextEditingController(
+      text: isEditing ? (address['addressLine']?.toString() ?? address['address']?.toString() ?? '') : '',
+    );
+    final postalCodeCtrl = TextEditingController(
+      text: isEditing ? (address['postalCode']?.toString() ?? '') : '',
+    );
     final isSaving = false.obs;
-    final selectedType = 'Home'.obs;
+    final selectedType = (isEditing ? (address['type']?.toString() ?? 'Home') : 'Home').obs;
+
 
     // Dynamic Pathao 3-level Geo States (City -> Zone -> Area)
     final cities = <Map<String, dynamic>>[].obs;
@@ -530,12 +599,18 @@ class CheckoutController extends GetxController {
             final list = List<Map<String, dynamic>>.from(rawList);
             cities.assignAll(list);
             if (list.isNotEmpty) {
-              final defaultCity = list.firstWhere(
-                (c) => c['name']?.toString().toLowerCase() == 'dhaka',
-                orElse: () => list.first,
-              );
-              selectedCityId.value = defaultCity['id']?.toString();
-              await loadZones(defaultCity['id'].toString());
+              Map<String, dynamic>? selectedCity;
+              if (isEditing && address['city'] != null && address['city'].toString().isNotEmpty) {
+                selectedCity = list.firstWhereOrNull((c) =>
+                    c['name']?.toString().toLowerCase().trim() ==
+                    address['city'].toString().toLowerCase().trim());
+              }
+              selectedCity ??= list.firstWhereOrNull((c) =>
+                      c['name']?.toString().toLowerCase() == 'dhaka') ??
+                  list.first;
+
+              selectedCityId.value = selectedCity['id']?.toString();
+              await loadZones(selectedCity['id'].toString());
             }
           }
         }
@@ -616,7 +691,7 @@ class CheckoutController extends GetxController {
                 ),
                 SizedBox(height: 16.h),
                 Text(
-                  'Add Delivery Address',
+                  (isEditing ? 'Edit Delivery Address' : 'Add Delivery Address'),
                   style: GoogleFonts.lato(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.bold,
@@ -1035,21 +1110,31 @@ class CheckoutController extends GetxController {
                               isSaving.value = true;
 
                               try {
-                                final response = await dioPost(
-                                  endUrl: 'addresses',
-                                  data: {
-                                    'label': selectedType.value,
-                                    'fullName': name,
-                                    'phone': phone,
-                                    'addressLine': street,
-                                    'city': cityName,
-                                    'zone': zoneName,
-                                    'area': areaName.isNotEmpty ? areaName : zoneName,
-                                    'postalCode': postal,
-                                    'isDefault': addresses.isEmpty,
-                                  },
-                                  isJson: true,
-                                );
+                                final payload = {
+                                  'label': selectedType.value,
+                                  'fullName': name,
+                                  'phone': phone,
+                                  'addressLine': street,
+                                  'city': cityName,
+                                  'zone': zoneName,
+                                  'area': areaName.isNotEmpty ? areaName : zoneName,
+                                  'postalCode': postal,
+                                };
+
+                                final response = isEditing
+                                    ? await dioPatch(
+                                        endUrl: 'addresses/${address['id']}',
+                                        data: payload,
+                                        isJson: true,
+                                      )
+                                    : await dioPost(
+                                        endUrl: 'addresses',
+                                        data: {
+                                          ...payload,
+                                          'isDefault': addresses.isEmpty,
+                                        },
+                                        isJson: true,
+                                      );
 
                                 isSaving.value = false;
 

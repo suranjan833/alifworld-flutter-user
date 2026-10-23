@@ -188,15 +188,46 @@ class ManageAddressesController extends GetxController
     }
   }
 
-  void openAddAddressSheet(BuildContext context) {
-    final nameCtrl = TextEditingController();
-    final phoneCtrl = TextEditingController();
-    final streetCtrl = TextEditingController();
-    final postalCodeCtrl = TextEditingController();
+  void confirmDeleteAddress(BuildContext context, String addressId) {
+    Get.defaultDialog(
+      title: 'Delete Address',
+      titleStyle: GoogleFonts.lato(
+        fontSize: 18.sp,
+        fontWeight: FontWeight.bold,
+        color: AppColor.textPrimary,
+      ),
+      middleText: 'Are you sure you want to remove this delivery address?',
+      middleTextStyle: GoogleFonts.lato(
+        fontSize: 14.sp,
+        color: AppColor.textSecondary,
+      ),
+      textConfirm: 'Delete',
+      textCancel: 'Cancel',
+      confirmTextColor: AppColor.white,
+      buttonColor: AppColor.error,
+      cancelTextColor: AppColor.textPrimary,
+      onConfirm: () {
+        Get.back();
+        deleteAddress(addressId);
+      },
+    );
+  }
+
+  void openAddAddressSheet(BuildContext context) => openAddressSheet(context);
+
+  void openAddressSheet(BuildContext context, {AddressModel? address}) {
+    final isEditing = address != null;
+    final nameCtrl = TextEditingController(text: isEditing ? address.name : '');
+    final phoneCtrl =
+        TextEditingController(text: isEditing ? address.phone : '');
+    final streetCtrl =
+        TextEditingController(text: isEditing ? address.street : '');
+    final postalCodeCtrl =
+        TextEditingController(text: isEditing ? address.pincode : '');
     final searchCtrl = TextEditingController();
     final isSaving = false.obs;
     final isSearching = false.obs;
-    final selectedType = 'Home'.obs;
+    final selectedType = (isEditing ? address.type : 'Home').obs;
 
     // Pathao 3-level Geo state: City -> Zone -> Area
     final cities = <Map<String, dynamic>>[].obs;
@@ -212,7 +243,8 @@ class ManageAddressesController extends GetxController
     final isLoadingZones = false.obs;
     final isLoadingAreas = false.obs;
 
-    Future<void> loadAreas(String zoneId, {String? targetAreaId}) async {
+    Future<void> loadAreas(String zoneId,
+        {String? targetAreaId, String? targetAreaName}) async {
       isLoadingAreas.value = true;
       areas.clear();
       selectedAreaId.value = null;
@@ -233,6 +265,15 @@ class ManageAddressesController extends GetxController
             if (targetAreaId != null &&
                 list.any((a) => a['id']?.toString() == targetAreaId)) {
               selectedAreaId.value = targetAreaId;
+            } else if (targetAreaName != null &&
+                targetAreaName.isNotEmpty &&
+                list.any((a) =>
+                    a['name']?.toString().toLowerCase().trim() ==
+                    targetAreaName.toLowerCase().trim())) {
+              final match = list.firstWhere((a) =>
+                  a['name']?.toString().toLowerCase().trim() ==
+                  targetAreaName.toLowerCase().trim());
+              selectedAreaId.value = match['id']?.toString();
             } else if (list.isNotEmpty) {
               selectedAreaId.value = list.first['id']?.toString();
             }
@@ -243,7 +284,10 @@ class ManageAddressesController extends GetxController
     }
 
     Future<void> loadZones(String cityId,
-        {String? targetZoneId, String? targetAreaId}) async {
+        {String? targetZoneId,
+        String? targetZoneName,
+        String? targetAreaId,
+        String? targetAreaName}) async {
       isLoadingZones.value = true;
       zones.clear();
       areas.clear();
@@ -266,7 +310,19 @@ class ManageAddressesController extends GetxController
             if (targetZoneId != null &&
                 list.any((z) => z['id']?.toString() == targetZoneId)) {
               selectedZoneId.value = targetZoneId;
-              await loadAreas(targetZoneId, targetAreaId: targetAreaId);
+              await loadAreas(targetZoneId,
+                  targetAreaId: targetAreaId, targetAreaName: targetAreaName);
+            } else if (targetZoneName != null &&
+                targetZoneName.isNotEmpty &&
+                list.any((z) =>
+                    z['name']?.toString().toLowerCase().trim() ==
+                    targetZoneName.toLowerCase().trim())) {
+              final match = list.firstWhere((z) =>
+                  z['name']?.toString().toLowerCase().trim() ==
+                  targetZoneName.toLowerCase().trim());
+              selectedZoneId.value = match['id']?.toString();
+              await loadAreas(match['id'].toString(),
+                  targetAreaId: targetAreaId, targetAreaName: targetAreaName);
             } else if (list.isNotEmpty) {
               selectedZoneId.value = list.first['id']?.toString();
               await loadAreas(list.first['id'].toString());
@@ -294,12 +350,22 @@ class ManageAddressesController extends GetxController
             final list = List<Map<String, dynamic>>.from(rawList);
             cities.assignAll(list);
             if (list.isNotEmpty) {
-              final defaultCity = list.firstWhere(
-                (c) => c['name']?.toString().toLowerCase() == 'dhaka',
-                orElse: () => list.first,
+              Map<String, dynamic>? selectedCity;
+              if (isEditing && address.city.isNotEmpty) {
+                selectedCity = list.firstWhereOrNull((c) =>
+                    c['name']?.toString().toLowerCase().trim() ==
+                    address.city.toLowerCase().trim());
+              }
+              selectedCity ??= list.firstWhereOrNull((c) =>
+                      c['name']?.toString().toLowerCase() == 'dhaka') ??
+                  list.first;
+
+              selectedCityId.value = selectedCity['id']?.toString();
+              await loadZones(
+                selectedCity['id'].toString(),
+                targetZoneName: isEditing ? address.zone : null,
+                targetAreaName: isEditing ? address.area : null,
               );
-              selectedCityId.value = defaultCity['id']?.toString();
-              await loadZones(defaultCity['id'].toString());
             }
           }
         }
@@ -380,7 +446,7 @@ class ManageAddressesController extends GetxController
                 ),
                 SizedBox(height: 16.h),
                 Text(
-                  'Add New Address',
+                  isEditing ? 'Edit Address' : 'Add New Address',
                   style: GoogleFonts.lato(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.bold,
@@ -807,23 +873,33 @@ class ManageAddressesController extends GetxController
 
                               isSaving.value = true;
                               try {
-                                final res = await dioPost(
-                                  endUrl: 'addresses',
-                                  data: {
-                                    'label': selectedType.value,
-                                    'fullName': name,
-                                    'phone': phone,
-                                    'addressLine': street,
-                                    'city': cityName,
-                                    'zone': zoneName,
-                                    'area': areaName.isNotEmpty
-                                        ? areaName
-                                        : zoneName,
-                                    'postalCode': postal,
-                                    'isDefault': addresses.isEmpty,
-                                  },
-                                  isJson: true,
-                                );
+                                final payload = {
+                                  'label': selectedType.value,
+                                  'fullName': name,
+                                  'phone': phone,
+                                  'addressLine': street,
+                                  'city': cityName,
+                                  'zone': zoneName,
+                                  'area': areaName.isNotEmpty
+                                      ? areaName
+                                      : zoneName,
+                                  'postalCode': postal,
+                                };
+
+                                final res = isEditing
+                                    ? await dioPatch(
+                                        endUrl: 'addresses/${address.id}',
+                                        data: payload,
+                                        isJson: true,
+                                      )
+                                    : await dioPost(
+                                        endUrl: 'addresses',
+                                        data: {
+                                          ...payload,
+                                          'isDefault': addresses.isEmpty,
+                                        },
+                                        isJson: true,
+                                      );
                                 isSaving.value = false;
 
                                 if (res.statusCode == 200 ||
@@ -832,14 +908,18 @@ class ManageAddressesController extends GetxController
                                   await fetchAddresses();
                                   Get.snackbar(
                                     'Success',
-                                    'Address added successfully',
+                                    isEditing
+                                        ? 'Address updated successfully'
+                                        : 'Address added successfully',
                                     snackPosition: SnackPosition.BOTTOM,
                                     backgroundColor:
                                         const Color(0xFF16A34A),
                                     colorText: AppColor.white,
                                   );
                                 } else {
-                                  String errMsg = 'Failed to save address';
+                                  String errMsg = isEditing
+                                      ? 'Failed to update address'
+                                      : 'Failed to save address';
                                   if (res.data is Map) {
                                     final d = res.data as Map;
                                     if (d['error'] is Map &&
@@ -886,7 +966,7 @@ class ManageAddressesController extends GetxController
                               ),
                             )
                           : Text(
-                              'Save Address',
+                              isEditing ? 'Update Address' : 'Save Address',
                               style: GoogleFonts.lato(
                                 fontSize: 15.sp,
                                 fontWeight: FontWeight.bold,
