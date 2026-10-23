@@ -234,16 +234,21 @@ class CheckoutView extends GetView<CheckoutController> {
                                       ),
                                       if (phone.isNotEmpty) ...[
                                         SizedBox(width: 8.w),
-                                        Text(
-                                          phone,
-                                          style: GoogleFonts.lato(
-                                            fontSize: 12.sp,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColor.textSecondary,
+                                        Expanded(
+                                          child: Text(
+                                            phone,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.lato(
+                                              fontSize: 12.sp,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColor.textSecondary,
+                                            ),
                                           ),
                                         ),
-                                      ],
-                                      const Spacer(),
+                                      ] else
+                                        const Spacer(),
+                                      SizedBox(width: 6.w),
                                       InkWell(
                                         onTap: () {
                                           controller.openAddAddressModal(
@@ -1342,16 +1347,21 @@ class CheckoutView extends GetView<CheckoutController> {
                                       ),
                                       if (phone.isNotEmpty) ...[
                                         SizedBox(width: 8.w),
-                                        Text(
-                                          phone,
-                                          style: GoogleFonts.lato(
-                                            fontSize: 12.sp,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColor.textSecondary,
+                                        Expanded(
+                                          child: Text(
+                                            phone,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.lato(
+                                              fontSize: 12.sp,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColor.textSecondary,
+                                            ),
                                           ),
                                         ),
-                                      ],
-                                      const Spacer(),
+                                      ] else
+                                        const Spacer(),
+                                      SizedBox(width: 6.w),
                                       InkWell(
                                         onTap: () {
                                           Get.back();
