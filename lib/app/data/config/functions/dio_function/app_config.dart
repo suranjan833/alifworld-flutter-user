@@ -1,12 +1,43 @@
 // ignore_for_file: non_constant_identifier_names, constant_identifier_names
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import '../../app_color.dart';
 
 final getBox = GetStorage();
-var BASE_URL = "https://alifworld231026.vercel.app/api/v1/";
+
+// Default API Endpoints
+const String _defaultProdUrl = "https://alifworld.com.bd/api/v1/";
+const String _defaultDebugUrl = "https://alifworld231026.vercel.app/api/v1/";
+
+/// Resolves BASE_URL automatically:
+/// - In release build (`flutter build apk / appbundle`): uses PROD_BASE_URL (https://alifworld.com.bd/api/v1/)
+/// - In debug build (`flutter run`): uses DEBUG_BASE_URL (https://alifworld231026.vercel.app/api/v1/)
+String resolveBaseUrl() {
+  String url;
+  if (kReleaseMode) {
+    url = dotenv.env['PROD_BASE_URL']?.trim() ?? _defaultProdUrl;
+  } else {
+    url = dotenv.env['DEBUG_BASE_URL']?.trim() ?? _defaultDebugUrl;
+  }
+  if (!url.endsWith('/')) {
+    url = '$url/';
+  }
+  return url;
+}
+
+var BASE_URL = resolveBaseUrl();
+var isDebugMode = (!kReleaseMode).obs;
+
+void initAppConfig() {
+  BASE_URL = resolveBaseUrl();
+  isDebugMode.value = !kReleaseMode;
+}
+
 const String USER_ID = "user_id";
 const String IS_USER_LOGGED_IN = "IS_USER_LOGGED_IN";
 const String USER_TOKEN = "TOKEN";
@@ -26,8 +57,6 @@ const String FORGOTFIELD = "forgot-feild-data";
 
 const String CUSTOMER_ORDER = "customer_order";
 
-var isDebugMode = true.obs;
-
 void SHOW_SNACKBAR({int? duration, String? message, bool? isSuccess}) {
   final snackbar = GetSnackBar(
     icon: Padding(
@@ -39,14 +68,14 @@ void SHOW_SNACKBAR({int? duration, String? message, bool? isSuccess}) {
       //   image: AssetImage(AppImage.logo),
       // ),
     ),
-    backgroundColor: (isSuccess ?? true) ? Colors.teal : Colors.red,
+    backgroundColor: (isSuccess ?? true) ? AppColor.teal : AppColor.red,
     duration: Duration(milliseconds: duration ?? 2500),
     message: message ?? "No Message",
   );
   Get.showSnackbar(snackbar);
 }
 
-void showSnack(String title, String msg, {Color bg = Colors.black}) {
+void showSnack(String title, String msg, {Color bg = AppColor.black}) {
   Get.showSnackbar(
     GetSnackBar(
       title: title,
@@ -65,8 +94,8 @@ void showTopSnack(String msg, {bool isError = false}) {
   final context = Get.key.currentContext!;
 
   // Colors based on success or error
-  final Color bgColor = isError ? Colors.red.shade50 : Colors.blue.shade50;
-  final Color textColor = isError ? Colors.red : Colors.teal;
+  final Color bgColor = isError ? AppColor.red.shade50 : AppColor.blue.shade50;
+  final Color textColor = isError ? AppColor.red : AppColor.teal;
   final IconData icon = isError ? Icons.error : Icons.check_circle;
 
   ScaffoldMessenger.of(context).clearMaterialBanners();
