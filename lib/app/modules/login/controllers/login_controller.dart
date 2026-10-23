@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../data/config/app_color.dart';
 
 import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
@@ -85,14 +86,31 @@ class LoginController extends GetxController {
       return 'Please enter your phone number';
     }
     final cleanDigits = value.replaceAll(RegExp(r'\D'), '');
-    if (cleanDigits.length < 7 || cleanDigits.length > 15) {
-      return 'Please enter a valid phone number (7-15 digits)';
+    if (cleanDigits.length != 11) {
+      return 'Phone number must be exactly 11 digits';
     }
     return null;
   }
 
   void validatePhone() {
     phoneError.value = validatePhoneInput(phoneController.text);
+  }
+
+  String get serverPhoneNumber {
+    String clean = phoneController.text.trim().replaceAll(RegExp(r'\D'), '');
+    if (clean.startsWith('0')) {
+      clean = clean.substring(1);
+    }
+    return '${selectedCountry.value.dialCode}$clean';
+  }
+
+  String get normalizedIdentifier {
+    final raw = identifierController.text.trim();
+    final cleanDigits = raw.replaceAll(RegExp(r'\D'), '');
+    if (cleanDigits.length == 11 && cleanDigits.startsWith('0')) {
+      return cleanDigits.substring(1);
+    }
+    return raw;
   }
 
   /// Combined login trigger called by Submit button
@@ -116,7 +134,7 @@ class LoginController extends GetxController {
         final response = await dioPost(
           endUrl: 'auth/login',
           data: {
-            'identifier': identifierController.text.trim(),
+            'identifier': normalizedIdentifier,
             'password': passwordController.text,
           },
           isJson: true,
@@ -135,14 +153,14 @@ class LoginController extends GetxController {
               response.data['error']['message'] != null) {
             msg = response.data['error']['message'].toString();
           }
-          showSnack('Login Failed', msg, bg: Colors.red);
+          showSnack('Login Failed', msg, bg: AppColor.red);
         }
       } catch (e) {
         isLoading.value = false;
         showSnack(
           'Login Error',
           'Something went wrong. Please try again.',
-          bg: Colors.red,
+          bg: AppColor.red,
         );
       }
     }
@@ -152,18 +170,21 @@ class LoginController extends GetxController {
   Future<void> requestOtp() async {
     final error = validatePhoneInput(phoneController.text);
     phoneError.value = error;
-    if (error != null) return;
+    if (error != null) {
+      showSnack('Invalid Phone', error, bg: AppColor.red);
+      return;
+    }
 
     if (formKey.currentState?.validate() ?? false) {
       isLoading.value = true;
 
-      final fullPhoneNumber =
-          '${selectedCountry.value.dialCode}${phoneController.text.trim()}';
+      final serverPhone = serverPhoneNumber;
+
 
       try {
         final response = await dioPost(
           endUrl: 'auth/otp/request',
-          data: {'phone': fullPhoneNumber, 'purpose': 'login'},
+          data: {'phone': serverPhone, 'purpose': 'login'},
           isJson: true,
         );
 
@@ -189,22 +210,22 @@ class LoginController extends GetxController {
             'OTP Sent',
             devCode != null
                 ? 'Verification code ($devCode) copied to OTP section.'
-                : 'An OTP has been sent to $fullPhoneNumber',
-            bg: Colors.black87,
+                : 'An OTP has been sent to ${phoneController.text.trim()}',
+            bg: AppColor.black87,
           );
         } else {
           String msg = 'Unable to send OTP. Please try again.';
           if (response.data is Map && response.data['message'] != null) {
             msg = response.data['message'].toString();
           }
-          showSnack('OTP Error', msg, bg: Colors.red);
+          showSnack('OTP Error', msg, bg: AppColor.red);
         }
       } catch (e) {
         isLoading.value = false;
         showSnack(
           'OTP Error',
           'Something went wrong. Please try again.',
-          bg: Colors.red,
+          bg: AppColor.red,
         );
       }
     }
@@ -213,19 +234,19 @@ class LoginController extends GetxController {
   /// 3. Verify OTP (POST /auth/otp/verify)
   Future<void> verifyOtp() async {
     if (otpController.text.trim().length < 4) {
-      showSnack('Invalid OTP', 'Please enter a valid OTP code', bg: Colors.red);
+      showSnack('Invalid OTP', 'Please enter a valid OTP code', bg: AppColor.red);
       return;
     }
 
     isLoading.value = true;
-    final fullPhoneNumber =
-        '${selectedCountry.value.dialCode}${phoneController.text.trim()}';
+    final serverPhone = serverPhoneNumber;
+
 
     try {
       final response = await dioPost(
         endUrl: 'auth/otp/verify',
         data: {
-          'phone': fullPhoneNumber,
+          'phone': serverPhone,
           'code': otpController.text.trim(),
           'purpose': 'login',
         },
@@ -254,13 +275,13 @@ class LoginController extends GetxController {
         // If user is not yet registered (loggedIn: false and regToken present)
         if (!isLoggedIn && regToken != null && regToken.isNotEmpty) {
           // 1. Save verified phone number and regToken in storage
-          getBox.write(USER_PHONE, fullPhoneNumber);
+          getBox.write(USER_PHONE, phoneController.text.trim());
           getBox.write('reg_token', regToken);
 
           showSnack(
             'Phone Verified',
             'Phone verified successfully! Please complete your registration.',
-            bg: Colors.black87,
+            bg: AppColor.black87,
           );
 
           // 2. Redirect user to Sign Up page with verified phone and regToken
@@ -268,7 +289,7 @@ class LoginController extends GetxController {
             Routes.SIGNUP,
             arguments: {
               'phone': phoneController.text.trim(),
-              'fullPhoneNumber': fullPhoneNumber,
+              'fullPhoneNumber': phoneController.text.trim(),
               'country': selectedCountry.value,
               'dialCode': selectedCountry.value.dialCode,
               'regToken': regToken,
@@ -282,14 +303,14 @@ class LoginController extends GetxController {
         if (response.data is Map && response.data['message'] != null) {
           msg = response.data['message'].toString();
         }
-        showSnack('Verification Failed', msg, bg: Colors.red);
+        showSnack('Verification Failed', msg, bg: AppColor.red);
       }
     } catch (e) {
       isLoading.value = false;
       showSnack(
         'Verification Error',
         'Something went wrong. Please try again.',
-        bg: Colors.red,
+        bg: AppColor.red,
       );
     }
   }
@@ -328,7 +349,7 @@ class LoginController extends GetxController {
       getBox.write(IS_USER_LOGGED_IN, true);
     }
 
-    showSnack('Success', 'Logged in successfully!', bg: Colors.black87);
+    showSnack('Success', 'Logged in successfully!', bg: AppColor.black87);
     Get.offAllNamed(Routes.MAIN_NAVIGATION);
   }
 

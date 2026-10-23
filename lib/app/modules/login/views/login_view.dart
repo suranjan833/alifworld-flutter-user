@@ -263,7 +263,7 @@ class LoginView extends GetView<LoginController> {
                             keyboardType: TextInputType.phone,
                             inputFormatters: [
                               FilteringTextInputFormatter.digitsOnly,
-                              LengthLimitingTextInputFormatter(15),
+                              LengthLimitingTextInputFormatter(11),
                             ],
                             onChanged: (_) => controller.validatePhone(),
                             validator: controller.validatePhoneInput,
@@ -273,7 +273,7 @@ class LoginView extends GetView<LoginController> {
                               color: AppColor.textPrimary,
                             ),
                             decoration: InputDecoration(
-                              hintText: 'Enter phone number',
+                              hintText: '01XXXXXXXXX',
                               hintStyle: GoogleFonts.lato(
                                 fontSize: 14.sp,
                                 color: AppColor.textHint,
@@ -378,7 +378,7 @@ class LoginView extends GetView<LoginController> {
                           : controller.login,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColor.primary,
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppColor.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.r),
@@ -392,7 +392,7 @@ class LoginView extends GetView<LoginController> {
                               width: 20.r,
                               height: 20.r,
                               child: const CircularProgressIndicator(
-                                color: Colors.white,
+                                color: AppColor.white,
                                 strokeWidth: 2.2,
                               ),
                             )
@@ -405,7 +405,7 @@ class LoginView extends GetView<LoginController> {
                               style: GoogleFonts.lato(
                                 fontSize: 15.sp,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: AppColor.white,
                               ),
                             ),
                     ),

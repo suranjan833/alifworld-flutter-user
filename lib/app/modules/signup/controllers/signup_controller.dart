@@ -5,6 +5,7 @@ import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/models/country_model.dart';
 import '../../../routes/app_pages.dart';
+import '../../../data/config/app_color.dart';
 
 class SignupController extends GetxController {
   final formKey = GlobalKey<FormState>();
@@ -180,8 +181,8 @@ class SignupController extends GetxController {
       return 'Please enter your phone number';
     }
     final cleanDigits = value.replaceAll(RegExp(r'\D'), '');
-    if (cleanDigits.length < 7 || cleanDigits.length > 15) {
-      return 'Please enter a valid phone number (7-15 digits)';
+    if (cleanDigits.length != 11) {
+      return 'Phone number must be exactly 11 digits';
     }
     return null;
   }
@@ -206,23 +207,31 @@ class SignupController extends GetxController {
     return null;
   }
 
+  String get serverPhoneNumber {
+    String clean = phoneController.text.trim().replaceAll(RegExp(r'\D'), '');
+    if (clean.startsWith('0')) {
+      clean = clean.substring(1);
+    }
+    return '${selectedCountry.value.dialCode}$clean';
+  }
+
   /// 1. Request Phone OTP (POST /auth/otp/request)
   Future<void> sendPhoneOtp() async {
     final error = validatePhone(phoneController.text);
     if (error != null) {
-      showSnack('Invalid Phone', error, bg: Colors.red);
+      showSnack('Invalid Phone', error, bg: AppColor.red);
       return;
     }
 
-    final fullPhoneNumber =
-        '${selectedCountry.value.dialCode}${phoneController.text.trim()}';
+    final serverPhone = serverPhoneNumber;
+
 
     isSendingPhoneOtp.value = true;
     try {
       final response = await dioPost(
         endUrl: 'auth/otp/request',
         data: {
-          'phone': fullPhoneNumber,
+          'phone': serverPhone,
           'purpose': 'register',
         },
         isJson: true,
@@ -249,8 +258,8 @@ class SignupController extends GetxController {
           'OTP Sent',
           devCode != null
               ? 'Verification code ($devCode) copied to OTP section.'
-              : 'Verification code sent to $fullPhoneNumber',
-          bg: Colors.black87,
+              : 'Verification code sent to ${phoneController.text.trim()}',
+          bg: AppColor.black87,
         );
       } else {
         String msg = 'Failed to send phone OTP.';
@@ -261,11 +270,11 @@ class SignupController extends GetxController {
             response.data['error']['message'] != null) {
           msg = response.data['error']['message'].toString();
         }
-        showSnack('Phone OTP Error', msg, bg: Colors.red);
+        showSnack('Phone OTP Error', msg, bg: AppColor.red);
       }
     } catch (_) {
       isSendingPhoneOtp.value = false;
-      showSnack('Error', 'Could not send phone OTP. Try again.', bg: Colors.red);
+      showSnack('Error', 'Could not send phone OTP. Try again.', bg: AppColor.red);
     }
   }
 
@@ -273,19 +282,19 @@ class SignupController extends GetxController {
   Future<void> verifyPhoneOtp() async {
     final code = phoneOtpController.text.trim();
     if (code.length < 4) {
-      showSnack('Invalid OTP', 'Please enter a valid OTP code', bg: Colors.red);
+      showSnack('Invalid OTP', 'Please enter a valid OTP code', bg: AppColor.red);
       return;
     }
 
-    final fullPhoneNumber =
-        '${selectedCountry.value.dialCode}${phoneController.text.trim()}';
+    final serverPhone = serverPhoneNumber;
+
 
     isVerifyingPhoneOtp.value = true;
     try {
       final response = await dioPost(
         endUrl: 'auth/otp/verify',
         data: {
-          'phone': fullPhoneNumber,
+          'phone': serverPhone,
           'purpose': 'register',
           'code': code,
         },
@@ -308,7 +317,7 @@ class SignupController extends GetxController {
         }
         _initialVerifiedPhone = phoneController.text.trim();
         isPhoneVerified.value = true;
-        showSnack('Phone Verified', 'Phone number verified successfully!', bg: Colors.green);
+        showSnack('Phone Verified', 'Phone number verified successfully!', bg: AppColor.green);
       } else {
         String msg = 'Invalid phone verification code.';
         if (response.data is Map && response.data['message'] != null) {
@@ -318,11 +327,11 @@ class SignupController extends GetxController {
             response.data['error']['message'] != null) {
           msg = response.data['error']['message'].toString();
         }
-        showSnack('Verification Failed', msg, bg: Colors.red);
+        showSnack('Verification Failed', msg, bg: AppColor.red);
       }
     } catch (_) {
       isVerifyingPhoneOtp.value = false;
-      showSnack('Error', 'Could not verify phone OTP. Try again.', bg: Colors.red);
+      showSnack('Error', 'Could not verify phone OTP. Try again.', bg: AppColor.red);
     }
   }
 
@@ -330,7 +339,7 @@ class SignupController extends GetxController {
   Future<void> sendEmailOtp() async {
     final error = validateEmail(emailController.text);
     if (error != null) {
-      showSnack('Invalid Email', error, bg: Colors.red);
+      showSnack('Invalid Email', error, bg: AppColor.red);
       return;
     }
 
@@ -365,7 +374,7 @@ class SignupController extends GetxController {
           devCode != null
               ? 'Verification code ($devCode) copied to OTP section.'
               : 'Verification code sent to $email',
-          bg: Colors.black87,
+          bg: AppColor.black87,
         );
       } else {
         String msg = 'Failed to send email OTP.';
@@ -376,11 +385,11 @@ class SignupController extends GetxController {
             response.data['error']['message'] != null) {
           msg = response.data['error']['message'].toString();
         }
-        showSnack('Email OTP Error', msg, bg: Colors.red);
+        showSnack('Email OTP Error', msg, bg: AppColor.red);
       }
     } catch (_) {
       isSendingEmailOtp.value = false;
-      showSnack('Error', 'Could not send email OTP. Try again.', bg: Colors.red);
+      showSnack('Error', 'Could not send email OTP. Try again.', bg: AppColor.red);
     }
   }
 
@@ -388,7 +397,7 @@ class SignupController extends GetxController {
   Future<void> verifyEmailOtp() async {
     final code = emailOtpController.text.trim();
     if (code.length < 4) {
-      showSnack('Invalid OTP', 'Please enter a valid OTP code', bg: Colors.red);
+      showSnack('Invalid OTP', 'Please enter a valid OTP code', bg: AppColor.red);
       return;
     }
 
@@ -419,7 +428,7 @@ class SignupController extends GetxController {
           emailToken.value = 'verified';
         }
         isEmailVerified.value = true;
-        showSnack('Email Verified', 'Email address verified successfully!', bg: Colors.green);
+        showSnack('Email Verified', 'Email address verified successfully!', bg: AppColor.green);
       } else {
         String msg = 'Invalid email verification code.';
         if (response.data is Map && response.data['message'] != null) {
@@ -429,11 +438,11 @@ class SignupController extends GetxController {
             response.data['error']['message'] != null) {
           msg = response.data['error']['message'].toString();
         }
-        showSnack('Verification Failed', msg, bg: Colors.red);
+        showSnack('Verification Failed', msg, bg: AppColor.red);
       }
     } catch (_) {
       isVerifyingEmailOtp.value = false;
-      showSnack('Error', 'Could not verify email OTP. Try again.', bg: Colors.red);
+      showSnack('Error', 'Could not verify email OTP. Try again.', bg: AppColor.red);
     }
   }
 
@@ -444,7 +453,7 @@ class SignupController extends GetxController {
         showSnack(
           'Phone Not Verified',
           'Please verify your phone number via OTP before completing signup.',
-          bg: Colors.red,
+          bg: AppColor.red,
         );
         return;
       }
@@ -453,7 +462,7 @@ class SignupController extends GetxController {
         showSnack(
           'Email Not Verified',
           'Please verify your email address via OTP before completing signup.',
-          bg: Colors.red,
+          bg: AppColor.red,
         );
         return;
       }
@@ -515,7 +524,7 @@ class SignupController extends GetxController {
           showSnack(
             'Account Created',
             'Welcome, ${nameController.text.trim()}! Account created successfully.',
-            bg: Colors.black87,
+            bg: AppColor.black87,
           );
           Get.offAllNamed(Routes.MAIN_NAVIGATION);
         } else {
@@ -527,14 +536,14 @@ class SignupController extends GetxController {
               response.data['error']['message'] != null) {
             msg = response.data['error']['message'].toString();
           }
-          showSnack('Registration Failed', msg, bg: Colors.red);
+          showSnack('Registration Failed', msg, bg: AppColor.red);
         }
       } catch (e) {
         isLoading.value = false;
         showSnack(
           'Registration Error',
           'Something went wrong. Please try again.',
-          bg: Colors.red,
+          bg: AppColor.red,
         );
       }
     }

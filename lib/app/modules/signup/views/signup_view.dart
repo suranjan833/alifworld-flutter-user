@@ -17,7 +17,7 @@ class SignupView extends GetView<SignupController> {
     return Scaffold(
       backgroundColor: AppColor.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColor.transparent,
         elevation: 0,
         toolbarHeight: 44.h,
         leading: IconButton(
@@ -272,11 +272,11 @@ class SignupView extends GetView<SignupController> {
                         keyboardType: TextInputType.phone,
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(15),
+                          LengthLimitingTextInputFormatter(11),
                         ],
                         style: _inputTextStyle,
                         decoration: _buildInputDecoration(
-                          hintText: 'Enter phone number',
+                          hintText: '01XXXXXXXXX',
                         ),
                       ),
                     ),
@@ -394,7 +394,7 @@ class SignupView extends GetView<SignupController> {
                           : controller.signup,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColor.primary,
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppColor.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.r),
@@ -405,7 +405,7 @@ class SignupView extends GetView<SignupController> {
                               width: 20.r,
                               height: 20.r,
                               child: const CircularProgressIndicator(
-                                color: Colors.white,
+                                color: AppColor.white,
                                 strokeWidth: 2.2,
                               ),
                             )
@@ -414,7 +414,7 @@ class SignupView extends GetView<SignupController> {
                               style: GoogleFonts.lato(
                                 fontSize: 15.sp,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: AppColor.white,
                               ),
                             ),
                     ),
@@ -598,7 +598,7 @@ class SignupView extends GetView<SignupController> {
                         vertical: 10.h,
                       ),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: AppColor.white,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10.r),
                         borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
@@ -637,7 +637,7 @@ class SignupView extends GetView<SignupController> {
                           height: 16.r,
                           child: const CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: AppColor.white,
                           ),
                         )
                       : Text(
@@ -645,7 +645,7 @@ class SignupView extends GetView<SignupController> {
                           style: GoogleFonts.lato(
                             fontSize: 13.sp,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: AppColor.white,
                           ),
                         ),
                 ),
