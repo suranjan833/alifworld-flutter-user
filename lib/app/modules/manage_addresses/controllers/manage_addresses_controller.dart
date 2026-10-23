@@ -15,6 +15,8 @@ class AddressModel {
   final String street;
   final String city;
   final String state;
+  final String area;
+  final String zone;
   final String pincode;
   final String type; // Home, Work, Other
   bool isDefault;
@@ -25,11 +27,25 @@ class AddressModel {
     required this.phone,
     required this.street,
     required this.city,
-    required this.state,
+    this.state = '',
+    this.area = '',
+    this.zone = '',
     required this.pincode,
     required this.type,
     this.isDefault = false,
   });
+
+  String get formattedAddress {
+    final parts = [street, area, zone, city, state]
+        .where((s) => s.trim().isNotEmpty)
+        .toSet()
+        .toList();
+    final base = parts.isNotEmpty ? parts.join(', ') : street;
+    if (pincode.isNotEmpty) {
+      return '$base - $pincode';
+    }
+    return base;
+  }
 }
 
 class ManageAddressesController extends GetxController
@@ -67,14 +83,18 @@ class ManageAddressesController extends GetxController
               final street = item['addressLine']?.toString() ??
                   item['address']?.toString() ??
                   '';
-              final upazila = item['upazila']?.toString() ?? '';
-              final district = item['district']?.toString() ??
-                  item['city']?.toString() ??
+              final area = item['area']?.toString() ??
+                  item['upazila']?.toString() ??
+                  '';
+              final zone = item['zone']?.toString() ?? '';
+              final city = item['city']?.toString() ??
+                  item['district']?.toString() ??
                   '';
               final division = item['division']?.toString() ?? '';
 
-              final parts = [street, upazila, district, division]
+              final parts = [street, area, zone, city, division]
                   .where((s) => s.trim().isNotEmpty)
+                  .toSet()
                   .toList();
               final fullAddress = parts.isNotEmpty ? parts.join(', ') : street;
 
@@ -86,9 +106,13 @@ class ManageAddressesController extends GetxController
                       item['name']?.toString() ??
                       'Customer',
                   phone: item['phone']?.toString() ?? '',
-                  street: fullAddress,
-                  city: district,
-                  state: division,
+                  street: street.isNotEmpty ? street : fullAddress,
+                  area: area,
+                  zone: zone,
+                  city: city.isNotEmpty ? city : zone,
+                  state: division.isNotEmpty
+                      ? division
+                      : (zone.isNotEmpty ? zone : city),
                   pincode: item['postalCode']?.toString() ?? '',
                   type: item['label']?.toString() ??
                       item['type']?.toString() ??
@@ -169,96 +193,164 @@ class ManageAddressesController extends GetxController
     final phoneCtrl = TextEditingController();
     final streetCtrl = TextEditingController();
     final postalCodeCtrl = TextEditingController(text: '1205');
+    final searchCtrl = TextEditingController();
     final isSaving = false.obs;
+    final isSearching = false.obs;
     final selectedType = 'Home'.obs;
 
-    final divisions = <Map<String, dynamic>>[].obs;
-    final districts = <Map<String, dynamic>>[].obs;
-    final upazilas = <Map<String, dynamic>>[].obs;
-    final selectedDivisionId = Rxn<String>();
-    final selectedDistrictId = Rxn<String>();
-    final selectedUpazilaId = Rxn<String>();
-    final isLoadingDivisions = false.obs;
-    final isLoadingDistricts = false.obs;
-    final isLoadingUpazilas = false.obs;
+    // Pathao 3-level Geo state: City -> Zone -> Area
+    final cities = <Map<String, dynamic>>[].obs;
+    final zones = <Map<String, dynamic>>[].obs;
+    final areas = <Map<String, dynamic>>[].obs;
+    final searchResults = <Map<String, dynamic>>[].obs;
 
-    Future<void> loadUpazilas(String distId) async {
-      isLoadingUpazilas.value = true;
-      upazilas.clear();
-      selectedUpazilaId.value = null;
+    final selectedCityId = Rxn<String>();
+    final selectedZoneId = Rxn<String>();
+    final selectedAreaId = Rxn<String>();
+
+    final isLoadingCities = false.obs;
+    final isLoadingZones = false.obs;
+    final isLoadingAreas = false.obs;
+
+    Future<void> loadAreas(String zoneId, {String? targetAreaId}) async {
+      isLoadingAreas.value = true;
+      areas.clear();
+      selectedAreaId.value = null;
       try {
-        final res = await dioGet('geo/upazilas?districtId=$distId');
+        final res = await dioGet('geo/areas?zoneId=$zoneId');
         if (res.statusCode == 200 && res.data != null) {
           final data = res.data is Map && res.data['data'] != null
               ? res.data['data']
               : res.data;
-          if (data is Map && data['upazilas'] is List) {
-            final list = List<Map<String, dynamic>>.from(data['upazilas']);
-            upazilas.assignAll(list);
-            if (list.isNotEmpty) {
-              selectedUpazilaId.value = list.first['id']?.toString();
+          final rawList = (data is Map && data['areas'] is List)
+              ? data['areas'] as List
+              : (res.data is Map && res.data['areas'] is List)
+                  ? res.data['areas'] as List
+                  : null;
+          if (rawList != null) {
+            final list = List<Map<String, dynamic>>.from(rawList);
+            areas.assignAll(list);
+            if (targetAreaId != null &&
+                list.any((a) => a['id']?.toString() == targetAreaId)) {
+              selectedAreaId.value = targetAreaId;
+            } else if (list.isNotEmpty) {
+              selectedAreaId.value = list.first['id']?.toString();
             }
           }
         }
       } catch (_) {}
-      isLoadingUpazilas.value = false;
+      isLoadingAreas.value = false;
     }
 
-    Future<void> loadDistricts(String divId) async {
-      isLoadingDistricts.value = true;
-      districts.clear();
-      upazilas.clear();
-      selectedDistrictId.value = null;
-      selectedUpazilaId.value = null;
+    Future<void> loadZones(String cityId,
+        {String? targetZoneId, String? targetAreaId}) async {
+      isLoadingZones.value = true;
+      zones.clear();
+      areas.clear();
+      selectedZoneId.value = null;
+      selectedAreaId.value = null;
       try {
-        final res = await dioGet('geo/districts?divisionId=$divId');
+        final res = await dioGet('geo/zones?cityId=$cityId');
         if (res.statusCode == 200 && res.data != null) {
           final data = res.data is Map && res.data['data'] != null
               ? res.data['data']
               : res.data;
-          if (data is Map && data['districts'] is List) {
-            final list = List<Map<String, dynamic>>.from(data['districts']);
-            districts.assignAll(list);
+          final rawList = (data is Map && data['zones'] is List)
+              ? data['zones'] as List
+              : (res.data is Map && res.data['zones'] is List)
+                  ? res.data['zones'] as List
+                  : null;
+          if (rawList != null) {
+            final list = List<Map<String, dynamic>>.from(rawList);
+            zones.assignAll(list);
+            if (targetZoneId != null &&
+                list.any((z) => z['id']?.toString() == targetZoneId)) {
+              selectedZoneId.value = targetZoneId;
+              await loadAreas(targetZoneId, targetAreaId: targetAreaId);
+            } else if (list.isNotEmpty) {
+              selectedZoneId.value = list.first['id']?.toString();
+              await loadAreas(list.first['id'].toString());
+            }
+          }
+        }
+      } catch (_) {}
+      isLoadingZones.value = false;
+    }
+
+    Future<void> loadCities() async {
+      isLoadingCities.value = true;
+      try {
+        final res = await dioGet('geo/cities');
+        if (res.statusCode == 200 && res.data != null) {
+          final data = res.data is Map && res.data['data'] != null
+              ? res.data['data']
+              : res.data;
+          final rawList = (data is Map && data['cities'] is List)
+              ? data['cities'] as List
+              : (res.data is Map && res.data['cities'] is List)
+                  ? res.data['cities'] as List
+                  : null;
+          if (rawList != null) {
+            final list = List<Map<String, dynamic>>.from(rawList);
+            cities.assignAll(list);
             if (list.isNotEmpty) {
-              final defaultDist = list.firstWhere(
-                (d) => d['name']?.toString().toLowerCase() == 'dhaka',
+              final defaultCity = list.firstWhere(
+                (c) => c['name']?.toString().toLowerCase() == 'dhaka',
                 orElse: () => list.first,
               );
-              selectedDistrictId.value = defaultDist['id']?.toString();
-              await loadUpazilas(defaultDist['id'].toString());
+              selectedCityId.value = defaultCity['id']?.toString();
+              await loadZones(defaultCity['id'].toString());
             }
           }
         }
       } catch (_) {}
-      isLoadingDistricts.value = false;
+      isLoadingCities.value = false;
     }
 
-    Future<void> loadDivisions() async {
-      isLoadingDivisions.value = true;
+    Future<void> performGeoSearch(String q) async {
+      final query = q.trim();
+      if (query.length < 2) {
+        searchResults.clear();
+        return;
+      }
+      isSearching.value = true;
       try {
-        final res = await dioGet('geo/divisions');
+        final res = await dioGet('geo/search?q=${Uri.encodeComponent(query)}');
         if (res.statusCode == 200 && res.data != null) {
           final data = res.data is Map && res.data['data'] != null
               ? res.data['data']
               : res.data;
-          if (data is Map && data['divisions'] is List) {
-            final list = List<Map<String, dynamic>>.from(data['divisions']);
-            divisions.assignAll(list);
-            if (list.isNotEmpty) {
-              final defaultDiv = list.firstWhere(
-                (d) => d['name']?.toString().toLowerCase() == 'dhaka',
-                orElse: () => list.first,
-              );
-              selectedDivisionId.value = defaultDiv['id']?.toString();
-              await loadDistricts(defaultDiv['id'].toString());
-            }
+          final rawList = (data is Map && data['results'] is List)
+              ? data['results'] as List
+              : (res.data is Map && res.data['results'] is List)
+                  ? res.data['results'] as List
+                  : null;
+          if (rawList != null) {
+            searchResults.assignAll(List<Map<String, dynamic>>.from(rawList));
           }
         }
       } catch (_) {}
-      isLoadingDivisions.value = false;
+      isSearching.value = false;
     }
 
-    loadDivisions();
+    void selectSearchResult(Map<String, dynamic> item) async {
+      searchResults.clear();
+      searchCtrl.clear();
+      final city = item['city'];
+      final zone = item['zone'];
+      final area = item['area'];
+
+      final cityId = city?['id']?.toString();
+      final zoneId = zone?['id']?.toString();
+      final areaId = area?['id']?.toString();
+
+      if (cityId != null) {
+        selectedCityId.value = cityId;
+        await loadZones(cityId, targetZoneId: zoneId, targetAreaId: areaId);
+      }
+    }
+
+    loadCities();
 
     Get.bottomSheet(
       Container(
@@ -295,7 +387,7 @@ class ManageAddressesController extends GetxController
                     color: AppColor.textPrimary,
                   ),
                 ),
-                SizedBox(height: 16.h),
+                SizedBox(height: 14.h),
 
                 // Address Type Selector
                 Obx(
@@ -314,8 +406,8 @@ class ManageAddressesController extends GetxController
                             fontWeight:
                                 isSel ? FontWeight.bold : FontWeight.w500,
                             color: isSel
-                                ? AppColor.textPrimary
-                                : AppColor.textSecondary,
+                                ? AppColor.white
+                                : AppColor.textPrimary,
                           ),
                         ),
                       );
@@ -324,11 +416,23 @@ class ManageAddressesController extends GetxController
                 ),
                 SizedBox(height: 14.h),
 
+                // Full Name
                 TextField(
                   controller: nameCtrl,
-                  decoration: const InputDecoration(labelText: 'Full Name *'),
+                  decoration: InputDecoration(
+                    labelText: 'Full Name *',
+                    labelStyle: GoogleFonts.lato(fontSize: 13.sp),
+                    filled: true,
+                    fillColor: const Color(0xFFF8F9FA),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                  ),
                 ),
                 SizedBox(height: 10.h),
+
+                // Phone Number
                 TextField(
                   controller: phoneCtrl,
                   keyboardType: TextInputType.number,
@@ -336,16 +440,111 @@ class ManageAddressesController extends GetxController
                     FilteringTextInputFormatter.digitsOnly,
                     LengthLimitingTextInputFormatter(11),
                   ],
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Phone Number (11 digits) *',
                     hintText: '01XXXXXXXXX',
+                    labelStyle: GoogleFonts.lato(fontSize: 13.sp),
+                    filled: true,
+                    fillColor: const Color(0xFFF8F9FA),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
                   ),
                 ),
                 SizedBox(height: 10.h),
 
-                // Division Dropdown
+                // Quick Geo Search
+                TextField(
+                  controller: searchCtrl,
+                  decoration: InputDecoration(
+                    hintText: 'Search Area, Zone, or City...',
+                    hintStyle: GoogleFonts.lato(
+                      fontSize: 13.sp,
+                      color: AppColor.textHint,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      size: 18.r,
+                      color: AppColor.textSecondary,
+                    ),
+                    suffixIcon: Obx(
+                      () => isSearching.value
+                          ? SizedBox(
+                              width: 16.r,
+                              height: 16.r,
+                              child: const Center(
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+                    filled: true,
+                    fillColor: const Color(0xFFF8F9FA),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+                  ),
+                  onChanged: (q) => performGeoSearch(q),
+                ),
                 Obx(() {
-                  if (isLoadingDivisions.value) {
+                  if (searchResults.isEmpty) return const SizedBox.shrink();
+                  return Container(
+                    margin: EdgeInsets.only(top: 6.h, bottom: 6.h),
+                    constraints: BoxConstraints(maxHeight: 180.h),
+                    decoration: BoxDecoration(
+                      color: AppColor.white,
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(
+                        color: AppColor.primary.withValues(alpha: 0.3),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColor.black.withValues(alpha: 0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: searchResults.length,
+                      separatorBuilder: (_, _) =>
+                          Divider(height: 1, color: AppColor.border),
+                      itemBuilder: (context, idx) {
+                        final hit = searchResults[idx];
+                        final areaName =
+                            hit['area']?['name'] ?? hit['name'] ?? '';
+                        final zoneName = hit['zone']?['name'] ?? '';
+                        final cityName = hit['city']?['name'] ?? '';
+                        final breadcrumb = [areaName, zoneName, cityName]
+                            .where((s) => s.toString().trim().isNotEmpty)
+                            .join(' › ');
+                        return ListTile(
+                          dense: true,
+                          title: Text(
+                            breadcrumb,
+                            style: GoogleFonts.lato(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColor.textPrimary,
+                            ),
+                          ),
+                          onTap: () => selectSearchResult(hit),
+                        );
+                      },
+                    ),
+                  );
+                }),
+                SizedBox(height: 10.h),
+
+                // City Dropdown
+                Obx(() {
+                  if (isLoadingCities.value) {
                     return Container(
                       height: 50.h,
                       alignment: Alignment.center,
@@ -353,39 +552,46 @@ class ManageAddressesController extends GetxController
                     );
                   }
                   return DropdownButtonFormField<String>(
-                    initialValue: selectedDivisionId.value,
+                    key: ValueKey('city_${selectedCityId.value}'),
+                    initialValue: selectedCityId.value,
                     decoration: InputDecoration(
-                      labelText: 'Division *',
+                      labelText: 'City *',
+                      labelStyle: GoogleFonts.lato(fontSize: 13.sp),
+                      filled: true,
+                      fillColor: const Color(0xFFF8F9FA),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
                       contentPadding: EdgeInsets.symmetric(
                         horizontal: 14.w,
                         vertical: 12.h,
                       ),
                     ),
                     isExpanded: true,
-                    items: divisions.map((d) {
-                      final name = d['name']?.toString() ?? '';
-                      final bnName = d['bnName']?.toString() ?? '';
+                    items: cities.map((c) {
+                      final name = c['name']?.toString() ?? '';
                       return DropdownMenuItem<String>(
-                        value: d['id']?.toString(),
+                        value: c['id']?.toString(),
                         child: Text(
-                          bnName.isNotEmpty ? '$name ($bnName)' : name,
+                          name,
                           style: GoogleFonts.lato(fontSize: 13.sp),
                         ),
                       );
                     }).toList(),
                     onChanged: (val) {
                       if (val != null) {
-                        selectedDivisionId.value = val;
-                        loadDistricts(val);
+                        selectedCityId.value = val;
+                        loadZones(val);
                       }
                     },
                   );
                 }),
                 SizedBox(height: 10.h),
 
-                // District Dropdown
+                // Zone Dropdown
                 Obx(() {
-                  if (isLoadingDistricts.value) {
+                  if (isLoadingZones.value) {
                     return Container(
                       height: 50.h,
                       alignment: Alignment.center,
@@ -393,88 +599,121 @@ class ManageAddressesController extends GetxController
                     );
                   }
                   return DropdownButtonFormField<String>(
-                    initialValue: selectedDistrictId.value,
+                    key: ValueKey('zone_${selectedZoneId.value}'),
+                    initialValue: selectedZoneId.value,
                     decoration: InputDecoration(
-                      labelText: 'District *',
+                      labelText: 'Zone *',
+                      labelStyle: GoogleFonts.lato(fontSize: 13.sp),
+                      filled: true,
+                      fillColor: const Color(0xFFF8F9FA),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
                       contentPadding: EdgeInsets.symmetric(
                         horizontal: 14.w,
                         vertical: 12.h,
                       ),
                     ),
                     isExpanded: true,
-                    items: districts.map((d) {
-                      final name = d['name']?.toString() ?? '';
-                      final bnName = d['bnName']?.toString() ?? '';
+                    items: zones.map((z) {
+                      final name = z['name']?.toString() ?? '';
                       return DropdownMenuItem<String>(
-                        value: d['id']?.toString(),
+                        value: z['id']?.toString(),
                         child: Text(
-                          bnName.isNotEmpty ? '$name ($bnName)' : name,
+                          name,
                           style: GoogleFonts.lato(fontSize: 13.sp),
                         ),
                       );
                     }).toList(),
                     onChanged: (val) {
                       if (val != null) {
-                        selectedDistrictId.value = val;
-                        loadUpazilas(val);
+                        selectedZoneId.value = val;
+                        loadAreas(val);
                       }
                     },
                   );
                 }),
                 SizedBox(height: 10.h),
 
-                // Upazila Dropdown
+                // Area Dropdown
                 Obx(() {
-                  if (isLoadingUpazilas.value) {
+                  if (isLoadingAreas.value) {
                     return Container(
                       height: 50.h,
                       alignment: Alignment.center,
                       child: const CircularProgressIndicator(strokeWidth: 2),
                     );
                   }
+                  if (areas.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
                   return DropdownButtonFormField<String>(
-                    initialValue: selectedUpazilaId.value,
+                    key: ValueKey('area_${selectedAreaId.value}'),
+                    initialValue: selectedAreaId.value,
                     decoration: InputDecoration(
-                      labelText: 'Upazila / Area *',
+                      labelText: 'Area (Selection / Sub-area) *',
+                      labelStyle: GoogleFonts.lato(fontSize: 13.sp),
+                      filled: true,
+                      fillColor: const Color(0xFFF8F9FA),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
                       contentPadding: EdgeInsets.symmetric(
                         horizontal: 14.w,
                         vertical: 12.h,
                       ),
                     ),
                     isExpanded: true,
-                    items: upazilas.map((u) {
-                      final name = u['name']?.toString() ?? '';
-                      final bnName = u['bnName']?.toString() ?? '';
+                    items: areas.map((a) {
+                      final name = a['name']?.toString() ?? '';
                       return DropdownMenuItem<String>(
-                        value: u['id']?.toString(),
+                        value: a['id']?.toString(),
                         child: Text(
-                          bnName.isNotEmpty ? '$name ($bnName)' : name,
+                          name,
                           style: GoogleFonts.lato(fontSize: 13.sp),
                         ),
                       );
                     }).toList(),
                     onChanged: (val) {
                       if (val != null) {
-                        selectedUpazilaId.value = val;
+                        selectedAreaId.value = val;
                       }
                     },
                   );
                 }),
                 SizedBox(height: 10.h),
 
+                // Street / House / Road Details
                 TextField(
                   controller: streetCtrl,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'House / Road / Flat / Area Details *',
+                    labelStyle: GoogleFonts.lato(fontSize: 13.sp),
+                    filled: true,
+                    fillColor: const Color(0xFFF8F9FA),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
                   ),
                 ),
                 SizedBox(height: 10.h),
 
+                // Postal Code
                 TextField(
                   controller: postalCodeCtrl,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Postal Code (e.g. 1205)',
+                    labelStyle: GoogleFonts.lato(fontSize: 13.sp),
+                    filled: true,
+                    fillColor: const Color(0xFFF8F9FA),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
                   ),
                 ),
                 SizedBox(height: 24.h),
@@ -520,7 +759,6 @@ class ManageAddressesController extends GetxController
                               }
 
                               if (phone.length != 11) {
-
                                 Get.snackbar(
                                   'Invalid Phone Number',
                                   'Phone number must be exactly 11 digits',
@@ -531,38 +769,37 @@ class ManageAddressesController extends GetxController
                                 return;
                               }
 
-                              final divItem = divisions.firstWhere(
-                                (d) =>
-                                    d['id']?.toString() ==
-                                    selectedDivisionId.value,
+                              final cityItem = cities.firstWhere(
+                                (c) =>
+                                    c['id']?.toString() ==
+                                    selectedCityId.value,
                                 orElse: () => {},
                               );
-                              final distItem = districts.firstWhere(
-                                (d) =>
-                                    d['id']?.toString() ==
-                                    selectedDistrictId.value,
+                              final zoneItem = zones.firstWhere(
+                                (z) =>
+                                    z['id']?.toString() ==
+                                    selectedZoneId.value,
                                 orElse: () => {},
                               );
-                              final upazilaItem = upazilas.firstWhere(
-                                (u) =>
-                                    u['id']?.toString() ==
-                                    selectedUpazilaId.value,
+                              final areaItem = areas.firstWhere(
+                                (a) =>
+                                    a['id']?.toString() ==
+                                    selectedAreaId.value,
                                 orElse: () => {},
                               );
 
-                              final divName =
-                                  divItem['name']?.toString() ?? '';
-                              final distName =
-                                  distItem['name']?.toString() ?? '';
-                              final upazilaName =
-                                  upazilaItem['name']?.toString() ?? '';
+                              final cityName =
+                                  cityItem['name']?.toString() ?? '';
+                              final zoneName =
+                                  zoneItem['name']?.toString() ?? '';
+                              final areaName =
+                                  areaItem['name']?.toString() ??
+                                      (areas.isEmpty ? zoneName : '');
 
-                              if (divName.isEmpty ||
-                                  distName.isEmpty ||
-                                  upazilaName.isEmpty) {
+                              if (cityName.isEmpty || zoneName.isEmpty) {
                                 Get.snackbar(
                                   'Location Required',
-                                  'Please select Division, District, and Upazila',
+                                  'Please select City and Zone',
                                   snackPosition: SnackPosition.BOTTOM,
                                   backgroundColor: AppColor.error,
                                   colorText: AppColor.white,
@@ -579,9 +816,11 @@ class ManageAddressesController extends GetxController
                                     'fullName': name,
                                     'phone': phone,
                                     'addressLine': street,
-                                    'division': divName,
-                                    'district': distName,
-                                    'upazila': upazilaName,
+                                    'city': cityName,
+                                    'zone': zoneName,
+                                    'area': areaName.isNotEmpty
+                                        ? areaName
+                                        : zoneName,
                                     'postalCode': postal,
                                     'isDefault': addresses.isEmpty,
                                   },

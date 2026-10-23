@@ -229,7 +229,7 @@ class ManageAddressesView extends GetView<ManageAddressesController> {
           SizedBox(height: 4.h),
 
           Text(
-            '${address.street}, ${address.city}, ${address.state} - ${address.pincode}',
+            address.formattedAddress,
             style: GoogleFonts.lato(
               fontSize: 13.5.sp,
               color: AppColor.textSecondary,
