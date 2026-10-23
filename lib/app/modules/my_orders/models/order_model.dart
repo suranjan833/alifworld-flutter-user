@@ -398,12 +398,15 @@ class OrderModel {
 
     String? formattedAddress;
     if (addrObj != null) {
-      final line = addrObj['addressLine']?.toString() ?? '';
-      final upazila = addrObj['upazila']?.toString() ?? '';
-      final district = addrObj['district']?.toString() ?? '';
+      final line = addrObj['addressLine']?.toString() ?? addrObj['street']?.toString() ?? '';
+      final area = addrObj['area']?.toString() ?? addrObj['upazila']?.toString() ?? '';
+      final zone = addrObj['zone']?.toString() ?? '';
+      final city = addrObj['city']?.toString() ?? addrObj['district']?.toString() ?? '';
+
+
       final division = addrObj['division']?.toString() ?? '';
       final postal = addrObj['postalCode']?.toString() ?? '';
-      final parts = [line, upazila, district, division, postal]
+      final parts = [line, area, zone, city, division, postal]
           .where((p) => p.trim().isNotEmpty)
           .toList();
       if (parts.isNotEmpty) {
