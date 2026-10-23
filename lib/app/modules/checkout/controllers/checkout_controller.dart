@@ -528,7 +528,7 @@ class CheckoutController extends GetxController {
       Container(
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColor.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
         ),
         child: ConstrainedBox(
@@ -579,7 +579,7 @@ class CheckoutController extends GetxController {
                             fontWeight: isSel
                                 ? FontWeight.bold
                                 : FontWeight.w500,
-                            color: isSel ? Colors.white : AppColor.textPrimary,
+                            color: isSel ? AppColor.white : AppColor.textPrimary,
                           ),
                         ),
                       );
@@ -610,10 +610,10 @@ class CheckoutController extends GetxController {
                   keyboardType: TextInputType.number,
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(15),
+                    LengthLimitingTextInputFormatter(11),
                   ],
                   decoration: InputDecoration(
-                    labelText: 'Phone Number (e.g. 017xxxxxxxx) *',
+                    labelText: 'Phone Number (11 digits) *',
                     hintText: '01XXXXXXXXX',
                     labelStyle: GoogleFonts.lato(fontSize: 13.sp),
                     filled: true,
@@ -825,7 +825,7 @@ class CheckoutController extends GetxController {
                                   'Please fill all required fields',
                                   snackPosition: SnackPosition.BOTTOM,
                                   backgroundColor: AppColor.error,
-                                  colorText: Colors.white,
+                                  colorText: AppColor.white,
                                 );
                                 return;
                               }
@@ -844,13 +844,13 @@ class CheckoutController extends GetxController {
                                 phone = '0$phone';
                               }
 
-                              if (!RegExp(r'^01[3-9]\d{8}$').hasMatch(phone)) {
+                              if (phone.length != 11) {
                                 Get.snackbar(
                                   'Invalid Phone Number',
-                                  'Please enter a valid 11-digit mobile number (e.g. 017XXXXXXXX)',
+                                  'Phone number must be exactly 11 digits',
                                   snackPosition: SnackPosition.BOTTOM,
                                   backgroundColor: AppColor.error,
-                                  colorText: Colors.white,
+                                  colorText: AppColor.white,
                                   duration: const Duration(seconds: 4),
                                 );
                                 return;
@@ -890,7 +890,7 @@ class CheckoutController extends GetxController {
                                   'Please select Division, District, and Upazila',
                                   snackPosition: SnackPosition.BOTTOM,
                                   backgroundColor: AppColor.error,
-                                  colorText: Colors.white,
+                                  colorText: AppColor.white,
                                 );
                                 return;
                               }
@@ -927,7 +927,7 @@ class CheckoutController extends GetxController {
                                     'Delivery address added successfully',
                                     snackPosition: SnackPosition.BOTTOM,
                                     backgroundColor: const Color(0xFF16A34A),
-                                    colorText: Colors.white,
+                                    colorText: AppColor.white,
                                   );
                                 } else {
                                   String errMsg = 'Failed to save address';
@@ -945,7 +945,7 @@ class CheckoutController extends GetxController {
                                     errMsg,
                                     snackPosition: SnackPosition.BOTTOM,
                                     backgroundColor: AppColor.error,
-                                    colorText: Colors.white,
+                                    colorText: AppColor.white,
                                     duration: const Duration(seconds: 4),
                                   );
                                 }
@@ -956,7 +956,7 @@ class CheckoutController extends GetxController {
                                   'Network error while saving address',
                                   snackPosition: SnackPosition.BOTTOM,
                                   backgroundColor: AppColor.error,
-                                  colorText: Colors.white,
+                                  colorText: AppColor.white,
                                 );
                               }
                             },
@@ -972,7 +972,7 @@ class CheckoutController extends GetxController {
                               width: 22,
                               height: 22,
                               child: CircularProgressIndicator(
-                                color: Colors.white,
+                                color: AppColor.white,
                                 strokeWidth: 2,
                               ),
                             )
@@ -981,7 +981,7 @@ class CheckoutController extends GetxController {
                               style: GoogleFonts.lato(
                                 fontSize: 15.sp,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: AppColor.white,
                               ),
                             ),
                     ),
@@ -1009,7 +1009,7 @@ class CheckoutController extends GetxController {
       'Coupon "$code" applied to order',
       snackPosition: SnackPosition.BOTTOM,
       backgroundColor: const Color(0xFF16A34A),
-      colorText: Colors.white,
+      colorText: AppColor.white,
     );
   }
 
@@ -1030,7 +1030,7 @@ class CheckoutController extends GetxController {
         'Please add a delivery address to complete your order',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColor.error,
-        colorText: Colors.white,
+        colorText: AppColor.white,
       );
       if (Get.context != null) {
         openAddAddressModal(Get.context!);
@@ -1048,7 +1048,7 @@ class CheckoutController extends GetxController {
         'Please select a valid delivery address',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColor.error,
-        colorText: Colors.white,
+        colorText: AppColor.white,
       );
       return;
     }
@@ -1145,14 +1145,14 @@ class CheckoutController extends GetxController {
             'Please log in to your account to place an order',
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: AppColor.error,
-            colorText: Colors.white,
+            colorText: AppColor.white,
             duration: const Duration(seconds: 4),
             mainButton: TextButton(
               onPressed: () => Get.toNamed(Routes.LOGIN),
               child: const Text(
                 'LOG IN',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColor.white,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -1166,7 +1166,7 @@ class CheckoutController extends GetxController {
             'Your wallet balance has changed. Please review before placing order.',
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: const Color(0xFFD97706),
-            colorText: Colors.white,
+            colorText: AppColor.white,
           );
         } else if (errorCode == 'CART_EMPTY') {
           Get.snackbar(
@@ -1174,7 +1174,7 @@ class CheckoutController extends GetxController {
             'Your shopping bag is empty. Please add items to order.',
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: AppColor.error,
-            colorText: Colors.white,
+            colorText: AppColor.white,
           );
         } else if (errorCode == 'INVENTORY_FAILED') {
           Get.snackbar(
@@ -1182,7 +1182,7 @@ class CheckoutController extends GetxController {
             'Some items are currently unavailable. Please adjust quantity.',
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: AppColor.error,
-            colorText: Colors.white,
+            colorText: AppColor.white,
           );
         } else {
           Get.snackbar(
@@ -1190,7 +1190,7 @@ class CheckoutController extends GetxController {
             errorMsg,
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: AppColor.error,
-            colorText: Colors.white,
+            colorText: AppColor.white,
             duration: const Duration(seconds: 4),
           );
         }
@@ -1202,7 +1202,7 @@ class CheckoutController extends GetxController {
         'Unable to reach server. Please check your internet connection.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColor.error,
-        colorText: Colors.white,
+        colorText: AppColor.white,
       );
     }
   }

@@ -16,7 +16,7 @@ class ManageAddressesView extends GetView<ManageAddressesController> {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F5F7),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColor.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
@@ -49,7 +49,7 @@ class ManageAddressesView extends GetView<ManageAddressesController> {
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
             child: Material(
-              color: Colors.white,
+              color: AppColor.white,
               borderRadius: BorderRadius.circular(16.r),
               child: InkWell(
                 onTap: () => controller.openAddAddressSheet(context),
@@ -139,11 +139,11 @@ class ManageAddressesView extends GetView<ManageAddressesController> {
       margin: EdgeInsets.only(bottom: 14.h),
       padding: EdgeInsets.all(16.r),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColor.white,
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: AppColor.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),

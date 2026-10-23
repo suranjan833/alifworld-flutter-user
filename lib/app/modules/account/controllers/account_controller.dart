@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -256,7 +257,7 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
       Container(
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColor.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
         ),
         child: Column(
@@ -368,7 +369,7 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
       Container(
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColor.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
         ),
         child: SingleChildScrollView(
@@ -423,7 +424,7 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
                       child: Center(
                         child: Icon(
                           Icons.person,
-                          color: Colors.white,
+                          color: AppColor.white,
                           size: 40.r,
                         ),
                       ),
@@ -436,12 +437,12 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
                         decoration: BoxDecoration(
                           color: AppColor.primary,
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2.w),
+                          border: Border.all(color: AppColor.white, width: 2.w),
                         ),
                         child: Icon(
                           Iconsax.camera,
                           size: 14.r,
-                          color: Colors.black,
+                          color: AppColor.black,
                         ),
                       ),
                     ),
@@ -540,12 +541,16 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
                 controller: phoneController,
                 readOnly: true,
                 keyboardType: TextInputType.phone,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(11),
+                ],
                 style: GoogleFonts.lato(
                   fontSize: 14.sp,
                   color: const Color(0xFF64748B),
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Enter phone number',
+                  hintText: '01XXXXXXXXX',
                   prefixIcon: Icon(
                     Iconsax.call,
                     size: 20.r,
@@ -588,7 +593,7 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
                         'Please enter your full name',
                         snackPosition: SnackPosition.BOTTOM,
                         backgroundColor: AppColor.error,
-                        colorText: Colors.white,
+                        colorText: AppColor.white,
                       );
                       return;
                     }
@@ -599,7 +604,7 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
                         'Please enter a valid email address',
                         snackPosition: SnackPosition.BOTTOM,
                         backgroundColor: AppColor.error,
-                        colorText: Colors.white,
+                        colorText: AppColor.white,
                       );
                       return;
                     }
@@ -647,7 +652,7 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
                             'Profile updated successfully',
                             snackPosition: SnackPosition.BOTTOM,
                             backgroundColor: AppColor.textPrimary,
-                            colorText: Colors.white,
+                            colorText: AppColor.white,
                             duration: const Duration(seconds: 2),
                           );
                         } else {
@@ -675,7 +680,7 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
                             msg,
                             snackPosition: SnackPosition.BOTTOM,
                             backgroundColor: AppColor.error,
-                            colorText: Colors.white,
+                            colorText: AppColor.white,
                           );
                         }
                       } catch (e) {
@@ -684,7 +689,7 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
                           'Network error. Please try again.',
                           snackPosition: SnackPosition.BOTTOM,
                           backgroundColor: AppColor.error,
-                          colorText: Colors.white,
+                          colorText: AppColor.white,
                         );
                       }
                     } else {
@@ -700,7 +705,7 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
                         'Profile updated successfully',
                         snackPosition: SnackPosition.BOTTOM,
                         backgroundColor: AppColor.textPrimary,
-                        colorText: Colors.white,
+                        colorText: AppColor.white,
                         duration: const Duration(seconds: 2),
                       );
                     }
@@ -819,7 +824,7 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
                         style: GoogleFonts.lato(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                          color: AppColor.white,
                         ),
                       ),
                     ),

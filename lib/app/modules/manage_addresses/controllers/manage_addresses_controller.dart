@@ -124,7 +124,7 @@ class ManageAddressesController extends GetxController
           'Default delivery address updated',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: AppColor.textPrimary,
-          colorText: Colors.white,
+          colorText: AppColor.white,
           duration: const Duration(seconds: 2),
         );
       }
@@ -141,7 +141,7 @@ class ManageAddressesController extends GetxController
           'Address has been removed',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: AppColor.error,
-          colorText: Colors.white,
+          colorText: AppColor.white,
           duration: const Duration(seconds: 2),
         );
       } else {
@@ -150,7 +150,7 @@ class ManageAddressesController extends GetxController
           'Failed to remove address',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: AppColor.error,
-          colorText: Colors.white,
+          colorText: AppColor.white,
         );
       }
     } catch (_) {
@@ -159,7 +159,7 @@ class ManageAddressesController extends GetxController
         'Connection error while removing address',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColor.error,
-        colorText: Colors.white,
+        colorText: AppColor.white,
       );
     }
   }
@@ -264,7 +264,7 @@ class ManageAddressesController extends GetxController
       Container(
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColor.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
         ),
         child: ConstrainedBox(
@@ -334,10 +334,10 @@ class ManageAddressesController extends GetxController
                   keyboardType: TextInputType.number,
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(15),
+                    LengthLimitingTextInputFormatter(11),
                   ],
                   decoration: const InputDecoration(
-                    labelText: 'Phone Number (e.g. 017xxxxxxxx) *',
+                    labelText: 'Phone Number (11 digits) *',
                     hintText: '01XXXXXXXXX',
                   ),
                 ),
@@ -503,7 +503,7 @@ class ManageAddressesController extends GetxController
                                   'Please fill in all required fields',
                                   snackPosition: SnackPosition.BOTTOM,
                                   backgroundColor: AppColor.error,
-                                  colorText: Colors.white,
+                                  colorText: AppColor.white,
                                 );
                                 return;
                               }
@@ -519,14 +519,14 @@ class ManageAddressesController extends GetxController
                                 phone = '0$phone';
                               }
 
-                              if (!RegExp(r'^01[3-9]\d{8}$')
-                                  .hasMatch(phone)) {
+                              if (phone.length != 11) {
+
                                 Get.snackbar(
                                   'Invalid Phone Number',
-                                  'Please enter a valid 11-digit mobile number (01XXXXXXXXX)',
+                                  'Phone number must be exactly 11 digits',
                                   snackPosition: SnackPosition.BOTTOM,
                                   backgroundColor: AppColor.error,
-                                  colorText: Colors.white,
+                                  colorText: AppColor.white,
                                 );
                                 return;
                               }
@@ -565,7 +565,7 @@ class ManageAddressesController extends GetxController
                                   'Please select Division, District, and Upazila',
                                   snackPosition: SnackPosition.BOTTOM,
                                   backgroundColor: AppColor.error,
-                                  colorText: Colors.white,
+                                  colorText: AppColor.white,
                                 );
                                 return;
                               }
@@ -599,7 +599,7 @@ class ManageAddressesController extends GetxController
                                     snackPosition: SnackPosition.BOTTOM,
                                     backgroundColor:
                                         const Color(0xFF16A34A),
-                                    colorText: Colors.white,
+                                    colorText: AppColor.white,
                                   );
                                 } else {
                                   String errMsg = 'Failed to save address';
@@ -618,7 +618,7 @@ class ManageAddressesController extends GetxController
                                     errMsg,
                                     snackPosition: SnackPosition.BOTTOM,
                                     backgroundColor: AppColor.error,
-                                    colorText: Colors.white,
+                                    colorText: AppColor.white,
                                   );
                                 }
                               } catch (_) {
@@ -628,7 +628,7 @@ class ManageAddressesController extends GetxController
                                   'Connection error while saving address',
                                   snackPosition: SnackPosition.BOTTOM,
                                   backgroundColor: AppColor.error,
-                                  colorText: Colors.white,
+                                  colorText: AppColor.white,
                                 );
                               }
                             },
@@ -644,7 +644,7 @@ class ManageAddressesController extends GetxController
                               width: 22,
                               height: 22,
                               child: CircularProgressIndicator(
-                                color: Colors.white,
+                                color: AppColor.white,
                                 strokeWidth: 2,
                               ),
                             )

@@ -14,9 +14,9 @@ class AccountView extends GetView<AccountController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColor.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColor.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
@@ -49,7 +49,7 @@ class AccountView extends GetView<AccountController> {
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                 child: Material(
-                  color: Colors.transparent,
+                  color: AppColor.transparent,
                   child: InkWell(
                     onTap: () => controller.openMyProfile(),
                     borderRadius: BorderRadius.circular(16.r),
@@ -70,7 +70,7 @@ class AccountView extends GetView<AccountController> {
                             child: Center(
                               child: Icon(
                                 Icons.person,
-                                color: Colors.white,
+                                color: AppColor.white,
                                 size: 30.r,
                               ),
                             ),
@@ -140,7 +140,7 @@ class AccountView extends GetView<AccountController> {
               Padding(
                 padding: EdgeInsets.only(left: 16.w, right: 16.w, top: 20.h),
                 child: Material(
-                  color: Colors.white,
+                  color: AppColor.white,
                   borderRadius: BorderRadius.circular(16.r),
                   child: InkWell(
                     onTap: () => controller.logout(),
@@ -216,11 +216,11 @@ class AccountView extends GetView<AccountController> {
           padding: EdgeInsets.symmetric(horizontal: 16.w),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColor.white,
               borderRadius: BorderRadius.circular(16.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.02),
+                  color: AppColor.black.withValues(alpha: 0.02),
                   blurRadius: 10,
                   offset: const Offset(0, 2),
                 ),
@@ -234,7 +234,7 @@ class AccountView extends GetView<AccountController> {
                 return Column(
                   children: [
                     Material(
-                      color: Colors.transparent,
+                      color: AppColor.transparent,
                       child: InkWell(
                         onTap: item.onTap,
                         borderRadius: BorderRadius.vertical(

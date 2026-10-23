@@ -80,7 +80,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
     return Scaffold(
       backgroundColor: const Color(0xFFF6F8FA),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColor.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
@@ -110,7 +110,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                 'Order ID copied to clipboard',
                 snackPosition: SnackPosition.BOTTOM,
                 backgroundColor: AppColor.textPrimary,
-                colorText: Colors.white,
+                colorText: AppColor.white,
                 duration: const Duration(seconds: 2),
               );
             },
@@ -186,11 +186,11 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
       width: double.infinity,
       padding: EdgeInsets.all(18.r),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColor.white,
         borderRadius: BorderRadius.circular(18.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: AppColor.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -338,11 +338,11 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
       width: double.infinity,
       padding: EdgeInsets.all(20.r),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColor.white,
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: AppColor.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -519,7 +519,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
         ),
         child: Icon(
           Icons.check_rounded,
-          color: Colors.white,
+          color: AppColor.white,
           size: 18.r,
         ),
       );
@@ -588,11 +588,11 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
       width: double.infinity,
       padding: EdgeInsets.all(18.r),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColor.white,
         borderRadius: BorderRadius.circular(18.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: AppColor.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -670,11 +670,11 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
       width: double.infinity,
       padding: EdgeInsets.all(18.r),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColor.white,
         borderRadius: BorderRadius.circular(18.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: AppColor.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -865,11 +865,11 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
       width: double.infinity,
       padding: EdgeInsets.all(18.r),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColor.white,
         borderRadius: BorderRadius.circular(18.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: AppColor.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -1160,7 +1160,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                 'Connecting to Alif Support for Order ${o.orderId}',
                 snackPosition: SnackPosition.BOTTOM,
                 backgroundColor: AppColor.textPrimary,
-                colorText: Colors.white,
+                colorText: AppColor.white,
               );
             },
             icon: Icon(Iconsax.message_question, size: 18.r),
@@ -1201,7 +1201,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
       Container(
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 22.h),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColor.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
         ),
         child: SingleChildScrollView(
@@ -1406,7 +1406,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                                 height: 20.r,
                                 child: const CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: Colors.white,
+                                  color: AppColor.white,
                                 ),
                               )
                             : Text(
@@ -1414,7 +1414,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                                 style: GoogleFonts.inter(
                                   fontSize: 14.sp,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  color: AppColor.white,
                                 ),
                               ),
                       ),

@@ -1,6 +1,5 @@
 
 import 'dart:developer' as developer;
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../data/config/app_color.dart';
@@ -204,7 +203,7 @@ class MyOrdersController extends GetxController with SkeletonLoadingMixin {
           'Order $orderId has been cancelled successfully.',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: AppColor.textPrimary,
-          colorText: Colors.white,
+          colorText: AppColor.white,
           duration: const Duration(seconds: 3),
         );
         fetchOrders(isRefresh: true);
@@ -224,7 +223,7 @@ class MyOrdersController extends GetxController with SkeletonLoadingMixin {
           errMsg,
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: AppColor.error,
-          colorText: Colors.white,
+          colorText: AppColor.white,
         );
         return false;
       }
@@ -234,7 +233,7 @@ class MyOrdersController extends GetxController with SkeletonLoadingMixin {
         'Could not cancel order. Please try again.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColor.error,
-        colorText: Colors.white,
+        colorText: AppColor.white,
       );
       return false;
     }

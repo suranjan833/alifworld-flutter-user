@@ -15,7 +15,7 @@ class CheckoutView extends GetView<CheckoutController> {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F5F7),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColor.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
@@ -69,7 +69,7 @@ class CheckoutView extends GetView<CheckoutController> {
                       return Container(
                         padding: EdgeInsets.all(20.r),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColor.white,
                           borderRadius: BorderRadius.circular(16.r),
                         ),
                         child: const Center(
@@ -83,7 +83,7 @@ class CheckoutView extends GetView<CheckoutController> {
                         width: double.infinity,
                         padding: EdgeInsets.all(18.r),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColor.white,
                           borderRadius: BorderRadius.circular(16.r),
                           border: Border.all(color: const Color(0xFFE2E8F0)),
                         ),
@@ -128,7 +128,7 @@ class CheckoutView extends GetView<CheckoutController> {
                                   controller.openAddAddressModal(context),
                               icon: const Icon(
                                 Iconsax.add,
-                                color: Colors.white,
+                                color: AppColor.white,
                                 size: 16,
                               ),
                               label: Text(
@@ -136,7 +136,7 @@ class CheckoutView extends GetView<CheckoutController> {
                                 style: GoogleFonts.lato(
                                   fontSize: 13.5.sp,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  color: AppColor.white,
                                 ),
                               ),
                               style: ElevatedButton.styleFrom(
@@ -175,7 +175,7 @@ class CheckoutView extends GetView<CheckoutController> {
                       child: Container(
                         padding: EdgeInsets.all(16.r),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColor.white,
                           borderRadius: BorderRadius.circular(16.r),
                           border: Border.all(
                             color: const Color(0xFFE2E8F0),
@@ -320,7 +320,7 @@ class CheckoutView extends GetView<CheckoutController> {
                           vertical: 18.h,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColor.white,
                           borderRadius: BorderRadius.circular(16.r),
                         ),
                         child: Center(
@@ -338,7 +338,7 @@ class CheckoutView extends GetView<CheckoutController> {
                     return Container(
                       padding: EdgeInsets.all(14.r),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColor.white,
                         borderRadius: BorderRadius.circular(16.r),
                       ),
                       child: Column(
@@ -447,7 +447,7 @@ class CheckoutView extends GetView<CheckoutController> {
                   Container(
                     padding: EdgeInsets.all(14.r),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColor.white,
                       borderRadius: BorderRadius.circular(16.r),
                     ),
                     child: Obx(() {
@@ -553,7 +553,7 @@ class CheckoutView extends GetView<CheckoutController> {
                     () => Container(
                       padding: EdgeInsets.all(14.r),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColor.white,
                         borderRadius: BorderRadius.circular(16.r),
                       ),
                       child: RadioGroup<String>(
@@ -581,7 +581,7 @@ class CheckoutView extends GetView<CheckoutController> {
                                 child: const Center(
                                   child: Icon(
                                     Icons.credit_card_rounded,
-                                    color: Colors.white,
+                                    color: AppColor.white,
                                     size: 20,
                                   ),
                                 ),
@@ -633,7 +633,7 @@ class CheckoutView extends GetView<CheckoutController> {
                                           color: const Color(0xFF0284C7),
                                           width: 5,
                                         ),
-                                        color: Colors.white,
+                                        color: AppColor.white,
                                       ),
                                     ),
                                     SizedBox(width: 10.w),
@@ -691,7 +691,7 @@ class CheckoutView extends GetView<CheckoutController> {
                     () => Container(
                       padding: EdgeInsets.all(16.r),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColor.white,
                         borderRadius: BorderRadius.circular(16.r),
                       ),
                       child: Column(
@@ -794,7 +794,7 @@ class CheckoutView extends GetView<CheckoutController> {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColor.white,
               border: Border(
                 top: BorderSide(color: const Color(0xFFE2E8F0), width: 1.w),
               ),
@@ -850,7 +850,7 @@ class CheckoutView extends GetView<CheckoutController> {
                                 width: 22,
                                 height: 22,
                                 child: CircularProgressIndicator(
-                                  color: Colors.white,
+                                  color: AppColor.white,
                                   strokeWidth: 2.2,
                                 ),
                               )
@@ -862,7 +862,7 @@ class CheckoutView extends GetView<CheckoutController> {
                                 style: GoogleFonts.lato(
                                   fontSize: 15.sp,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  color: AppColor.white,
                                 ),
                               ),
                       ),
@@ -924,7 +924,7 @@ class CheckoutView extends GetView<CheckoutController> {
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFF0F9FF) : Colors.transparent,
+          color: isSelected ? const Color(0xFFF0F9FF) : AppColor.transparent,
           borderRadius: BorderRadius.circular(12.r),
         ),
         child: Row(
@@ -989,7 +989,7 @@ class CheckoutView extends GetView<CheckoutController> {
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColor.white,
             borderRadius: BorderRadius.circular(10.r),
             border: Border.all(
               color:
@@ -1003,7 +1003,7 @@ class CheckoutView extends GetView<CheckoutController> {
                 width: 20.r,
                 height: 20.r,
                 decoration: BoxDecoration(
-                  color: isChecked ? const Color(0xFFFF630F) : Colors.white,
+                  color: isChecked ? const Color(0xFFFF630F) : AppColor.white,
                   borderRadius: BorderRadius.circular(4.r),
                   border: Border.all(
                     color: isChecked
@@ -1014,7 +1014,7 @@ class CheckoutView extends GetView<CheckoutController> {
                 ),
                 child: isChecked
                     ? const Center(
-                        child: Icon(Icons.check, size: 14, color: Colors.white),
+                        child: Icon(Icons.check, size: 14, color: AppColor.white),
                       )
                     : null,
               ),
@@ -1181,7 +1181,7 @@ class CheckoutView extends GetView<CheckoutController> {
           bottom: 24.h,
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColor.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
         ),
         child: Column(
@@ -1270,7 +1270,7 @@ class CheckoutView extends GetView<CheckoutController> {
                                       : const Color(0xFF94A3B8),
                                   width: isSelected ? 5.5 : 1.5,
                                 ),
-                                color: Colors.white,
+                                color: AppColor.white,
                               ),
                             ),
                             SizedBox(width: 12.w),

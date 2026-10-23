@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -13,9 +14,9 @@ class MyProfileView extends GetView<MyProfileController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColor.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColor.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
@@ -68,7 +69,7 @@ class MyProfileView extends GetView<MyProfileController> {
                               child: Center(
                                 child: Icon(
                                   Icons.person,
-                                  color: Colors.white,
+                                  color: AppColor.white,
                                   size: 46.r,
                                 ),
                               ),
@@ -83,7 +84,7 @@ class MyProfileView extends GetView<MyProfileController> {
                                     'Photo upload will be enabled in an upcoming release.',
                                     snackPosition: SnackPosition.BOTTOM,
                                     backgroundColor: AppColor.textPrimary,
-                                    colorText: Colors.white,
+                                    colorText: AppColor.white,
                                     duration: const Duration(seconds: 2),
                                   );
                                 },
@@ -93,14 +94,14 @@ class MyProfileView extends GetView<MyProfileController> {
                                     color: AppColor.primary,
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: Colors.white,
+                                      color: AppColor.white,
                                       width: 2.5.w,
                                     ),
                                   ),
                                   child: Icon(
                                     Iconsax.camera,
                                     size: 16.r,
-                                    color: Colors.black,
+                                    color: AppColor.black,
                                   ),
                                 ),
                               ),
@@ -148,10 +149,14 @@ class MyProfileView extends GetView<MyProfileController> {
                       SizedBox(height: 6.h),
                       _buildTextField(
                         controller: controller.phoneController,
-                        hint: 'Your phone number',
+                        hint: '01XXXXXXXXX',
                         prefixIcon: Iconsax.call,
                         suffixIcon: Iconsax.lock,
                         keyboardType: TextInputType.phone,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(11),
+                        ],
                         readOnly: true,
                         helperText:
                             'Verified phone number is linked to your login account.',
@@ -211,7 +216,7 @@ class MyProfileView extends GetView<MyProfileController> {
                                     width: 24.r,
                                     height: 24.r,
                                     child: const CircularProgressIndicator(
-                                      color: Colors.white,
+                                      color: AppColor.white,
                                       strokeWidth: 2.5,
                                     ),
                                   )
@@ -220,7 +225,7 @@ class MyProfileView extends GetView<MyProfileController> {
                                     style: GoogleFonts.lato(
                                       fontSize: 16.sp,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.white,
+                                      color: AppColor.white,
                                     ),
                                   ),
                           ),
@@ -253,6 +258,7 @@ class MyProfileView extends GetView<MyProfileController> {
     IconData? suffixIcon,
     TextInputType keyboardType = TextInputType.text,
     bool readOnly = false,
+    List<TextInputFormatter>? inputFormatters,
     String? helperText,
   }) {
     return Column(
@@ -262,6 +268,7 @@ class MyProfileView extends GetView<MyProfileController> {
           controller: controller,
           readOnly: readOnly,
           keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
           style: GoogleFonts.lato(
             fontSize: 15.sp,
             color: readOnly ? const Color(0xFF64748B) : AppColor.textPrimary,

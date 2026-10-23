@@ -158,7 +158,7 @@ class MyProfileController extends GetxController {
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
               primary: AppColor.primary,
-              onPrimary: Colors.black,
+              onPrimary: AppColor.black,
               onSurface: AppColor.textPrimary,
             ),
           ),
@@ -203,7 +203,7 @@ class MyProfileController extends GetxController {
         'Please enter your full name',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColor.error,
-        colorText: Colors.white,
+        colorText: AppColor.white,
       );
       return;
     }
@@ -215,7 +215,7 @@ class MyProfileController extends GetxController {
         'Please enter a valid email address',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColor.error,
-        colorText: Colors.white,
+        colorText: AppColor.white,
       );
       return;
     }
@@ -226,7 +226,7 @@ class MyProfileController extends GetxController {
         'Date of birth cannot be in the future',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColor.error,
-        colorText: Colors.white,
+        colorText: AppColor.white,
       );
       return;
     }
@@ -290,7 +290,7 @@ class MyProfileController extends GetxController {
             'Profile updated successfully',
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: AppColor.textPrimary,
-            colorText: Colors.white,
+            colorText: AppColor.white,
             duration: const Duration(seconds: 2),
           );
         } else {
@@ -320,7 +320,7 @@ class MyProfileController extends GetxController {
             msg,
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: AppColor.error,
-            colorText: Colors.white,
+            colorText: AppColor.white,
           );
         }
       } catch (e) {
@@ -329,7 +329,7 @@ class MyProfileController extends GetxController {
           'Something went wrong. Please check your connection and try again.',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: AppColor.error,
-          colorText: Colors.white,
+          colorText: AppColor.white,
         );
       } finally {
         isSaving.value = false;
@@ -360,7 +360,7 @@ class MyProfileController extends GetxController {
         'Profile updated successfully',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColor.textPrimary,
-        colorText: Colors.white,
+        colorText: AppColor.white,
         duration: const Duration(seconds: 2),
       );
     }
