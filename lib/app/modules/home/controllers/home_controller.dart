@@ -182,9 +182,7 @@ class HomeController extends GetxController with SkeletonLoadingMixin {
                 final slug = rawCat['slug']?.toString() ?? '';
                 final rawImg = rawCat['imageUrl']?.toString();
                 if (slug.isNotEmpty && rawImg != null && rawImg.isNotEmpty) {
-                  final fullImg = rawImg.startsWith('http')
-                      ? rawImg
-                      : 'https://alifworld.vercel.app$rawImg';
+                  final fullImg = resolveImageUrl(rawImg);
                   final catIdx = categories.indexWhere((c) => c.slug == slug);
                   if (catIdx != -1) {
                     categories[catIdx] =
@@ -238,9 +236,7 @@ class HomeController extends GetxController with SkeletonLoadingMixin {
             if (item is Map<String, dynamic>) {
               final b = BrandModel.fromJson(item);
               if (b.name.isNotEmpty) {
-                final logoUrl = b.logoUrl.startsWith('http')
-                    ? b.logoUrl
-                    : 'https://alifworld.vercel.app${b.logoUrl}';
+                final logoUrl = resolveImageUrl(b.logoUrl);
                 final alreadyHas =
                     topBrands.any((element) => element['name'] == b.name);
                 if (!alreadyHas) {
