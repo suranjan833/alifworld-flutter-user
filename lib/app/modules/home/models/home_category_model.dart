@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../data/config/functions/dio_function/app_config.dart';
+
 class HomeCategoryModel {
   final String id;
   final String name;
@@ -27,7 +29,7 @@ class HomeCategoryModel {
     this.bannerTitle = 'DISCOVER ALIF',
     this.bannerSubtitle = 'Best Deals For You',
     this.bannerImage = 'https://images.unsplash.com/photo-1511556532299-8f662fc26c06?q=80&w=1200&auto=format&fit=crop',
-    this.headerBgMobileUrl = 'https://alifworld.vercel.app/category-headers/all-mobile.png',
+    this.headerBgMobileUrl = '/category-headers/all-mobile.png',
     this.imageUrl,
     this.bgColor = const Color(0xFFFAF9F6),
     this.accentColor = const Color(0xFF3760A5),
@@ -39,10 +41,7 @@ class HomeCategoryModel {
 
   String get fullImageUrl {
     if (imageUrl == null || imageUrl!.isEmpty) return '';
-    if (imageUrl!.startsWith('http://') || imageUrl!.startsWith('https://')) {
-      return imageUrl!;
-    }
-    return 'https://alifworld.vercel.app$imageUrl';
+    return resolveImageUrl(imageUrl);
   }
 
   bool get isSvgIcon {
@@ -134,11 +133,9 @@ class HomeCategoryModel {
 
     String mobileHeader = '';
     if (headerBgMobile != null && headerBgMobile.isNotEmpty) {
-      mobileHeader = headerBgMobile.startsWith('http')
-          ? headerBgMobile
-          : 'https://alifworld.vercel.app$headerBgMobile';
+      mobileHeader = resolveImageUrl(headerBgMobile);
     } else {
-      mobileHeader = 'https://alifworld.vercel.app/category-headers/all-mobile.png';
+      mobileHeader = resolveImageUrl('/category-headers/all-mobile.png');
     }
 
     final bannerImages = {

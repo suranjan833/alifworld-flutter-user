@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import '../../../data/config/app_color.dart';
+import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/mixins/skeleton_loading_mixin.dart';
 import '../../bag/controllers/bag_controller.dart';
@@ -47,11 +48,9 @@ class MyWishlistController extends GetxController with SkeletonLoadingMixin {
             List? images = v?['images'] ?? p['images'] ?? (e is Map ? e['images'] as List? : null);
             String img = '';
             if (images != null && images.isNotEmpty && images.first != null) {
-              img = images.first.toString();
-              if (!img.startsWith('http')) img = 'https://alifworld.vercel.app$img';
+              img = resolveImageUrl(images.first.toString());
             } else if (p['image'] != null) {
-              img = p['image'].toString();
-              if (!img.startsWith('http')) img = 'https://alifworld.vercel.app$img';
+              img = resolveImageUrl(p['image'].toString());
             }
 
             final variantId = e['variantId']?.toString() ??

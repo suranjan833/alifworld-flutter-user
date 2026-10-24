@@ -7,6 +7,7 @@ import 'package:iconsax/iconsax.dart';
 
 import '../../../data/config/app_color.dart';
 import '../../../data/config/app_image.dart';
+import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/widgets/brand_logo_widget.dart';
 import '../../../data/widgets/skeleton_box.dart';
 import '../../../data/widgets/typewriter_search_hint.dart';
@@ -1026,8 +1027,8 @@ class HomeView extends GetView<HomeController> {
               false)) {
         headerUrl = controller.showcase.value!.fullHeaderBgMobileUrl;
       }
-      if (headerUrl.isNotEmpty && !headerUrl.startsWith('http')) {
-        headerUrl = 'https://alifworld.vercel.app$headerUrl';
+      if (headerUrl.isNotEmpty) {
+        headerUrl = resolveImageUrl(headerUrl);
       }
 
       return Padding(

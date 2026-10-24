@@ -6,17 +6,15 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+
 import '../../app_color.dart';
 
 final getBox = GetStorage();
 
 // Default API Endpoints
 const String _defaultProdUrl = "https://alifworld.com.bd/api/v1/";
-const String _defaultDebugUrl = "https://alifworld231026.vercel.app/api/v1/";
+const String _defaultDebugUrl = "https://dev.alifworld.com.bd/api/v1/";
 
-/// Resolves BASE_URL automatically:
-/// - In release build (`flutter build apk / appbundle`): uses PROD_BASE_URL (https://alifworld.com.bd/api/v1/)
-/// - In debug build (`flutter run`): uses DEBUG_BASE_URL (https://alifworld231026.vercel.app/api/v1/)
 String resolveBaseUrl() {
   String url;
   if (kReleaseMode) {
@@ -36,6 +34,38 @@ var isDebugMode = (!kReleaseMode).obs;
 void initAppConfig() {
   BASE_URL = resolveBaseUrl();
   isDebugMode.value = !kReleaseMode;
+}
+
+/// Resolves full image URL for relative asset paths (e.g. '/category-icons/electronics.svg')
+/// using the current active BASE_URL host root, while preserving absolute URLs.
+String resolveImageUrl(String? path) {
+  if (path == null) return '';
+  final trimmed = path.trim();
+  if (trimmed.isEmpty) return '';
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    // If it points to an old dead Vercel deployment, rewrite to the active host root
+    if (trimmed.contains('alifworld.vercel.app')) {
+      try {
+        final deadUri = Uri.parse(trimmed);
+        final activeUri = Uri.parse(BASE_URL);
+        final hostRoot =
+            '${activeUri.scheme}://${activeUri.host}${activeUri.hasPort ? ':${activeUri.port}' : ''}';
+        return '$hostRoot${deadUri.path}${deadUri.hasQuery ? '?${deadUri.query}' : ''}';
+      } catch (_) {}
+    }
+    return trimmed;
+  }
+  try {
+    final uri = Uri.parse(BASE_URL);
+    final hostRoot =
+        '${uri.scheme}://${uri.host}${uri.hasPort ? ':${uri.port}' : ''}';
+    if (trimmed.startsWith('/')) {
+      return '$hostRoot$trimmed';
+    }
+    return '$hostRoot/$trimmed';
+  } catch (_) {
+    return trimmed;
+  }
 }
 
 const String USER_ID = "user_id";

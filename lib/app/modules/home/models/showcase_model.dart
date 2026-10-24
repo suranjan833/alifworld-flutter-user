@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../data/config/functions/dio_function/app_config.dart';
+
 Color? parseHexColor(dynamic hexString) {
   if (hexString == null) return null;
   String hex = hexString.toString().trim();
@@ -48,10 +50,7 @@ class BrandModel {
 
   String get fullLogoUrl {
     if (logoUrl.isEmpty) return '';
-    if (logoUrl.startsWith('http://') || logoUrl.startsWith('https://')) {
-      return logoUrl;
-    }
-    return 'https://alifworld.vercel.app$logoUrl';
+    return resolveImageUrl(logoUrl);
   }
 
   bool get isSvg => fullLogoUrl.toLowerCase().contains('.svg');
@@ -96,10 +95,7 @@ class ShowcaseMiniBannerModel {
 
   String get fullImageUrl {
     if (imageUrl.isEmpty) return '';
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      return imageUrl;
-    }
-    return 'https://alifworld.vercel.app$imageUrl';
+    return resolveImageUrl(imageUrl);
   }
 
   Map<String, dynamic> toJson() {
@@ -155,9 +151,7 @@ class ShowcaseProductModel {
 
   String get displayImage {
     if (images.isEmpty) return '';
-    final first = images.first;
-    if (first.startsWith('http://') || first.startsWith('https://')) return first;
-    return 'https://alifworld.vercel.app$first';
+    return resolveImageUrl(images.first);
   }
 
   factory ShowcaseProductModel.fromJson(Map<String, dynamic> json) {
@@ -406,17 +400,12 @@ class ShowcaseModel {
   String get fullHeaderBgMobileUrl {
     final url = headerBgMobileUrl ?? headerBgDesktopUrl;
     if (url == null || url.isEmpty) return '';
-    if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    return 'https://alifworld.vercel.app$url';
+    return resolveImageUrl(url);
   }
 
   String get fullAllCategoryIconUrl {
     if (allCategoryIconUrl == null || allCategoryIconUrl!.isEmpty) return '';
-    if (allCategoryIconUrl!.startsWith('http://') ||
-        allCategoryIconUrl!.startsWith('https://')) {
-      return allCategoryIconUrl!;
-    }
-    return 'https://alifworld.vercel.app$allCategoryIconUrl';
+    return resolveImageUrl(allCategoryIconUrl);
   }
 
   factory ShowcaseModel.fromJson(Map<String, dynamic> json) {

@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../config/app_color.dart';
+import '../config/functions/dio_function/app_config.dart';
 
 class BrandLogoWidget extends StatelessWidget {
   final String logoUrl;
@@ -21,14 +22,7 @@ class BrandLogoWidget extends StatelessWidget {
     this.fit = BoxFit.contain,
   });
 
-  String get _normalizedUrl {
-    final trimmed = logoUrl.trim();
-    if (trimmed.isEmpty) return '';
-    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-      return trimmed;
-    }
-    return 'https://alifworld.vercel.app$trimmed';
-  }
+  String get _normalizedUrl => resolveImageUrl(logoUrl);
 
   bool get _isSvg {
     final lower = _normalizedUrl.toLowerCase();

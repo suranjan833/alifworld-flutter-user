@@ -33,50 +33,49 @@ class _AutoScrollingMiniBannersState extends State<AutoScrollingMiniBanners> {
       id: 'fb-1',
       name: 'Audio & Headphones',
       slug: 'audio-headphones',
-      imageUrl: 'https://alifworld.vercel.app/minibanners/audio-minibanner.png',
+      imageUrl: '/minibanners/audio-minibanner.png',
     ),
     ShowcaseMiniBannerModel(
       id: 'fb-2',
       name: 'Footwear',
       slug: 'footwear',
-      imageUrl: 'https://alifworld.vercel.app/minibanners/footwear-minibanner.png',
+      imageUrl: '/minibanners/footwear-minibanner.png',
     ),
     ShowcaseMiniBannerModel(
       id: 'fb-3',
       name: 'Furniture',
       slug: 'furniture',
-      imageUrl: 'https://alifworld.vercel.app/minibanners/furniture-minibanner.png',
+      imageUrl: '/minibanners/furniture-minibanner.png',
     ),
     ShowcaseMiniBannerModel(
       id: 'fb-4',
       name: 'Laptops & Computers',
       slug: 'laptops-computers',
-      imageUrl: 'https://alifworld.vercel.app/minibanners/laptop-minibanner.png',
+      imageUrl: '/minibanners/laptop-minibanner.png',
     ),
     ShowcaseMiniBannerModel(
       id: 'fb-5',
       name: "Men's Fashion",
       slug: 'mens-fashion',
-      imageUrl:
-          'https://alifworld.vercel.app/minibanners/mens-fashion-minibanner.png',
+      imageUrl: '/minibanners/mens-fashion-minibanner.png',
     ),
     ShowcaseMiniBannerModel(
       id: 'fb-6',
       name: 'Mobile Phones',
       slug: 'mobile-phones',
-      imageUrl: 'https://alifworld.vercel.app/minibanners/mobile-minibanner.png',
+      imageUrl: '/minibanners/mobile-minibanner.png',
     ),
     ShowcaseMiniBannerModel(
       id: 'fb-7',
       name: 'Skincare',
       slug: 'skincare',
-      imageUrl: 'https://alifworld.vercel.app/minibanners/skincare-minibanner.png',
+      imageUrl: '/minibanners/skincare-minibanner.png',
     ),
     ShowcaseMiniBannerModel(
       id: 'fb-8',
       name: 'TVs & Home Theater',
       slug: 'tvs-home-theater',
-      imageUrl: 'https://alifworld.vercel.app/minibanners/tv-minibanner.png',
+      imageUrl: '/minibanners/tv-minibanner.png',
     ),
   ];
 
