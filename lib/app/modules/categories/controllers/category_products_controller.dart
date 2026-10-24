@@ -103,9 +103,8 @@ class CategoryProductsController extends GetxController {
   }
 
   String _getIconForSubcategory(String slug, String? existingIcon) {
-    if (existingIcon != null && existingIcon.isNotEmpty && !existingIcon.endsWith('.svg')) {
-      if (existingIcon.startsWith('http')) return existingIcon;
-      return 'https://alifworld.vercel.app$existingIcon';
+    if (existingIcon != null && existingIcon.isNotEmpty) {
+      return resolveImageUrl(existingIcon);
     }
     switch (slug.toLowerCase()) {
       case 'mobile-phones':

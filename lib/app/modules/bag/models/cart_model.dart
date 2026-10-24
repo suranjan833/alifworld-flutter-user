@@ -1,3 +1,5 @@
+import '../../../data/config/functions/dio_function/app_config.dart';
+
 /// Data models for the Shopping Bag and Cart module.
 /// Represents cart line items, seller groupings, pricing breakdowns, and applied coupons.
 class CartItemModel {
@@ -163,8 +165,8 @@ class CartItemModel {
       }
     }
 
-    if (extractedImage.isNotEmpty && !extractedImage.startsWith('http')) {
-      extractedImage = 'https://alifworld.vercel.app$extractedImage';
+    if (extractedImage.isNotEmpty) {
+      extractedImage = resolveImageUrl(extractedImage);
     }
 
     int? extractedStock;
