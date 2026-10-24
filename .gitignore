@@ -75,3 +75,5 @@ mera_push.ps1
 mera_push.sh
 .env
 .env.example
+.kotlin/
+android/.kotlin/

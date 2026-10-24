@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../../../data/config/app_color.dart';
+import '../../../data/config/functions/dio_function/app_config.dart';
 import '../controllers/checkout_controller.dart';
 
 class CheckoutView extends GetView<CheckoutController> {
@@ -393,10 +394,7 @@ class CheckoutView extends GetView<CheckoutController> {
                               (item['price'] as num?)?.toDouble() ?? 0.0;
                           final qty = (item['quantity'] as num?)?.toInt() ?? 1;
                           final rawImg = item['image'] as String? ?? '';
-                          final imgUrl =
-                              (rawImg.isNotEmpty && !rawImg.startsWith('http'))
-                              ? 'https://alifworld.vercel.app$rawImg'
-                              : rawImg;
+                          final imgUrl = resolveImageUrl(rawImg);
 
                           return Column(
                             children: [
