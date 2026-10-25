@@ -54,19 +54,19 @@ class _AddressFormModalState extends State<AddressFormModal> {
   String _selectedLabel = 'Home';
   bool _isDefault = false;
 
-  // 5-Level Geo Lists
-  List<Map<String, dynamic>> _divisions = [];
-  List<Map<String, dynamic>> _districts = [];
-  List<Map<String, dynamic>> _upazilas = [];
-  List<Map<String, dynamic>> _unions = [];
-  List<Map<String, dynamic>> _areas = [];
+  // 5-Level Geo Lists using typed Geo models
+  List<GeoDivision> _divisions = [];
+  List<GeoDistrict> _districts = [];
+  List<GeoUpazila> _upazilas = [];
+  List<GeoUnion> _unions = [];
+  List<GeoArea> _areas = [];
 
-  // Selected Geo Objects { id, name, type }
-  Map<String, dynamic>? _selectedDivision;
-  Map<String, dynamic>? _selectedDistrict;
-  Map<String, dynamic>? _selectedUpazila;
-  Map<String, dynamic>? _selectedUnion;
-  Map<String, dynamic>? _selectedArea;
+  // Selected Geo Objects
+  GeoDivision? _selectedDivision;
+  GeoDistrict? _selectedDistrict;
+  GeoUpazila? _selectedUpazila;
+  GeoUnion? _selectedUnion;
+  GeoArea? _selectedArea;
 
   // Loading states
   bool _isLoadingDivisions = false;
@@ -77,7 +77,7 @@ class _AddressFormModalState extends State<AddressFormModal> {
   bool _isSaving = false;
 
   // Search state
-  List<Map<String, dynamic>> _searchResults = [];
+  List<GeoSearchResult> _searchResults = [];
   bool _isSearching = false;
   Timer? _searchDebounce;
 
@@ -119,24 +119,25 @@ class _AddressFormModalState extends State<AddressFormModal> {
     super.dispose();
   }
 
-  // --- Normalizes BD phone number to 01XXXXXXXXX ---
+  // Helper to normalize Bangladeshi phone to 01XXXXXXXXX
   String _normalizeBdPhone(String input) {
-    var clean = input.replaceAll(RegExp(r'\D'), '');
-    if (clean.startsWith('880')) {
-      clean = clean.substring(3);
+    var digits = input.replaceAll(RegExp(r'\D'), '');
+    if (digits.startsWith('880')) {
+      digits = digits.substring(3);
     }
-    while (clean.startsWith('0')) {
-      clean = clean.substring(1);
+    if (digits.length == 10 && digits.startsWith('1')) {
+      digits = '0$digits';
     }
-    return '0$clean';
+    return digits;
   }
 
-  bool _isValidBdPhone(String phone) {
-    final normalized = _normalizeBdPhone(phone);
-    return normalized.length == 11 && normalized.startsWith('01');
+  bool _isValidBdPhone(String input) {
+    final normalized = _normalizeBdPhone(input);
+    return RegExp(r'^01[3-9]\d{8}$').hasMatch(normalized);
   }
 
-  // --- Geo API Fetchers ---
+  // --- 5-Level Geo Cascade API Loaders ---
+
   Future<void> _loadDivisions() async {
     setState(() => _isLoadingDivisions = true);
     try {
@@ -145,9 +146,14 @@ class _AddressFormModalState extends State<AddressFormModal> {
         final data = res.data is Map && res.data['data'] != null
             ? res.data['data']
             : res.data;
-        final list = (data is Map && data['divisions'] is List)
-            ? (data['divisions'] as List).cast<Map<String, dynamic>>()
-            : <Map<String, dynamic>>[];
+        final rawList = (data is Map && data['divisions'] is List)
+            ? (data['divisions'] as List)
+            : <dynamic>[];
+        final list = rawList
+            .whereType<Map<String, dynamic>>()
+            .map((j) => GeoDivision.fromJson(j))
+            .toList();
+
         setState(() {
           _divisions = list;
           _isLoadingDivisions = false;
@@ -156,8 +162,12 @@ class _AddressFormModalState extends State<AddressFormModal> {
         // Pre-fill existing address division if editing
         if (widget.address != null && widget.address!.division.isNotEmpty) {
           final target = widget.address!.division.toLowerCase().trim();
+          final targetBn = widget.address!.divisionBn.toLowerCase().trim();
           final match = _divisions.firstWhereOrNull(
-            (d) => d['name']?.toString().toLowerCase().trim() == target,
+            (d) =>
+                d.name.toLowerCase().trim() == target ||
+                (targetBn.isNotEmpty &&
+                    d.bnName.toLowerCase().trim() == targetBn),
           );
           if (match != null) {
             _onSelectDivision(match, prefill: true);
@@ -190,9 +200,13 @@ class _AddressFormModalState extends State<AddressFormModal> {
         final data = res.data is Map && res.data['data'] != null
             ? res.data['data']
             : res.data;
-        final list = (data is Map && data['districts'] is List)
-            ? (data['districts'] as List).cast<Map<String, dynamic>>()
-            : <Map<String, dynamic>>[];
+        final rawList = (data is Map && data['districts'] is List)
+            ? (data['districts'] as List)
+            : <dynamic>[];
+        final list = rawList
+            .whereType<Map<String, dynamic>>()
+            .map((j) => GeoDistrict.fromJson(j))
+            .toList();
 
         setState(() {
           _districts = list;
@@ -201,8 +215,12 @@ class _AddressFormModalState extends State<AddressFormModal> {
 
         if (prefill && widget.address != null) {
           final target = widget.address!.district.toLowerCase().trim();
+          final targetBn = widget.address!.districtBn.toLowerCase().trim();
           final match = _districts.firstWhereOrNull(
-            (d) => d['name']?.toString().toLowerCase().trim() == target,
+            (d) =>
+                d.name.toLowerCase().trim() == target ||
+                (targetBn.isNotEmpty &&
+                    d.bnName.toLowerCase().trim() == targetBn),
           );
           if (match != null) {
             _onSelectDistrict(match, prefill: true);
@@ -233,9 +251,13 @@ class _AddressFormModalState extends State<AddressFormModal> {
         final data = res.data is Map && res.data['data'] != null
             ? res.data['data']
             : res.data;
-        final list = (data is Map && data['upazilas'] is List)
-            ? (data['upazilas'] as List).cast<Map<String, dynamic>>()
-            : <Map<String, dynamic>>[];
+        final rawList = (data is Map && data['upazilas'] is List)
+            ? (data['upazilas'] as List)
+            : <dynamic>[];
+        final list = rawList
+            .whereType<Map<String, dynamic>>()
+            .map((j) => GeoUpazila.fromJson(j))
+            .toList();
 
         setState(() {
           _upazilas = list;
@@ -244,8 +266,12 @@ class _AddressFormModalState extends State<AddressFormModal> {
 
         if (prefill && widget.address != null) {
           final target = widget.address!.upazila.toLowerCase().trim();
+          final targetBn = widget.address!.upazilaBn.toLowerCase().trim();
           final match = _upazilas.firstWhereOrNull(
-            (u) => u['name']?.toString().toLowerCase().trim() == target,
+            (u) =>
+                u.name.toLowerCase().trim() == target ||
+                (targetBn.isNotEmpty &&
+                    u.bnName.toLowerCase().trim() == targetBn),
           );
           if (match != null) {
             _onSelectUpazila(match, prefill: true);
@@ -274,9 +300,13 @@ class _AddressFormModalState extends State<AddressFormModal> {
         final data = res.data is Map && res.data['data'] != null
             ? res.data['data']
             : res.data;
-        final list = (data is Map && data['unions'] is List)
-            ? (data['unions'] as List).cast<Map<String, dynamic>>()
-            : <Map<String, dynamic>>[];
+        final rawList = (data is Map && data['unions'] is List)
+            ? (data['unions'] as List)
+            : <dynamic>[];
+        final list = rawList
+            .whereType<Map<String, dynamic>>()
+            .map((j) => GeoUnion.fromJson(j))
+            .toList();
 
         setState(() {
           _unions = list;
@@ -285,8 +315,12 @@ class _AddressFormModalState extends State<AddressFormModal> {
 
         if (prefill && widget.address != null) {
           final target = widget.address!.union.toLowerCase().trim();
+          final targetBn = widget.address!.unionBn.toLowerCase().trim();
           final match = _unions.firstWhereOrNull(
-            (u) => u['name']?.toString().toLowerCase().trim() == target,
+            (u) =>
+                u.name.toLowerCase().trim() == target ||
+                (targetBn.isNotEmpty &&
+                    u.bnName.toLowerCase().trim() == targetBn),
           );
           if (match != null) {
             _onSelectUnion(match, prefill: true);
@@ -313,18 +347,24 @@ class _AddressFormModalState extends State<AddressFormModal> {
         final data = res.data is Map && res.data['data'] != null
             ? res.data['data']
             : res.data;
-        final list = (data is Map && data['areas'] is List)
-            ? (data['areas'] as List).cast<Map<String, dynamic>>()
-            : <Map<String, dynamic>>[];
+        final rawList = (data is Map && data['areas'] is List)
+            ? (data['areas'] as List)
+            : <dynamic>[];
+        final list = rawList
+            .whereType<Map<String, dynamic>>()
+            .map((j) => GeoArea.fromJson(j))
+            .toList();
 
-        Map<String, dynamic>? fallbackArea;
+        GeoArea? fallbackArea;
         if (list.isEmpty && _selectedUnion != null) {
-          final unionName = _selectedUnion!['name']?.toString() ?? 'Default';
-          fallbackArea = {
-            'id': '',
-            'name': '$unionName Area',
-            'isVirtual': true,
-          };
+          final unionName = _selectedUnion!.name;
+          final unionBn = _selectedUnion!.bnName;
+          fallbackArea = GeoArea(
+            id: '',
+            name: '$unionName Area',
+            bnName: unionBn.isNotEmpty ? '$unionBn এলাকা' : '',
+            isVirtual: true,
+          );
         }
 
         setState(() {
@@ -337,8 +377,12 @@ class _AddressFormModalState extends State<AddressFormModal> {
 
         if (prefill && widget.address != null) {
           final target = widget.address!.area.toLowerCase().trim();
+          final targetBn = widget.address!.areaBn.toLowerCase().trim();
           final match = _areas.firstWhereOrNull(
-            (a) => a['name']?.toString().toLowerCase().trim() == target,
+            (a) =>
+                a.name.toLowerCase().trim() == target ||
+                (targetBn.isNotEmpty &&
+                    a.bnName.toLowerCase().trim() == targetBn),
           );
           if (match != null) {
             setState(() => _selectedArea = match);
@@ -353,24 +397,24 @@ class _AddressFormModalState extends State<AddressFormModal> {
   }
 
   // --- Dropdown Selection Handlers ---
-  void _onSelectDivision(Map<String, dynamic> div, {bool prefill = false}) {
+  void _onSelectDivision(GeoDivision div, {bool prefill = false}) {
     setState(() => _selectedDivision = div);
-    _loadDistricts(div['id'].toString(), prefill: prefill);
+    _loadDistricts(div.id, prefill: prefill);
   }
 
-  void _onSelectDistrict(Map<String, dynamic> dist, {bool prefill = false}) {
+  void _onSelectDistrict(GeoDistrict dist, {bool prefill = false}) {
     setState(() => _selectedDistrict = dist);
-    _loadUpazilas(dist['id'].toString(), prefill: prefill);
+    _loadUpazilas(dist.id, prefill: prefill);
   }
 
-  void _onSelectUpazila(Map<String, dynamic> upz, {bool prefill = false}) {
+  void _onSelectUpazila(GeoUpazila upz, {bool prefill = false}) {
     setState(() => _selectedUpazila = upz);
-    _loadUnions(upz['id'].toString(), prefill: prefill);
+    _loadUnions(upz.id, prefill: prefill);
   }
 
-  void _onSelectUnion(Map<String, dynamic> un, {bool prefill = false}) {
+  void _onSelectUnion(GeoUnion un, {bool prefill = false}) {
     setState(() => _selectedUnion = un);
-    _loadAreas(un['id'].toString(), prefill: prefill);
+    _loadAreas(un.id, prefill: prefill);
   }
 
   // --- Combined Geo Search (GET /geo/search?q=...) ---
@@ -393,9 +437,13 @@ class _AddressFormModalState extends State<AddressFormModal> {
           final data = res.data is Map && res.data['data'] != null
               ? res.data['data']
               : res.data;
-          final list = (data is Map && data['results'] is List)
-              ? (data['results'] as List).cast<Map<String, dynamic>>()
-              : <Map<String, dynamic>>[];
+          final rawList = (data is Map && data['results'] is List)
+              ? (data['results'] as List)
+              : <dynamic>[];
+          final list = rawList
+              .whereType<Map<String, dynamic>>()
+              .map((j) => GeoSearchResult.fromJson(j))
+              .toList();
           setState(() {
             _searchResults = list;
             _isSearching = false;
@@ -409,12 +457,12 @@ class _AddressFormModalState extends State<AddressFormModal> {
     });
   }
 
-  Future<void> _applySearchResult(Map<String, dynamic> item) async {
-    final div = item['division'] as Map<String, dynamic>?;
-    final dist = item['district'] as Map<String, dynamic>?;
-    final upz = item['upazila'] as Map<String, dynamic>?;
-    final un = item['union'] as Map<String, dynamic>?;
-    final ar = item['area'] as Map<String, dynamic>?;
+  Future<void> _applySearchResult(GeoSearchResult hit) async {
+    final div = hit.division;
+    final dist = hit.district;
+    final upz = hit.upazila;
+    final un = hit.union;
+    final ar = hit.area;
 
     setState(() {
       _searchResults = [];
@@ -427,16 +475,16 @@ class _AddressFormModalState extends State<AddressFormModal> {
     });
 
     if (div != null) {
-      await _loadDistricts(div['id'].toString());
+      await _loadDistricts(div.id);
       if (dist != null) {
         setState(() => _selectedDistrict = dist);
-        await _loadUpazilas(dist['id'].toString());
+        await _loadUpazilas(dist.id);
         if (upz != null) {
           setState(() => _selectedUpazila = upz);
-          await _loadUnions(upz['id'].toString());
+          await _loadUnions(upz.id);
           if (un != null) {
             setState(() => _selectedUnion = un);
-            await _loadAreas(un['id'].toString());
+            await _loadAreas(un.id);
             if (ar != null) {
               setState(() => _selectedArea = ar);
             }
@@ -444,24 +492,6 @@ class _AddressFormModalState extends State<AddressFormModal> {
         }
       }
     }
-  }
-
-  // Helper to format union display name with type disambiguation
-  String _formatUnionName(Map<String, dynamic> u) {
-    final name = u['name']?.toString() ?? '';
-    final type = u['type']?.toString().toLowerCase() ?? '';
-    final count = _unions
-        .where(
-          (x) =>
-              x['name']?.toString().toLowerCase().trim() ==
-              name.toLowerCase().trim(),
-        )
-        .length;
-    if (count > 1 && type.isNotEmpty) {
-      final capType = '${type[0].toUpperCase()}${type.substring(1)}';
-      return '$name ($capType)';
-    }
-    return name;
   }
 
   // --- Save / Update Address ---
@@ -524,9 +554,9 @@ class _AddressFormModalState extends State<AddressFormModal> {
     final normalizedPhone = _normalizeBdPhone(rawPhone);
     final isEditing = widget.address != null;
 
-    final isVirtualArea = _selectedArea?['isVirtual'] == true;
+    final isVirtualArea = _selectedArea?.isVirtual == true;
     final areaName = (_areas.isNotEmpty && !isVirtualArea)
-        ? (_selectedArea?['name']?.toString() ?? '')
+        ? (_selectedArea?.name ?? '')
         : '';
 
     final payload = <String, dynamic>{
@@ -534,11 +564,23 @@ class _AddressFormModalState extends State<AddressFormModal> {
       'fullName': name,
       'phone': normalizedPhone,
       'addressLine': addressLine,
-      'division': _selectedDivision!['name']?.toString(),
-      'district': _selectedDistrict!['name']?.toString(),
-      'upazila': _selectedUpazila!['name']?.toString(),
-      'union': _selectedUnion != null ? _selectedUnion!['name']?.toString() : '',
+      'division': _selectedDivision!.name,
+      if (_selectedDivision!.bnName.isNotEmpty)
+        'divisionBn': _selectedDivision!.bnName,
+      'district': _selectedDistrict!.name,
+      if (_selectedDistrict!.bnName.isNotEmpty)
+        'districtBn': _selectedDistrict!.bnName,
+      'upazila': _selectedUpazila!.name,
+      if (_selectedUpazila!.bnName.isNotEmpty)
+        'upazilaBn': _selectedUpazila!.bnName,
+      'union': _selectedUnion != null ? _selectedUnion!.name : '',
+      if (_selectedUnion != null && _selectedUnion!.bnName.isNotEmpty)
+        'unionBn': _selectedUnion!.bnName,
       'area': areaName,
+      if (_selectedArea != null &&
+          _selectedArea!.bnName.isNotEmpty &&
+          !isVirtualArea)
+        'areaBn': _selectedArea!.bnName,
       'postalCode': postalCode,
       'isDefault': _isDefault,
     };
@@ -561,20 +603,17 @@ class _AddressFormModalState extends State<AddressFormModal> {
 
       setState(() => _isSaving = false);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        dynamic rawData = response.data;
-        if (rawData is Map && rawData['data'] != null) {
-          rawData = rawData['data'];
-        }
-        Map<String, dynamic> addrJson = {};
-        if (rawData is Map && rawData['address'] is Map) {
-          addrJson = (rawData['address'] as Map).cast<String, dynamic>();
-        } else if (rawData is Map) {
-          addrJson = rawData.cast<String, dynamic>();
-        }
+      if (response != null &&
+          (response.statusCode == 200 || response.statusCode == 201)) {
+        final resData = response.data is Map && response.data['data'] != null
+            ? response.data['data']
+            : response.data;
+        final savedJson = (resData is Map && resData['address'] is Map)
+            ? (resData['address'] as Map<String, dynamic>)
+            : (resData is Map<String, dynamic> ? resData : payload);
 
         final saved = AddressModel.fromJson(
-          addrJson.isNotEmpty ? addrJson : payload,
+          Map<String, dynamic>.from(savedJson),
         );
 
         showSnack(
@@ -602,8 +641,8 @@ class _AddressFormModalState extends State<AddressFormModal> {
     } catch (e) {
       setState(() => _isSaving = false);
       showSnack(
-        'Address Error',
-        'Something went wrong. Please try again.',
+        'Submission Failed',
+        'Unable to reach server. Please try again.',
         bg: AppColor.red,
       );
     }
@@ -621,20 +660,20 @@ class _AddressFormModalState extends State<AddressFormModal> {
       ),
       child: Column(
         children: [
-          // Drag handle
+          // Drag Handle
           Container(
-            margin: EdgeInsets.symmetric(vertical: 10.h),
+            margin: EdgeInsets.only(top: 10.h, bottom: 6.h),
             width: 44.w,
             height: 4.h,
             decoration: BoxDecoration(
               color: const Color(0xFFCBD5E1),
-              borderRadius: BorderRadius.circular(2.r),
+              borderRadius: BorderRadius.circular(4.r),
             ),
           ),
 
           // Header
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 6.h),
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -725,7 +764,7 @@ class _AddressFormModalState extends State<AddressFormModal> {
                             ),
                             decoration: InputDecoration(
                               hintText:
-                                  'Search e.g. Savar, Banani, Mirpur, Uttara...',
+                                  'Search e.g. Savar, সাভার, Banani, Uttara...',
                               hintStyle: GoogleFonts.lato(
                                 fontSize: 12.5.sp,
                                 color: AppColor.textHint,
@@ -756,22 +795,32 @@ class _AddressFormModalState extends State<AddressFormModal> {
                                 ),
                               ),
                               suffixIcon: _isSearching
-                                  ? Padding(
-                                      padding: EdgeInsets.all(12.r),
-                                      child: SizedBox(
-                                        width: 14.r,
-                                        height: 14.r,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: AppColor.primaryDark,
-                                        ),
+                                  ? Transform.scale(
+                                      scale: 0.5,
+                                      child: const CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: AppColor.primaryDark,
                                       ),
                                     )
-                                  : null,
+                                  : (_searchController.text.isNotEmpty
+                                      ? IconButton(
+                                          icon: const Icon(
+                                            Icons.clear_rounded,
+                                            size: 18,
+                                          ),
+                                          onPressed: () {
+                                            _searchController.clear();
+                                            setState(() {
+                                              _searchResults = [];
+                                              _isSearching = false;
+                                            });
+                                          },
+                                        )
+                                      : null),
                             ),
                           ),
 
-                          // Search Result List
+                          // Search Results List
                           if (_searchResults.isNotEmpty) ...[
                             SizedBox(height: 8.h),
                             Container(
@@ -792,36 +841,34 @@ class _AddressFormModalState extends State<AddressFormModal> {
                                 ),
                                 itemBuilder: (ctx, idx) {
                                   final hit = _searchResults[idx];
-                                  final div = hit['division']?['name'] ?? '';
-                                  final dist = hit['district']?['name'] ?? '';
-                                  final upz = hit['upazila']?['name'] ?? '';
-                                  final un = hit['union']?['name'] ?? '';
-                                  final ar = hit['area']?['name'] ?? '';
-                                  final parts = [ar, un, upz, dist, div]
-                                      .where((p) => p.toString().isNotEmpty)
-                                      .toList();
-                                  final breadcrumb = parts.join(' › ');
-
                                   return InkWell(
                                     onTap: () => _applySearchResult(hit),
                                     child: Padding(
                                       padding: EdgeInsets.symmetric(
-                                        horizontal: 10.w,
-                                        vertical: 8.h,
+                                        horizontal: 14.w,
+                                        vertical: 10.h,
                                       ),
                                       child: Row(
                                         children: [
-                                          Icon(
-                                            Iconsax.location,
-                                            size: 15.r,
-                                            color: AppColor.primary,
+                                          Container(
+                                            padding: EdgeInsets.all(6.r),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFEFF6FF),
+                                              borderRadius:
+                                                  BorderRadius.circular(6.r),
+                                            ),
+                                            child: Icon(
+                                              Iconsax.location,
+                                              size: 14.r,
+                                              color: AppColor.primary,
+                                            ),
                                           ),
-                                          SizedBox(width: 8.w),
+                                          SizedBox(width: 10.w),
                                           Expanded(
                                             child: Text(
-                                              breadcrumb,
+                                              hit.breadcrumb,
                                               style: GoogleFonts.lato(
-                                                fontSize: 12.sp,
+                                                fontSize: 12.5.sp,
                                                 fontWeight: FontWeight.w600,
                                                 color: AppColor.textPrimary,
                                               ),
@@ -856,11 +903,11 @@ class _AddressFormModalState extends State<AddressFormModal> {
                       label: 'Division *',
                       hint: 'Select Division',
                       isLoading: _isLoadingDivisions,
-                      value: _selectedDivision?['name']?.toString(),
-                      items: _divisions.map((d) => d['name'].toString()).toList(),
-                      onChanged: (name) {
+                      value: _selectedDivision?.displayName,
+                      items: _divisions.map((d) => d.displayName).toList(),
+                      onChanged: (displayName) {
                         final match = _divisions.firstWhereOrNull(
-                          (d) => d['name'].toString() == name,
+                          (d) => d.displayName == displayName,
                         );
                         if (match != null) _onSelectDivision(match);
                       },
@@ -874,13 +921,13 @@ class _AddressFormModalState extends State<AddressFormModal> {
                           ? 'Select division first'
                           : 'Select District',
                       isLoading: _isLoadingDistricts,
-                      value: _selectedDistrict?['name']?.toString(),
-                      items: _districts.map((d) => d['name'].toString()).toList(),
+                      value: _selectedDistrict?.displayName,
+                      items: _districts.map((d) => d.displayName).toList(),
                       onChanged: _selectedDivision == null
                           ? null
-                          : (name) {
+                          : (displayName) {
                               final match = _districts.firstWhereOrNull(
-                                (d) => d['name'].toString() == name,
+                                (d) => d.displayName == displayName,
                               );
                               if (match != null) _onSelectDistrict(match);
                             },
@@ -894,23 +941,14 @@ class _AddressFormModalState extends State<AddressFormModal> {
                           ? 'Select district first'
                           : 'Select Upazila / City Corporation',
                       isLoading: _isLoadingUpazilas,
-                      value: _selectedUpazila != null
-                          ? '${_selectedUpazila!['name']}${_selectedUpazila!['type'] == 'city_corporation' ? ' (City Corp)' : ''}'
-                          : null,
-                      items: _upazilas.map((u) {
-                        final isCityCorp = u['type'] == 'city_corporation';
-                        return '${u['name']}${isCityCorp ? ' (City Corp)' : ''}';
-                      }).toList(),
+                      value: _selectedUpazila?.displayName,
+                      items: _upazilas.map((u) => u.displayName).toList(),
                       onChanged: _selectedDistrict == null
                           ? null
-                          : (itemDisplay) {
-                              final match = _upazilas.firstWhereOrNull((u) {
-                                final isCityCorp =
-                                    u['type'] == 'city_corporation';
-                                final disp =
-                                    '${u['name']}${isCityCorp ? ' (City Corp)' : ''}';
-                                return disp == itemDisplay;
-                              });
+                          : (displayName) {
+                              final match = _upazilas.firstWhereOrNull(
+                                (u) => u.displayName == displayName,
+                              );
                               if (match != null) _onSelectUpazila(match);
                             },
                     ),
@@ -925,15 +963,13 @@ class _AddressFormModalState extends State<AddressFormModal> {
                               ? 'No unions for this area'
                               : 'Select Union / Pourashava'),
                       isLoading: _isLoadingUnions,
-                      value: _selectedUnion != null
-                          ? _formatUnionName(_selectedUnion!)
-                          : null,
-                      items: _unions.map(_formatUnionName).toList(),
+                      value: _selectedUnion?.displayName,
+                      items: _unions.map((u) => u.displayName).toList(),
                       onChanged: (_selectedUpazila == null || _unions.isEmpty)
                           ? null
-                          : (unionDisplay) {
+                          : (displayName) {
                               final match = _unions.firstWhereOrNull(
-                                (u) => _formatUnionName(u) == unionDisplay,
+                                (u) => u.displayName == displayName,
                               );
                               if (match != null) _onSelectUnion(match);
                             },
@@ -949,17 +985,17 @@ class _AddressFormModalState extends State<AddressFormModal> {
                               ? 'Loading areas...'
                               : 'Select Area'),
                       isLoading: _isLoadingAreas,
-                      value: _selectedArea?['name']?.toString(),
+                      value: _selectedArea?.displayName,
                       items: _areas.isNotEmpty
-                          ? _areas.map((a) => a['name'].toString()).toList()
+                          ? _areas.map((a) => a.displayName).toList()
                           : (_selectedArea != null
-                              ? [_selectedArea!['name'].toString()]
+                              ? [_selectedArea!.displayName]
                               : const []),
                       onChanged: (_selectedUnion == null || _areas.isEmpty)
                           ? null
-                          : (name) {
+                          : (displayName) {
                               final match = _areas.firstWhereOrNull(
-                                (a) => a['name'].toString() == name,
+                                (a) => a.displayName == displayName,
                               );
                               if (match != null) {
                                 setState(() => _selectedArea = match);
