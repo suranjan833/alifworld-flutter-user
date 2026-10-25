@@ -44,7 +44,7 @@ String resolveImageUrl(String? path) {
   if (trimmed.isEmpty) return '';
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
     // If it points to an old dead Vercel deployment, rewrite to the active host root
-    if (trimmed.contains('alifworld.vercel.app')) {
+    if (trimmed.contains('.vercel.app')) {
       try {
         final deadUri = Uri.parse(trimmed);
         final activeUri = Uri.parse(BASE_URL);
