@@ -1,3 +1,5 @@
+export 'geo_model.dart';
+
 class AddressModel {
   final String id;
   final String userId;
@@ -6,10 +8,15 @@ class AddressModel {
   final String phone;
   final String addressLine;
   final String division;
+  final String divisionBn;
   final String district;
+  final String districtBn;
   final String upazila;
+  final String upazilaBn;
   final String union;
+  final String unionBn;
   final String area;
+  final String areaBn;
   final String postalCode;
   bool isDefault;
   final String? createdAt;
@@ -23,10 +30,15 @@ class AddressModel {
     required this.phone,
     required this.addressLine,
     required this.division,
+    this.divisionBn = '',
     required this.district,
+    this.districtBn = '',
     required this.upazila,
+    this.upazilaBn = '',
     this.union = '',
+    this.unionBn = '',
     this.area = '',
+    this.areaBn = '',
     this.postalCode = '',
     this.isDefault = false,
     this.createdAt,
@@ -62,6 +74,23 @@ class AddressModel {
     return parts.join(', ');
   }
 
+  /// Formatted Bangla address string if bn names are present
+  String get formattedAddressBn {
+    final parts = [
+      addressLine,
+      areaBn.isNotEmpty ? areaBn : area,
+      unionBn.isNotEmpty ? unionBn : union,
+      upazilaBn.isNotEmpty ? upazilaBn : upazila,
+      districtBn.isNotEmpty ? districtBn : district,
+      divisionBn.isNotEmpty ? divisionBn : division,
+    ].where((s) => s.trim().isNotEmpty).toList();
+    final base = parts.isNotEmpty ? parts.join(', ') : addressLine;
+    if (postalCode.trim().isNotEmpty) {
+      return '$base - $postalCode';
+    }
+    return base;
+  }
+
   factory AddressModel.fromJson(Map<String, dynamic> json) {
     String clean(dynamic v) {
       if (v == null) return '';
@@ -84,10 +113,15 @@ class AddressModel {
       json['addressLine'] ?? json['street'] ?? json['address'],
     );
     final division = clean(json['division'] ?? json['state']);
+    final divisionBn = clean(json['divisionBn'] ?? json['division_bn']);
     final district = clean(json['district'] ?? json['city']);
+    final districtBn = clean(json['districtBn'] ?? json['district_bn']);
     final upazila = clean(json['upazila'] ?? json['zone']);
+    final upazilaBn = clean(json['upazilaBn'] ?? json['upazila_bn']);
     final union = clean(json['union']);
+    final unionBn = clean(json['unionBn'] ?? json['union_bn']);
     final area = clean(json['area']);
+    final areaBn = clean(json['areaBn'] ?? json['area_bn']);
     final postalCode = clean(json['postalCode'] ?? json['pincode']);
     final isDefault = json['isDefault'] == true;
 
@@ -99,10 +133,15 @@ class AddressModel {
       phone: phone,
       addressLine: addressLine,
       division: division,
+      divisionBn: divisionBn,
       district: district,
+      districtBn: districtBn,
       upazila: upazila,
+      upazilaBn: upazilaBn,
       union: union,
+      unionBn: unionBn,
       area: area,
+      areaBn: areaBn,
       postalCode: postalCode,
       isDefault: isDefault,
       createdAt: json['createdAt']?.toString(),
@@ -118,13 +157,17 @@ class AddressModel {
       'phone': phone,
       'addressLine': addressLine,
       'division': division,
+      if (divisionBn.isNotEmpty) 'divisionBn': divisionBn,
       'district': district,
+      if (districtBn.isNotEmpty) 'districtBn': districtBn,
       'upazila': upazila,
+      if (upazilaBn.isNotEmpty) 'upazilaBn': upazilaBn,
       'union': union,
+      if (unionBn.isNotEmpty) 'unionBn': unionBn,
       'area': area,
+      if (areaBn.isNotEmpty) 'areaBn': areaBn,
       'postalCode': postalCode,
       'isDefault': isDefault,
     };
   }
 }
-
