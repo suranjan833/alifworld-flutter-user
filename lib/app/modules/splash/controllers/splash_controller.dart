@@ -94,7 +94,15 @@ class SplashController extends GetxController
     if (isLoggedIn) {
       Get.offAllNamed(Routes.MAIN_NAVIGATION);
     } else {
-      Get.offNamed(Routes.LOGIN);
+      final pendingCode = getBox.read(PENDING_REFERRAL_CODE)?.toString();
+      if (pendingCode != null && pendingCode.trim().isNotEmpty) {
+        Get.offAllNamed(
+          Routes.SIGNUP,
+          arguments: {'referralCode': pendingCode.trim()},
+        );
+      } else {
+        Get.offNamed(Routes.LOGIN);
+      }
     }
   }
 

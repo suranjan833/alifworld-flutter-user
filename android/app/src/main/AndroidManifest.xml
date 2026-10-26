@@ -36,6 +36,10 @@
                     android:scheme="https"
                     android:host="alifworld.com.bd"
                     android:pathPrefix="/register" />
+                <data
+                    android:scheme="https"
+                    android:host="dev.alifworld.com.bd"
+                    android:pathPrefix="/register" />
             </intent-filter>
 
             <!-- Custom Scheme: alifworld://register?ref=CODE -->

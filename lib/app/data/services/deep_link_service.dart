@@ -119,8 +119,8 @@ class DeepLinkService extends GetxService {
       } catch (_) {}
     }
 
-    // If not on Sign Up page, navigate to Sign Up
-    if (Get.currentRoute != Routes.SIGNUP) {
+    // If not on Splash or Sign Up page, navigate to Sign Up
+    if (Get.currentRoute != Routes.SPLASH && Get.currentRoute != Routes.SIGNUP) {
       Get.toNamed(Routes.SIGNUP, arguments: {'referralCode': code});
     }
   }
