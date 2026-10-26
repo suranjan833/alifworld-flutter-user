@@ -42,15 +42,13 @@ class SplashController extends GetxController
       ),
     );
 
-    logoSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.15),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: animationController,
-        curve: const Interval(0.0, 0.55, curve: Curves.easeOutCubic),
-      ),
-    );
+    logoSlideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.15), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: animationController,
+            curve: const Interval(0.0, 0.55, curve: Curves.easeOutCubic),
+          ),
+        );
 
     glowPulseAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
@@ -59,15 +57,13 @@ class SplashController extends GetxController
       ),
     );
 
-    taglineSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.35),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: animationController,
-        curve: const Interval(0.45, 0.8, curve: Curves.easeOutCubic),
-      ),
-    );
+    taglineSlideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.35), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: animationController,
+            curve: const Interval(0.45, 0.8, curve: Curves.easeOutCubic),
+          ),
+        );
 
     taglineFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
@@ -90,7 +86,8 @@ class SplashController extends GetxController
     final token = getBox.read(USER_TOKEN);
     final hasToken = token != null && token.toString().trim().isNotEmpty;
     final loggedInVal = getBox.read(IS_USER_LOGGED_IN);
-    final isLoggedIn = (loggedInVal == true || loggedInVal == 'true' || hasToken);
+    final isLoggedIn =
+        (loggedInVal == true || loggedInVal == 'true' || hasToken);
     if (isLoggedIn) {
       Get.offAllNamed(Routes.MAIN_NAVIGATION);
     } else {

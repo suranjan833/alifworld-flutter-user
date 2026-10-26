@@ -420,7 +420,7 @@ class CheckoutController extends GetxController {
         Get.snackbar(
           'Address Removed',
           'Address has been removed',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: AppColor.error,
           colorText: AppColor.white,
           duration: const Duration(seconds: 2),
@@ -429,7 +429,7 @@ class CheckoutController extends GetxController {
         Get.snackbar(
           'Error',
           'Failed to remove address',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: AppColor.error,
           colorText: AppColor.white,
         );
@@ -438,7 +438,7 @@ class CheckoutController extends GetxController {
       Get.snackbar(
         'Error',
         'Connection error while removing address',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: AppColor.error,
         colorText: AppColor.white,
       );
@@ -496,7 +496,7 @@ class CheckoutController extends GetxController {
     Get.snackbar(
       'Promo Applied!',
       'Coupon "$code" applied to order',
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       backgroundColor: const Color(0xFF16A34A),
       colorText: AppColor.white,
     );
@@ -517,7 +517,7 @@ class CheckoutController extends GetxController {
       Get.snackbar(
         'Address Required',
         'Please add a delivery address to complete your order',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: AppColor.error,
         colorText: AppColor.white,
       );
@@ -535,7 +535,7 @@ class CheckoutController extends GetxController {
       Get.snackbar(
         'Address Required',
         'Please select a valid delivery address',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: AppColor.error,
         colorText: AppColor.white,
       );
@@ -632,7 +632,7 @@ class CheckoutController extends GetxController {
           Get.snackbar(
             'Login Required',
             'Please log in to your account to place an order',
-            snackPosition: SnackPosition.BOTTOM,
+            snackPosition: SnackPosition.TOP,
             backgroundColor: AppColor.error,
             colorText: AppColor.white,
             duration: const Duration(seconds: 4),
@@ -653,7 +653,7 @@ class CheckoutController extends GetxController {
           Get.snackbar(
             'Wallet Balance Changed',
             'Your wallet balance has changed. Please review before placing order.',
-            snackPosition: SnackPosition.BOTTOM,
+            snackPosition: SnackPosition.TOP,
             backgroundColor: const Color(0xFFD97706),
             colorText: AppColor.white,
           );
@@ -661,7 +661,7 @@ class CheckoutController extends GetxController {
           Get.snackbar(
             'Cart is Empty',
             'Your shopping bag is empty. Please add items to order.',
-            snackPosition: SnackPosition.BOTTOM,
+            snackPosition: SnackPosition.TOP,
             backgroundColor: AppColor.error,
             colorText: AppColor.white,
           );
@@ -669,7 +669,7 @@ class CheckoutController extends GetxController {
           Get.snackbar(
             'Out of Stock',
             'Some items are currently unavailable. Please adjust quantity.',
-            snackPosition: SnackPosition.BOTTOM,
+            snackPosition: SnackPosition.TOP,
             backgroundColor: AppColor.error,
             colorText: AppColor.white,
           );
@@ -677,7 +677,7 @@ class CheckoutController extends GetxController {
           Get.snackbar(
             'Order Placement Error',
             errorMsg,
-            snackPosition: SnackPosition.BOTTOM,
+            snackPosition: SnackPosition.TOP,
             backgroundColor: AppColor.error,
             colorText: AppColor.white,
             duration: const Duration(seconds: 4),
@@ -689,7 +689,7 @@ class CheckoutController extends GetxController {
       Get.snackbar(
         'Connection Error',
         'Unable to reach server. Please check your internet connection.',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: AppColor.error,
         colorText: AppColor.white,
       );

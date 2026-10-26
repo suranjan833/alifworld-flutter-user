@@ -118,7 +118,7 @@ void showNoInternetDialog({
                             Get.snackbar(
                               'Still Offline',
                               'No active internet detected. Please check Wi-Fi / Mobile Data.',
-                              snackPosition: SnackPosition.BOTTOM,
+                              snackPosition: SnackPosition.TOP,
                               backgroundColor: AppColor.error,
                               colorText: AppColor.white,
                               duration: const Duration(seconds: 2),

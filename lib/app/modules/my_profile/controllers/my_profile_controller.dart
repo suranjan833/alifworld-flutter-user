@@ -201,7 +201,7 @@ class MyProfileController extends GetxController {
       Get.snackbar(
         'Required',
         'Please enter your full name',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: AppColor.error,
         colorText: AppColor.white,
       );
@@ -213,7 +213,7 @@ class MyProfileController extends GetxController {
       Get.snackbar(
         'Invalid Email',
         'Please enter a valid email address',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: AppColor.error,
         colorText: AppColor.white,
       );
@@ -224,7 +224,7 @@ class MyProfileController extends GetxController {
       Get.snackbar(
         'Invalid Date',
         'Date of birth cannot be in the future',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: AppColor.error,
         colorText: AppColor.white,
       );
@@ -288,7 +288,7 @@ class MyProfileController extends GetxController {
           Get.snackbar(
             'Success',
             'Profile updated successfully',
-            snackPosition: SnackPosition.BOTTOM,
+            snackPosition: SnackPosition.TOP,
             backgroundColor: AppColor.textPrimary,
             colorText: AppColor.white,
             duration: const Duration(seconds: 2),
@@ -318,7 +318,7 @@ class MyProfileController extends GetxController {
           Get.snackbar(
             'Update Failed',
             msg,
-            snackPosition: SnackPosition.BOTTOM,
+            snackPosition: SnackPosition.TOP,
             backgroundColor: AppColor.error,
             colorText: AppColor.white,
           );
@@ -327,7 +327,7 @@ class MyProfileController extends GetxController {
         Get.snackbar(
           'Error',
           'Something went wrong. Please check your connection and try again.',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: AppColor.error,
           colorText: AppColor.white,
         );
@@ -358,7 +358,7 @@ class MyProfileController extends GetxController {
       Get.snackbar(
         'Success',
         'Profile updated successfully',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: AppColor.textPrimary,
         colorText: AppColor.white,
         duration: const Duration(seconds: 2),

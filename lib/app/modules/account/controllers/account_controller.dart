@@ -591,7 +591,7 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
                       Get.snackbar(
                         'Required',
                         'Please enter your full name',
-                        snackPosition: SnackPosition.BOTTOM,
+                        snackPosition: SnackPosition.TOP,
                         backgroundColor: AppColor.error,
                         colorText: AppColor.white,
                       );
@@ -602,7 +602,7 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
                       Get.snackbar(
                         'Invalid Email',
                         'Please enter a valid email address',
-                        snackPosition: SnackPosition.BOTTOM,
+                        snackPosition: SnackPosition.TOP,
                         backgroundColor: AppColor.error,
                         colorText: AppColor.white,
                       );
@@ -650,7 +650,7 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
                           Get.snackbar(
                             'Success',
                             'Profile updated successfully',
-                            snackPosition: SnackPosition.BOTTOM,
+                            snackPosition: SnackPosition.TOP,
                             backgroundColor: AppColor.textPrimary,
                             colorText: AppColor.white,
                             duration: const Duration(seconds: 2),
@@ -678,7 +678,7 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
                           Get.snackbar(
                             'Update Failed',
                             msg,
-                            snackPosition: SnackPosition.BOTTOM,
+                            snackPosition: SnackPosition.TOP,
                             backgroundColor: AppColor.error,
                             colorText: AppColor.white,
                           );
@@ -687,7 +687,7 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
                         Get.snackbar(
                           'Error',
                           'Network error. Please try again.',
-                          snackPosition: SnackPosition.BOTTOM,
+                          snackPosition: SnackPosition.TOP,
                           backgroundColor: AppColor.error,
                           colorText: AppColor.white,
                         );
@@ -703,7 +703,7 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
                       Get.snackbar(
                         'Success',
                         'Profile updated successfully',
-                        snackPosition: SnackPosition.BOTTOM,
+                        snackPosition: SnackPosition.TOP,
                         backgroundColor: AppColor.textPrimary,
                         colorText: AppColor.white,
                         duration: const Duration(seconds: 2),

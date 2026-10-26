@@ -32,7 +32,7 @@ class SupportController extends GetxController with SkeletonLoadingMixin {
     Get.snackbar(
       'Live Chat',
       'Connecting to support agent...',
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       backgroundColor: AppColor.primary,
       colorText: AppColor.black,
     );

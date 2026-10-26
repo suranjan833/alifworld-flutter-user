@@ -93,14 +93,11 @@ const String CUSTOMER_ORDER = "customer_order";
 
 void SHOW_SNACKBAR({int? duration, String? message, bool? isSuccess}) {
   final snackbar = GetSnackBar(
+    snackPosition: SnackPosition.TOP,
+    margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+    borderRadius: 10.r,
     icon: Padding(
       padding: EdgeInsets.symmetric(horizontal: 5.w),
-      // child: Image(
-      //   height: 50.h,
-      //   width: 100.w,
-      //   fit: BoxFit.contain,
-      //   image: AssetImage(AppImage.logo),
-      // ),
     ),
     backgroundColor: (isSuccess ?? true) ? AppColor.teal : AppColor.red,
     duration: Duration(milliseconds: duration ?? 2500),

@@ -201,7 +201,7 @@ class MyOrdersController extends GetxController with SkeletonLoadingMixin {
         Get.snackbar(
           'Order Cancelled',
           'Order $orderId has been cancelled successfully.',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: AppColor.textPrimary,
           colorText: AppColor.white,
           duration: const Duration(seconds: 3),
@@ -221,7 +221,7 @@ class MyOrdersController extends GetxController with SkeletonLoadingMixin {
         Get.snackbar(
           'Unable to Cancel',
           errMsg,
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: AppColor.error,
           colorText: AppColor.white,
         );
@@ -231,7 +231,7 @@ class MyOrdersController extends GetxController with SkeletonLoadingMixin {
       Get.snackbar(
         'Cancellation Error',
         'Could not cancel order. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: AppColor.error,
         colorText: AppColor.white,
       );

@@ -177,7 +177,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
       Get.snackbar(
         'Stock Limit Reached',
         'Only ${item.maxStock} items available in stock',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: const Color(0xFFF59E0B),
         colorText: AppColor.white,
         duration: const Duration(seconds: 2),
@@ -220,7 +220,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
           Get.snackbar(
             'Unable to Update',
             errMsg,
-            snackPosition: SnackPosition.BOTTOM,
+            snackPosition: SnackPosition.TOP,
             backgroundColor: AppColor.error,
             colorText: AppColor.white,
             duration: const Duration(seconds: 2),
@@ -292,7 +292,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
     Get.snackbar(
       'Item Removed',
       '${removed.title} removed from bag',
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       backgroundColor: AppColor.textPrimary,
       colorText: AppColor.white,
       duration: const Duration(seconds: 2),
@@ -313,7 +313,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
       Get.snackbar(
         'Login Required',
         'Please log in to add items to your shopping bag',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: AppColor.error,
         colorText: AppColor.white,
         duration: const Duration(seconds: 3),
@@ -377,7 +377,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
       Get.snackbar(
         'Product Option',
         'Please select an available variant on product page',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: AppColor.error,
         colorText: AppColor.white,
       );
@@ -406,7 +406,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
         Get.snackbar(
           'Added to Bag',
           '${item['title'] ?? item['name'] ?? 'Item'} added to your bag',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: const Color(0xFF16A34A),
           colorText: AppColor.white,
           duration: const Duration(seconds: 2),
@@ -424,7 +424,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
         Get.snackbar(
           'Unable to Add',
           errMsg,
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: AppColor.error,
           colorText: AppColor.white,
         );
@@ -439,7 +439,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
         Get.snackbar(
           'Error',
           'Network error while adding to bag',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: AppColor.error,
           colorText: AppColor.white,
         );
@@ -467,7 +467,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
           Get.snackbar(
             'Bag Cleared',
             'All items removed from your shopping bag',
-            snackPosition: SnackPosition.BOTTOM,
+            snackPosition: SnackPosition.TOP,
             backgroundColor: AppColor.textPrimary,
             colorText: AppColor.white,
             duration: const Duration(seconds: 2),
@@ -490,7 +490,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
       Get.snackbar(
         'Login Required',
         'Please log in to proceed to checkout',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: AppColor.error,
         colorText: AppColor.white,
         duration: const Duration(seconds: 3),
@@ -512,7 +512,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
       Get.snackbar(
         'Empty Bag',
         'Please add items to your bag before checking out',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: AppColor.error,
         colorText: AppColor.white,
       );
@@ -569,7 +569,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
         Get.snackbar(
           'Insufficient Stock',
           '${item.title} only has ${item.maxStock} items available',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: AppColor.error,
           colorText: AppColor.white,
           duration: const Duration(seconds: 3),

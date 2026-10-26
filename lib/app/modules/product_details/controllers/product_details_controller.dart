@@ -224,7 +224,7 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
       Get.snackbar(
         'Maximum Stock Reached',
         'Only $maxStock units available',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: AppColor.black87,
         colorText: AppColor.white,
       );
@@ -250,7 +250,7 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
       isWishlisted.value
           ? '${p?.name ?? 'Item'} saved to your wishlist'
           : 'Item removed from wishlist',
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       backgroundColor: AppColor.textPrimary,
       colorText: AppColor.white,
       duration: const Duration(seconds: 2),
@@ -314,7 +314,7 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
       Get.snackbar(
         'Login Required',
         'Please log in to continue with your purchase',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: AppColor.error,
         colorText: AppColor.white,
         duration: const Duration(seconds: 3),

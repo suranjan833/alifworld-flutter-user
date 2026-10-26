@@ -73,7 +73,7 @@ class SellerDetailsController extends GetxController {
       isFollowing.value
           ? 'You are now following ${seller['name']}'
           : 'You unfollowed ${seller['name']}',
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       backgroundColor: AppColor.textPrimary,
       colorText: AppColor.white,
       duration: const Duration(seconds: 2),

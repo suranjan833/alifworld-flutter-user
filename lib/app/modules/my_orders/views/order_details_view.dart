@@ -108,7 +108,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
               Get.snackbar(
                 'Copied',
                 'Order ID copied to clipboard',
-                snackPosition: SnackPosition.BOTTOM,
+                snackPosition: SnackPosition.TOP,
                 backgroundColor: AppColor.textPrimary,
                 colorText: AppColor.white,
                 duration: const Duration(seconds: 2),
@@ -471,7 +471,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                       Get.snackbar(
                         'OTP Copied',
                         'Delivery OTP copied to clipboard',
-                        snackPosition: SnackPosition.BOTTOM,
+                        snackPosition: SnackPosition.TOP,
                         backgroundColor: AppColor.textPrimary,
                         colorText: AppColor.white,
                         duration: const Duration(seconds: 2),
@@ -1397,7 +1397,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
               Get.snackbar(
                 'Customer Support',
                 'Connecting to Alif Support for Order ${o.orderId}',
-                snackPosition: SnackPosition.BOTTOM,
+                snackPosition: SnackPosition.TOP,
                 backgroundColor: AppColor.textPrimary,
                 colorText: AppColor.white,
               );

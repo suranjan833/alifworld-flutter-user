@@ -41,7 +41,7 @@ class ShoppingListController extends GetxController
       Get.snackbar(
         'Added',
         'Item added to shopping list',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: AppColor.textPrimary,
         colorText: AppColor.white,
       );

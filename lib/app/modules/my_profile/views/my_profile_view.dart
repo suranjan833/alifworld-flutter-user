@@ -82,7 +82,7 @@ class MyProfileView extends GetView<MyProfileController> {
                                   Get.snackbar(
                                     'Profile Photo',
                                     'Photo upload will be enabled in an upcoming release.',
-                                    snackPosition: SnackPosition.BOTTOM,
+                                    snackPosition: SnackPosition.TOP,
                                     backgroundColor: AppColor.textPrimary,
                                     colorText: AppColor.white,
                                     duration: const Duration(seconds: 2),

@@ -72,7 +72,7 @@ class ManageAddressesController extends GetxController
         Get.snackbar(
           'Default Address',
           'Default delivery address updated',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: AppColor.textPrimary,
           colorText: AppColor.white,
           duration: const Duration(seconds: 2),
@@ -91,7 +91,7 @@ class ManageAddressesController extends GetxController
         Get.snackbar(
           'Address Removed',
           'Address has been removed',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: AppColor.error,
           colorText: AppColor.white,
           duration: const Duration(seconds: 2),
@@ -100,7 +100,7 @@ class ManageAddressesController extends GetxController
         Get.snackbar(
           'Error',
           'Failed to remove address',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: AppColor.error,
           colorText: AppColor.white,
         );
@@ -109,7 +109,7 @@ class ManageAddressesController extends GetxController
       Get.snackbar(
         'Error',
         'Connection error while removing address',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: AppColor.error,
         colorText: AppColor.white,
       );

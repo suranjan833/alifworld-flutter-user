@@ -28,24 +28,31 @@ class MyWishlistController extends GetxController with SkeletonLoadingMixin {
         if (rawData is List) {
           final items = rawData.map<Map<String, dynamic>>((e) {
             Map<String, dynamic>? v;
-            if (e is Map<String, dynamic> && e['variant'] is Map<String, dynamic>) {
+            if (e is Map<String, dynamic> &&
+                e['variant'] is Map<String, dynamic>) {
               v = e['variant'] as Map<String, dynamic>;
             }
             final p = (v != null && v['product'] is Map<String, dynamic>)
                 ? v['product'] as Map<String, dynamic>
-                : ((e is Map<String, dynamic> && e['product'] is Map<String, dynamic>)
-                    ? e['product'] as Map<String, dynamic>
-                    : (e is Map<String, dynamic> ? e : <String, dynamic>{}));
+                : ((e is Map<String, dynamic> &&
+                          e['product'] is Map<String, dynamic>)
+                      ? e['product'] as Map<String, dynamic>
+                      : (e is Map<String, dynamic> ? e : <String, dynamic>{}));
 
-            final priceMinor = v?['priceMinor'] ?? p['priceMinor'] ?? e['priceMinor'] ?? 0;
+            final priceMinor =
+                v?['priceMinor'] ?? p['priceMinor'] ?? e['priceMinor'] ?? 0;
             final price = (priceMinor / 100.0).toStringAsFixed(2);
 
-            final comparePriceMinor = v?['compareAtPriceMinor'] ?? p['compareAtPriceMinor'] ?? 0;
+            final comparePriceMinor =
+                v?['compareAtPriceMinor'] ?? p['compareAtPriceMinor'] ?? 0;
             final origPrice = comparePriceMinor > priceMinor
                 ? '৳${(comparePriceMinor / 100.0).toStringAsFixed(2)}'
                 : '';
 
-            List? images = v?['images'] ?? p['images'] ?? (e is Map ? e['images'] as List? : null);
+            List? images =
+                v?['images'] ??
+                p['images'] ??
+                (e is Map ? e['images'] as List? : null);
             String img = '';
             if (images != null && images.isNotEmpty && images.first != null) {
               img = resolveImageUrl(images.first.toString());
@@ -53,7 +60,8 @@ class MyWishlistController extends GetxController with SkeletonLoadingMixin {
               img = resolveImageUrl(p['image'].toString());
             }
 
-            final variantId = e['variantId']?.toString() ??
+            final variantId =
+                e['variantId']?.toString() ??
                 v?['id']?.toString() ??
                 p['variantId']?.toString() ??
                 p['id']?.toString() ??
@@ -63,7 +71,8 @@ class MyWishlistController extends GetxController with SkeletonLoadingMixin {
               'id': e['id']?.toString() ?? p['id']?.toString() ?? variantId,
               'productId': p['id']?.toString() ?? '',
               'variantId': variantId,
-              'title': p['title']?.toString() ?? p['name']?.toString() ?? 'Product',
+              'title':
+                  p['title']?.toString() ?? p['name']?.toString() ?? 'Product',
               'brand': p['brand'] is Map
                   ? (p['brand'] as Map)['name']?.toString() ?? 'Alif'
                   : (p['brand']?.toString() ?? 'Alif'),
@@ -93,8 +102,12 @@ class MyWishlistController extends GetxController with SkeletonLoadingMixin {
   /// 2. DELETE /wishlist?variantId={variantId} - Remove specific variant from wishlist
   Future<void> removeItem(String id, [String? variantId]) async {
     final vId = (variantId != null && variantId.isNotEmpty) ? variantId : id;
-    wishlistItems.removeWhere((item) =>
-        item['id'] == id || item['variantId'] == id || item['variantId'] == vId);
+    wishlistItems.removeWhere(
+      (item) =>
+          item['id'] == id ||
+          item['variantId'] == id ||
+          item['variantId'] == vId,
+    );
 
     try {
       await dioDelete('wishlist?variantId=$vId');
@@ -103,7 +116,7 @@ class MyWishlistController extends GetxController with SkeletonLoadingMixin {
     Get.snackbar(
       'Removed',
       'Item removed from wishlist',
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       backgroundColor: AppColor.textPrimary,
       colorText: AppColor.white,
       duration: const Duration(seconds: 2),
@@ -120,7 +133,7 @@ class MyWishlistController extends GetxController with SkeletonLoadingMixin {
     Get.snackbar(
       'Wishlist Cleared',
       'All items removed from your wishlist',
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       backgroundColor: AppColor.textPrimary,
       colorText: AppColor.white,
       duration: const Duration(seconds: 2),
