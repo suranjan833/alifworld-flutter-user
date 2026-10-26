@@ -87,9 +87,22 @@ class LoginView extends GetView<LoginController> {
                     TextFormField(
                       controller: controller.identifierController,
                       keyboardType: TextInputType.text,
+                      inputFormatters: [
+                        _PhoneOrEmailInputFormatter(),
+                      ],
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) {
                           return 'Please enter your phone number';
+                        }
+                        final trimmed = v.trim();
+                        if (!trimmed.contains('@')) {
+                          final digits = trimmed.replaceAll(RegExp(r'\D'), '');
+                          if (digits.length > 11) {
+                            return 'Phone number cannot exceed 11 digits';
+                          }
+                          if (digits.length < 10) {
+                            return 'Please enter a valid 11-digit phone number';
+                          }
                         }
                         return null;
                       },
@@ -263,7 +276,7 @@ class LoginView extends GetView<LoginController> {
                             keyboardType: TextInputType.phone,
                             inputFormatters: [
                               FilteringTextInputFormatter.digitsOnly,
-                              LengthLimitingTextInputFormatter(15),
+                              LengthLimitingTextInputFormatter(11),
                             ],
                             onChanged: (_) => controller.validatePhone(),
                             validator: controller.validatePhoneInput,
@@ -472,5 +485,25 @@ class LoginView extends GetView<LoginController> {
         ),
       ),
     );
+  }
+}
+
+class _PhoneOrEmailInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final text = newValue.text;
+    // If it's an email (contains @ or latin letters), allow standard typing
+    if (text.contains('@') || RegExp(r'[a-zA-Z]').hasMatch(text)) {
+      return newValue;
+    }
+    // If it's digits / phone number, strictly limit to 11 digits
+    final digits = text.replaceAll(RegExp(r'\D'), '');
+    if (digits.length > 11) {
+      return oldValue;
+    }
+    return newValue;
   }
 }

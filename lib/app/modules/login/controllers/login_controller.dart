@@ -86,8 +86,8 @@ class LoginController extends GetxController {
       return 'Please enter your phone number';
     }
     final cleanDigits = value.replaceAll(RegExp(r'\D'), '');
-    if (cleanDigits.length < 10 || cleanDigits.length > 15) {
-      return 'Please enter a valid phone number (at least 10 digits)';
+    if (cleanDigits.length < 10 || cleanDigits.length > 11) {
+      return 'Please enter a valid 11-digit phone number';
     }
     return null;
   }
