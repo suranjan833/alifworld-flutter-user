@@ -5,6 +5,7 @@ import '../../../data/config/app_color.dart';
 import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/models/user_model.dart';
+import '../../../routes/app_pages.dart';
 import '../../account/controllers/account_controller.dart';
 
 class MyProfileController extends GetxController {
@@ -27,8 +28,10 @@ class MyProfileController extends GetxController {
   bool get _hasAuth {
     final token = getBox.read(USER_TOKEN);
     final sessionCookie = getBox.read('SESSION_COOKIE');
+    final isLoggedIn = getBox.read(IS_USER_LOGGED_IN);
     return (token != null && token.toString().trim().isNotEmpty) ||
-        (sessionCookie != null && sessionCookie.toString().trim().isNotEmpty);
+        (sessionCookie != null && sessionCookie.toString().trim().isNotEmpty) ||
+        (isLoggedIn == true || isLoggedIn == 'true');
   }
 
   @override
@@ -41,9 +44,11 @@ class MyProfileController extends GetxController {
     dobController = TextEditingController(text: userDob.value);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_hasAuth) {
-        fetchProfile();
+      if (!_hasAuth) {
+        Get.offNamed(Routes.LOGIN);
+        return;
       }
+      fetchProfile();
     });
   }
 

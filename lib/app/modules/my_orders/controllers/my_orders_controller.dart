@@ -1,11 +1,14 @@
 
 import 'dart:developer' as developer;
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
 import '../../../data/config/app_color.dart';
+import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/mixins/skeleton_loading_mixin.dart';
 import '../../../data/widgets/no_internet_dialog.dart';
+import '../../../routes/app_pages.dart';
 import '../models/order_model.dart';
 
 class MyOrdersController extends GetxController with SkeletonLoadingMixin {
@@ -17,9 +20,24 @@ class MyOrdersController extends GetxController with SkeletonLoadingMixin {
   final isLoadingMore = false.obs;
   final hasInternetError = false.obs;
 
+  bool get _hasAuth {
+    final token = getBox.read(USER_TOKEN);
+    final sessionCookie = getBox.read('SESSION_COOKIE');
+    final isLoggedIn = getBox.read(IS_USER_LOGGED_IN);
+    return (token != null && token.toString().trim().isNotEmpty) ||
+        (sessionCookie != null && sessionCookie.toString().trim().isNotEmpty) ||
+        (isLoggedIn == true || isLoggedIn == 'true');
+  }
+
   @override
   void onInit() {
     super.onInit();
+    if (!_hasAuth) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Get.offNamed(Routes.LOGIN);
+      });
+      return;
+    }
     fetchOrders();
   }
 
