@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'app/data/config/app_color.dart';
 import 'app/data/config/functions/dio_function/app_config.dart';
 import 'app/data/services/app_translations.dart';
+import 'app/data/services/deep_link_service.dart';
 import 'app/routes/app_pages.dart';
 
 void main() async {
@@ -19,6 +20,8 @@ void main() async {
   }
   initAppConfig();
   await GetStorage.init();
+  Get.put(DeepLinkService(), permanent: true);
+  DeepLinkService.to.init();
   runApp(
     ScreenUtilInit(
       designSize: const Size(375, 812),

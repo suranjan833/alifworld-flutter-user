@@ -83,6 +83,10 @@ const String USER_LOGIN = "login_true";
 const String HIDEBUYNOW = "buy_now";
 const String USER_OTP = "MY OTP";
 const String REFERRAL_CODE = "referral_code";
+const String PENDING_REFERRAL_CODE = "pending_referral_code";
+const String INSTALL_REFERRER_CONSUMED = "install_referrer_consumed";
+const String USER_REFRESH_TOKEN = "user_refresh_token";
+const String APP_PACKAGE_NAME = "com.dream.alifbd";
 const String FORGOTFIELD = "forgot-feild-data";
 
 const String CUSTOMER_ORDER = "customer_order";
