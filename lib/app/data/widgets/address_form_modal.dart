@@ -974,10 +974,10 @@ class _AddressFormModalState extends State<AddressFormModal> {
 
                     // 3. Upazila / City Corporation Dropdown
                     _buildDropdown(
-                      label: 'Upazila / City Corporation *',
+                      label: 'Thana / Upazila / City Corporation *',
                       hint: _selectedDistrict == null
                           ? 'Select district first'
-                          : 'Select Upazila / City Corporation',
+                          : 'Select Thana / Upazila / City Corporation',
                       isLoading: _isLoadingUpazilas,
                       value: _selectedUpazila?.displayName,
                       items: _upazilas.map((u) => u.displayName).toList(),
@@ -994,12 +994,12 @@ class _AddressFormModalState extends State<AddressFormModal> {
 
                     // 4. Union / Pourashava Dropdown
                     _buildDropdown(
-                      label: 'Union / Pourashava *',
+                      label: 'Union / Pourashava / Word *',
                       hint: _selectedUpazila == null
                           ? 'Select upazila first'
                           : (_unions.isEmpty
                               ? 'No unions for this area'
-                              : 'Select Union / Pourashava'),
+                              : 'Select Union / Pourashava  / Word'),
                       isLoading: _isLoadingUnions,
                       value: _selectedUnion?.displayName,
                       items: _unions.map((u) => u.displayName).toList(),
