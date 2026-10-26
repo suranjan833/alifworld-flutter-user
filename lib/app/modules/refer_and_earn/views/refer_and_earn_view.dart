@@ -532,15 +532,7 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
               ),
             ],
           ),
-          SizedBox(height: 6.h),
-          Text(
-            'Live settings from server (Admin Configured):',
-            style: GoogleFonts.lato(
-              fontSize: 12.sp,
-              color: AppColor.textSecondary,
-            ),
-          ),
-          SizedBox(height: 12.h),
+          SizedBox(height: 14.h),
 
           ...bonus.levels.map((lvl) {
             final rate = lvl.ratePct;
