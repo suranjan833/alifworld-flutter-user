@@ -64,6 +64,8 @@ class SignupController extends GetxController {
       final phone = args['phone']?.toString() ?? '';
       final token = args['regToken']?.toString() ?? '';
       final country = args['country'];
+      final refCode =
+          args['referralCode']?.toString() ?? args['ref']?.toString();
 
       if (country is CountryModel) {
         selectedCountry.value = country;
@@ -81,6 +83,18 @@ class SignupController extends GetxController {
         regToken.value = token;
         isPhoneVerified.value = true;
         isPhoneOtpSent.value = true;
+      }
+
+      if (refCode != null && refCode.trim().isNotEmpty) {
+        referralCodeController.text = refCode.trim().toUpperCase();
+      }
+    }
+
+    // Prefill pending referral code from storage if field is still empty
+    if (referralCodeController.text.trim().isEmpty) {
+      final pendingCode = getBox.read(PENDING_REFERRAL_CODE)?.toString();
+      if (pendingCode != null && pendingCode.trim().isNotEmpty) {
+        referralCodeController.text = pendingCode.trim().toUpperCase();
       }
     }
   }
@@ -478,6 +492,8 @@ class SignupController extends GetxController {
       final lastName =
           nameParts.length > 1 ? nameParts.sublist(1).join(' ') : firstName;
 
+      final refCode = referralCodeController.text.trim().toUpperCase();
+
       try {
         final response = await dioPost(
           endUrl: 'auth/register/complete',
@@ -488,8 +504,7 @@ class SignupController extends GetxController {
             'lastName': lastName,
             'email': emailController.text.trim(),
             'password': passwordController.text,
-            if (referralCodeController.text.trim().isNotEmpty)
-              'referralCode': referralCodeController.text.trim(),
+            if (refCode.isNotEmpty) 'referralCode': refCode,
           },
           isJson: true,
         );
@@ -497,6 +512,9 @@ class SignupController extends GetxController {
         isLoading.value = false;
 
         if (response.statusCode == 200 || response.statusCode == 201) {
+          // Success: Clear pending referral code
+          getBox.remove(PENDING_REFERRAL_CODE);
+
           if (response.data is Map<String, dynamic>) {
             final dataMap = response.data as Map<String, dynamic>;
             final payload = dataMap['data'] ?? dataMap;
@@ -525,6 +543,39 @@ class SignupController extends GetxController {
               }
             }
           }
+
+          // Step 4 of referral spec: Authenticate to obtain mobile Bearer & refresh tokens
+          try {
+            final tokenRes = await dioPost(
+              endUrl: 'auth/token',
+              data: {
+                'phone': serverPhoneNumber,
+                'password': passwordController.text,
+              },
+              isJson: true,
+            );
+            if (tokenRes.statusCode == 200 || tokenRes.statusCode == 201) {
+              final tData = tokenRes.data is Map
+                  ? (tokenRes.data['data'] ?? tokenRes.data)
+                  : {};
+              final accessToken = tData['accessToken'] ?? tData['token'];
+              final refreshToken = tData['refreshToken'];
+              if (accessToken != null && accessToken.toString().isNotEmpty) {
+                getBox.write(USER_TOKEN, accessToken.toString());
+                getBox.write(IS_USER_LOGGED_IN, true);
+              }
+              if (refreshToken != null && refreshToken.toString().isNotEmpty) {
+                getBox.write(USER_REFRESH_TOKEN, refreshToken.toString());
+              }
+            }
+          } catch (_) {}
+
+          // Prefetch wallets and referrals so registration bonus is fetched
+          try {
+            await dioGet('wallets');
+            await dioGet('referrals');
+          } catch (_) {}
+
           showSnack(
             'Account Created',
             'Welcome, ${nameController.text.trim()}! Account created successfully.',
@@ -532,14 +583,46 @@ class SignupController extends GetxController {
           );
           Get.offAllNamed(Routes.MAIN_NAVIGATION);
         } else {
+          final dynamic data = response.data;
+          String? errCode;
           String msg = 'Could not create account. Please try again.';
-          if (response.data is Map && response.data['message'] != null) {
-            msg = response.data['message'].toString();
-          } else if (response.data is Map &&
-              response.data['error'] is Map &&
-              response.data['error']['message'] != null) {
-            msg = response.data['error']['message'].toString();
+
+          if (data is Map) {
+            errCode = data['error']?.toString();
+            if (data['message'] != null) {
+              msg = data['message'].toString();
+            } else if (data['error'] is Map && data['error']['message'] != null) {
+              msg = data['error']['message'].toString();
+            }
           }
+
+          // Case: Invalid Referral Code (keep form inputs intact so user can correct or clear)
+          if (errCode == 'INVALID_REFERRAL_CODE' ||
+              msg.toLowerCase().contains('referral code does not match') ||
+              msg.toLowerCase().contains('invalid referral code')) {
+            showSnack(
+              'Invalid Referral Code',
+              'This referral code does not match any account. You can correct it or clear it to proceed.',
+              bg: AppColor.red,
+            );
+            return;
+          }
+
+          // Case: User Exists (redirect to sign in)
+          if (response.statusCode == 409 ||
+              errCode == 'USER_EXISTS' ||
+              msg.toLowerCase().contains('already exists')) {
+            showSnack(
+              'Account Exists',
+              'An account with this phone number already exists. Please sign in.',
+              bg: AppColor.red,
+            );
+            Future.delayed(const Duration(milliseconds: 1500), () {
+              Get.offAllNamed(Routes.LOGIN);
+            });
+            return;
+          }
+
           showSnack('Registration Failed', msg, bg: AppColor.red);
         }
       } catch (e) {

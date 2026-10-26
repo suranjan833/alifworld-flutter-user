@@ -4,8 +4,78 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:dio/dio.dart' as DIO;
+import 'package:get/get.dart';
 
+import '../../../../routes/app_pages.dart';
 import 'app_config.dart';
+
+bool _isRefreshing = false;
+
+Future<bool> _refreshToken() async {
+  if (_isRefreshing) return false;
+  _isRefreshing = true;
+
+  final refreshToken = getBox.read(USER_REFRESH_TOKEN);
+  if (refreshToken == null || refreshToken.toString().trim().isEmpty) {
+    _isRefreshing = false;
+    _forceLogout();
+    return false;
+  }
+
+  try {
+    final dio = DIO.Dio(
+      DIO.BaseOptions(
+        connectTimeout: const Duration(seconds: 15),
+        sendTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 15),
+      ),
+    );
+    final url = "${BASE_URL}auth/refresh";
+    final response = await dio.post(
+      url,
+      data: {'refreshToken': refreshToken.toString().trim()},
+      options: DIO.Options(
+        validateStatus: (status) => true,
+        contentType: DIO.Headers.jsonContentType,
+      ),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final resData = response.data is Map
+          ? (response.data['data'] ?? response.data)
+          : {};
+      final newAccessToken = resData['accessToken'] ?? resData['token'];
+      final newRefreshToken = resData['refreshToken'];
+
+      if (newAccessToken != null && newAccessToken.toString().isNotEmpty) {
+        getBox.write(USER_TOKEN, newAccessToken.toString());
+      }
+      if (newRefreshToken != null && newRefreshToken.toString().isNotEmpty) {
+        getBox.write(USER_REFRESH_TOKEN, newRefreshToken.toString());
+      }
+      _isRefreshing = false;
+      return true;
+    } else {
+      _isRefreshing = false;
+      _forceLogout();
+      return false;
+    }
+  } catch (e) {
+    _isRefreshing = false;
+    _forceLogout();
+    return false;
+  }
+}
+
+void _forceLogout() {
+  getBox.remove(USER_TOKEN);
+  getBox.remove(USER_REFRESH_TOKEN);
+  getBox.write(IS_USER_LOGGED_IN, false);
+  try {
+    showSnack('Session Expired', 'Session expired, please sign in.');
+    Get.offAllNamed(Routes.LOGIN);
+  } catch (_) {}
+}
 
 Map<String, String> _getHeaders() {
   final token = getBox.read(USER_TOKEN) ?? '';
@@ -59,7 +129,7 @@ DIO.Dio _createDio() {
   );
 }
 
-Future<DIO.Response<dynamic>> dioGet(String endUrl) async {
+Future<DIO.Response<dynamic>> dioGet(String endUrl, {bool isRetry = false}) async {
   var dio = _createDio();
   var finalUrl = "$BASE_URL$endUrl";
 
@@ -74,6 +144,12 @@ Future<DIO.Response<dynamic>> dioGet(String endUrl) async {
     if (isDebugMode.value) {
       log("\n\nGET: $finalUrl\nHEADERS:\n${jsonEncode(_getHeaders())}\nSTATUS CODE: ${response.statusCode}\n${jsonEncode(response.data)}\n\n");
     }
+    if (response.statusCode == 401 && !isRetry && !endUrl.contains('auth/')) {
+      final refreshed = await _refreshToken();
+      if (refreshed) {
+        return await dioGet(endUrl, isRetry: true);
+      }
+    }
     return response;
   } catch (e) {
     return DIO.Response(
@@ -85,7 +161,7 @@ Future<DIO.Response<dynamic>> dioGet(String endUrl) async {
   }
 }
 
-Future<DIO.Response<dynamic>> dioDelete(String endUrl) async {
+Future<DIO.Response<dynamic>> dioDelete(String endUrl, {bool isRetry = false}) async {
   var dio = _createDio();
   var finalUrl = "$BASE_URL$endUrl";
 
@@ -99,6 +175,12 @@ Future<DIO.Response<dynamic>> dioDelete(String endUrl) async {
     _saveCookieFromResponse(response);
     if (isDebugMode.value) {
       log("\n\nDELETE: $finalUrl\nHEADERS:\n${jsonEncode(_getHeaders())}\nSTATUS CODE: ${response.statusCode}\n${jsonEncode(response.data)}\n\n");
+    }
+    if (response.statusCode == 401 && !isRetry && !endUrl.contains('auth/')) {
+      final refreshed = await _refreshToken();
+      if (refreshed) {
+        return await dioDelete(endUrl, isRetry: true);
+      }
     }
     return response;
   } catch (e) {
@@ -117,6 +199,7 @@ Future<DIO.Response<dynamic>> dioPost({
   bool? isFile,
   bool isJson = false,
   Map<String, String>? customHeaders,
+  bool isRetry = false,
 }) async {
   var finalUrl = "$BASE_URL${endUrl ?? ''}";
   var dio = _createDio();
@@ -139,6 +222,19 @@ Future<DIO.Response<dynamic>> dioPost({
     if (isDebugMode.value) {
       log("\n\nPOST: $finalUrl\nHEADERS:\n${jsonEncode(_getHeaders())}\n${(isFile ?? false) ? '' : 'BODY:${jsonEncode(data)}'}\nSTATUS CODE: ${response.statusCode}\n${jsonEncode(response.data)}\n\n");
     }
+    if (response.statusCode == 401 && !isRetry && (endUrl == null || !endUrl.contains('auth/'))) {
+      final refreshed = await _refreshToken();
+      if (refreshed) {
+        return await dioPost(
+          data: data,
+          endUrl: endUrl,
+          isFile: isFile,
+          isJson: isJson,
+          customHeaders: customHeaders,
+          isRetry: true,
+        );
+      }
+    }
     return response;
   } catch (e) {
     log(e.toString());
@@ -155,6 +251,7 @@ Future<DIO.Response<dynamic>> dioPut({
   Map<String, dynamic>? data,
   String? endUrl,
   bool isJson = true,
+  bool isRetry = false,
 }) async {
   var finalUrl = "$BASE_URL${endUrl ?? ''}";
   var dio = _createDio();
@@ -174,6 +271,17 @@ Future<DIO.Response<dynamic>> dioPut({
     if (isDebugMode.value) {
       log("\n\nPUT: $finalUrl\nHEADERS:\n${jsonEncode(_getHeaders())}\nBODY:${jsonEncode(data)}\nSTATUS CODE: ${response.statusCode}\n${jsonEncode(response.data)}\n\n");
     }
+    if (response.statusCode == 401 && !isRetry && (endUrl == null || !endUrl.contains('auth/'))) {
+      final refreshed = await _refreshToken();
+      if (refreshed) {
+        return await dioPut(
+          data: data,
+          endUrl: endUrl,
+          isJson: isJson,
+          isRetry: true,
+        );
+      }
+    }
     return response;
   } catch (e) {
     log(e.toString());
@@ -190,6 +298,7 @@ Future<DIO.Response<dynamic>> dioPatch({
   Map<String, dynamic>? data,
   String? endUrl,
   bool isJson = true,
+  bool isRetry = false,
 }) async {
   var finalUrl = "$BASE_URL${endUrl ?? ''}";
   var dio = _createDio();
@@ -208,6 +317,17 @@ Future<DIO.Response<dynamic>> dioPatch({
     _saveCookieFromResponse(response);
     if (isDebugMode.value) {
       log("\n\nPATCH: $finalUrl\nHEADERS:\n${jsonEncode(_getHeaders())}\nBODY:${jsonEncode(data)}\nSTATUS CODE: ${response.statusCode}\n${jsonEncode(response.data)}\n\n");
+    }
+    if (response.statusCode == 401 && !isRetry && (endUrl == null || !endUrl.contains('auth/'))) {
+      final refreshed = await _refreshToken();
+      if (refreshed) {
+        return await dioPatch(
+          data: data,
+          endUrl: endUrl,
+          isJson: isJson,
+          isRetry: true,
+        );
+      }
     }
     return response;
   } catch (e) {

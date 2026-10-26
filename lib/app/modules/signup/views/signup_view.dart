@@ -371,14 +371,31 @@ class SignupView extends GetView<SignupController> {
                   ],
                 ),
                 SizedBox(height: 4.h),
-                TextFormField(
-                  controller: controller.referralCodeController,
-                  textCapitalization: TextCapitalization.characters,
-                  style: _inputTextStyle,
-                  decoration: _buildInputDecoration(
-                    hintText: 'Enter referral code (if any)',
-                    prefixIcon: Iconsax.gift,
-                  ),
+                ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: controller.referralCodeController,
+                  builder: (context, value, _) {
+                    return TextFormField(
+                      controller: controller.referralCodeController,
+                      textCapitalization: TextCapitalization.characters,
+                      style: _inputTextStyle,
+                      decoration: _buildInputDecoration(
+                        hintText: 'Enter referral code (if any)',
+                        prefixIcon: Iconsax.gift,
+                      ).copyWith(
+                        suffixIcon: value.text.isNotEmpty
+                            ? IconButton(
+                                icon: Icon(
+                                  Icons.clear,
+                                  size: 18.r,
+                                  color: AppColor.textSecondary,
+                                ),
+                                onPressed: () =>
+                                    controller.referralCodeController.clear(),
+                              )
+                            : null,
+                      ),
+                    );
+                  },
                 ),
 
                 SizedBox(height: 24.h),

@@ -339,6 +339,11 @@ class LoginController extends GetxController {
         } else {
           getBox.write(IS_USER_LOGGED_IN, true);
         }
+        final refreshToken = payload['refreshToken'];
+        if (refreshToken != null &&
+            refreshToken.toString().trim().isNotEmpty) {
+          getBox.write(USER_REFRESH_TOKEN, refreshToken.toString().trim());
+        }
         final user = payload['user'];
         if (user is Map<String, dynamic>) {
           if (user['id'] != null) {
