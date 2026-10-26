@@ -34,13 +34,16 @@ class CategoryProductsController extends GetxController {
     super.onInit();
     final args = Get.arguments;
     if (args != null && args is Map) {
-      if (args.containsKey('name')) {
+      if (args.containsKey('name') && args['name'] != null) {
         categoryName.value = args['name'].toString();
       }
-      if (args.containsKey('image')) {
-        categoryImage.value = args['image'].toString();
+      final rawImg = args['imageUrl'] ?? args['image'] ?? args['icon'];
+      if (rawImg != null &&
+          rawImg.toString() != 'null' &&
+          rawImg.toString().trim().isNotEmpty) {
+        categoryImage.value = rawImg.toString().trim();
       }
-      if (args.containsKey('slug')) {
+      if (args.containsKey('slug') && args['slug'] != null) {
         categorySlug.value = args['slug'].toString();
       }
       if (args.containsKey('brandSlug')) {
@@ -167,6 +170,12 @@ class CategoryProductsController extends GetxController {
               final children = item['children'] as List?;
 
               if (s == currentSlug || n == currentName || s.contains(currentSlug) || currentSlug.contains(s)) {
+                final catImg = item['imageUrl']?.toString() ?? item['image']?.toString();
+                if (catImg != null && catImg != 'null' && catImg.isNotEmpty) {
+                  if (categoryImage.value.isEmpty || categoryImage.value == 'null') {
+                    categoryImage.value = catImg;
+                  }
+                }
                 if (children != null && children.isNotEmpty) {
                   _populateSubCategories(children, parentSlug: s);
                   break;

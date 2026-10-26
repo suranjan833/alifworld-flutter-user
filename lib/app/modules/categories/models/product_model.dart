@@ -1,3 +1,4 @@
+import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../product_details/models/product_details_model.dart';
 
 class ProductModel {
@@ -61,19 +62,22 @@ class ProductModel {
           : double.tryParse(orig.toString());
     }
 
+    List<Map<String, dynamic>>? parsedVariants;
+    if (json['variants'] is List) {
+      parsedVariants = (json['variants'] as List)
+          .whereType<Map<String, dynamic>>()
+          .toList();
+    }
+
     // Check first variant if price is 0
-    if (parsedPrice == 0.0 &&
-        json['variants'] is List &&
-        (json['variants'] as List).isNotEmpty) {
-      final firstVar = (json['variants'] as List).first;
-      if (firstVar is Map<String, dynamic>) {
-        if (firstVar['priceMinor'] is num) {
-          parsedPrice = (firstVar['priceMinor'] as num) / 100.0;
-        }
-        if (firstVar['compareAtPriceMinor'] is num) {
-          parsedOriginalPrice =
-              (firstVar['compareAtPriceMinor'] as num) / 100.0;
-        }
+    if (parsedPrice == 0.0 && parsedVariants != null && parsedVariants.isNotEmpty) {
+      final firstVar = parsedVariants.first;
+      if (firstVar['priceMinor'] is num) {
+        parsedPrice = (firstVar['priceMinor'] as num) / 100.0;
+      }
+      if (firstVar['compareAtPriceMinor'] is num) {
+        parsedOriginalPrice =
+            (firstVar['compareAtPriceMinor'] as num) / 100.0;
       }
     }
 
@@ -89,16 +93,48 @@ class ProductModel {
       if (pct > 0) discountStr = '$pct% OFF';
     }
 
-    List<String>? parsedImages;
+    List<String> parsedImages = [];
     if (json['images'] != null && json['images'] is List) {
-      parsedImages = (json['images'] as List).map((e) => e.toString()).toList();
+      for (var e in json['images'] as List) {
+        if (e != null &&
+            e.toString().trim().isNotEmpty &&
+            e.toString() != 'null') {
+          parsedImages.add(resolveImageUrl(e.toString().trim()));
+        }
+      }
+    } else if (json['image'] != null &&
+        json['image'].toString().trim().isNotEmpty &&
+        json['image'].toString() != 'null') {
+      parsedImages.add(resolveImageUrl(json['image'].toString().trim()));
+    } else if (json['thumbnail'] != null &&
+        json['thumbnail'].toString().trim().isNotEmpty &&
+        json['thumbnail'].toString() != 'null') {
+      parsedImages.add(resolveImageUrl(json['thumbnail'].toString().trim()));
     }
 
-    List<Map<String, dynamic>>? parsedVariants;
-    if (json['variants'] is List) {
-      parsedVariants = (json['variants'] as List)
-          .whereType<Map<String, dynamic>>()
-          .toList();
+    // Fallback to variant images if product-level images list is empty
+    if (parsedImages.isEmpty &&
+        parsedVariants != null &&
+        parsedVariants.isNotEmpty) {
+      for (var v in parsedVariants) {
+        if (v['images'] is List) {
+          for (var img in v['images'] as List) {
+            if (img != null &&
+                img.toString().trim().isNotEmpty &&
+                img.toString() != 'null') {
+              parsedImages.add(resolveImageUrl(img.toString().trim()));
+            }
+          }
+        }
+      }
+    }
+
+    String? primaryImage = parsedImages.isNotEmpty ? parsedImages.first : null;
+    if (primaryImage == null) {
+      final raw = json['image']?.toString() ?? json['thumbnail']?.toString();
+      if (raw != null && raw != 'null' && raw.trim().isNotEmpty) {
+        primaryImage = resolveImageUrl(raw.trim());
+      }
     }
 
     Map<String, dynamic>? parsedSeller;
@@ -115,13 +151,8 @@ class ProductModel {
       price: parsedPrice > 0 ? parsedPrice : 999.0,
       originalPrice: parsedOriginalPrice,
       discount: discountStr,
-      image:
-          json['image']?.toString() ??
-          json['thumbnail']?.toString() ??
-          (parsedImages != null && parsedImages.isNotEmpty
-              ? parsedImages.first
-              : null),
-      images: parsedImages,
+      image: primaryImage,
+      images: parsedImages.isNotEmpty ? parsedImages : null,
       badge: json['badge']?.toString(),
       subCategoryId:
           json['subCategoryId']?.toString() ??

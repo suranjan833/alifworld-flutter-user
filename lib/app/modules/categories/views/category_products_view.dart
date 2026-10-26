@@ -169,7 +169,9 @@ class CategoryProductsView extends GetView<CategoryProductsController> {
               child: BrandLogoWidget(
                 logoUrl: controller.categoryImage.value,
                 brandName: controller.categoryName.value,
-                fit: BoxFit.cover,
+                width: 38.r,
+                height: 38.r,
+                fit: BoxFit.contain,
               ),
             ),
             SizedBox(width: 10.w),
@@ -577,15 +579,36 @@ class CategoryProductsView extends GetView<CategoryProductsController> {
                     color: const Color(0xFFFAFBFC),
                     padding: EdgeInsets.all(10.r),
                     child: Center(
-                      child: Image.network(
-                        imageUrl,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) => Icon(
-                          Iconsax.image,
-                          size: 32.r,
-                          color: AppColor.textSecondary,
-                        ),
-                      ),
+                      child: imageUrl.isEmpty
+                          ? Icon(
+                              Iconsax.image,
+                              size: 32.r,
+                              color: AppColor.textSecondary,
+                            )
+                          : Image.network(
+                              imageUrl,
+                              fit: BoxFit.contain,
+                              loadingBuilder: (context, child, progress) {
+                                if (progress == null) return child;
+                                return Center(
+                                  child: SizedBox(
+                                    width: 20.r,
+                                    height: 20.r,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.r,
+                                      color: AppColor.primary
+                                          .withValues(alpha: 0.5),
+                                    ),
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Icon(
+                                Iconsax.image,
+                                size: 32.r,
+                                color: AppColor.textSecondary,
+                              ),
+                            ),
                     ),
                   ),
 

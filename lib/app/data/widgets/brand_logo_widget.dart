@@ -22,7 +22,11 @@ class BrandLogoWidget extends StatelessWidget {
     this.fit = BoxFit.contain,
   });
 
-  String get _normalizedUrl => resolveImageUrl(logoUrl);
+  String get _normalizedUrl {
+    final trimmed = logoUrl.trim();
+    if (trimmed.isEmpty || trimmed == 'null') return '';
+    return resolveImageUrl(trimmed);
+  }
 
   bool get _isSvg {
     final lower = _normalizedUrl.toLowerCase();
@@ -38,22 +42,25 @@ class BrandLogoWidget extends StatelessWidget {
     }
 
     if (_isSvg) {
-      return SvgPicture.network(
-        url,
-        width: width,
-        height: height,
-        fit: fit,
-        placeholderBuilder: (context) => Center(
-          child: SizedBox(
-            width: 22.r,
-            height: 22.r,
-            child: CircularProgressIndicator(
-              strokeWidth: 2.w,
-              color: AppColor.primary,
+      return Padding(
+        padding: EdgeInsets.all(3.r),
+        child: SvgPicture.network(
+          url,
+          width: width,
+          height: height,
+          fit: fit,
+          placeholderBuilder: (context) => Center(
+            child: SizedBox(
+              width: 18.r,
+              height: 18.r,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.w,
+                color: AppColor.primary,
+              ),
             ),
           ),
+          errorBuilder: (context, error, stackTrace) => _buildFallback(),
         ),
-        errorBuilder: (context, error, stackTrace) => _buildFallback(),
       );
     }
 
@@ -67,8 +74,8 @@ class BrandLogoWidget extends StatelessWidget {
         if (loadingProgress == null) return child;
         return Center(
           child: SizedBox(
-            width: 22.r,
-            height: 22.r,
+            width: 18.r,
+            height: 18.r,
             child: CircularProgressIndicator(
               strokeWidth: 2.w,
               color: AppColor.primary,
@@ -80,6 +87,38 @@ class BrandLogoWidget extends StatelessWidget {
   }
 
   Widget _buildFallback() {
+    final isCompact =
+        (width != null && width! <= 48) || (height != null && height! <= 48);
+
+    if (isCompact) {
+      final initial = brandName.trim().isNotEmpty
+          ? brandName.trim()[0].toUpperCase()
+          : '';
+      return Center(
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: const Color(0xFFEFF6FF),
+          child: Center(
+            child: initial.isNotEmpty
+                ? Text(
+                    initial,
+                    style: GoogleFonts.inter(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColor.primary,
+                    ),
+                  )
+                : Icon(
+                    Icons.category_outlined,
+                    size: 18.r,
+                    color: AppColor.primary,
+                  ),
+          ),
+        ),
+      );
+    }
+
     return Center(
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 6.w),
