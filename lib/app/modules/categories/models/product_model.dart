@@ -93,23 +93,43 @@ class ProductModel {
       if (pct > 0) discountStr = '$pct% OFF';
     }
 
+    String? extractUrl(dynamic item) {
+      if (item == null) return null;
+      if (item is Map) {
+        final raw = item['fileUrl'] ??
+            item['url'] ??
+            item['image'] ??
+            item['src'] ??
+            item['path'];
+        if (raw != null &&
+            raw.toString().trim().isNotEmpty &&
+            raw.toString() != 'null') {
+          return raw.toString().trim();
+        }
+        return null;
+      }
+      final s = item.toString().trim();
+      if (s.isNotEmpty && s != 'null') return s;
+      return null;
+    }
+
     List<String> parsedImages = [];
     if (json['images'] != null && json['images'] is List) {
       for (var e in json['images'] as List) {
-        if (e != null &&
-            e.toString().trim().isNotEmpty &&
-            e.toString() != 'null') {
-          parsedImages.add(resolveImageUrl(e.toString().trim()));
+        final url = extractUrl(e);
+        if (url != null) {
+          parsedImages.add(resolveImageUrl(url));
         }
       }
-    } else if (json['image'] != null &&
-        json['image'].toString().trim().isNotEmpty &&
-        json['image'].toString() != 'null') {
-      parsedImages.add(resolveImageUrl(json['image'].toString().trim()));
-    } else if (json['thumbnail'] != null &&
-        json['thumbnail'].toString().trim().isNotEmpty &&
-        json['thumbnail'].toString() != 'null') {
-      parsedImages.add(resolveImageUrl(json['thumbnail'].toString().trim()));
+    } else {
+      final single = extractUrl(json['image']) ??
+          extractUrl(json['thumbnail']) ??
+          extractUrl(json['fileUrl']) ??
+          extractUrl(json['photo']) ??
+          extractUrl(json['featured_image']);
+      if (single != null) {
+        parsedImages.add(resolveImageUrl(single));
+      }
     }
 
     // Fallback to variant images if product-level images list is empty
@@ -119,11 +139,18 @@ class ProductModel {
       for (var v in parsedVariants) {
         if (v['images'] is List) {
           for (var img in v['images'] as List) {
-            if (img != null &&
-                img.toString().trim().isNotEmpty &&
-                img.toString() != 'null') {
-              parsedImages.add(resolveImageUrl(img.toString().trim()));
+            final url = extractUrl(img);
+            if (url != null) {
+              parsedImages.add(resolveImageUrl(url));
             }
+          }
+        } else {
+          final vSingle = extractUrl(v['image']) ??
+              extractUrl(v['thumbnail']) ??
+              extractUrl(v['fileUrl']) ??
+              extractUrl(v['src']);
+          if (vSingle != null) {
+            parsedImages.add(resolveImageUrl(vSingle));
           }
         }
       }
@@ -131,9 +158,12 @@ class ProductModel {
 
     String? primaryImage = parsedImages.isNotEmpty ? parsedImages.first : null;
     if (primaryImage == null) {
-      final raw = json['image']?.toString() ?? json['thumbnail']?.toString();
-      if (raw != null && raw != 'null' && raw.trim().isNotEmpty) {
-        primaryImage = resolveImageUrl(raw.trim());
+      final raw = extractUrl(json['image']) ??
+          extractUrl(json['thumbnail']) ??
+          extractUrl(json['fileUrl']) ??
+          extractUrl(json['photo']);
+      if (raw != null) {
+        primaryImage = resolveImageUrl(raw);
       }
     }
 
