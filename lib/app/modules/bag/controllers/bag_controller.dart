@@ -486,6 +486,28 @@ class BagController extends GetxController with SkeletonLoadingMixin {
       return;
     }
 
+    if (!_hasAuth) {
+      Get.snackbar(
+        'Login Required',
+        'Please log in to proceed to checkout',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColor.error,
+        colorText: AppColor.white,
+        duration: const Duration(seconds: 3),
+        mainButton: TextButton(
+          onPressed: () => Get.toNamed(Routes.LOGIN),
+          child: const Text(
+            'LOG IN',
+            style: TextStyle(
+              color: AppColor.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
     if (cartItems.isEmpty) {
       Get.snackbar(
         'Empty Bag',

@@ -770,16 +770,6 @@ class HomeView extends GetView<HomeController> {
                   }
                   final bagCtrl = Get.find<BagController>();
                   await bagCtrl.addItemToBag(product);
-                  await bagCtrl.fetchCart(showLoading: false, force: true);
-                  bagCtrl.cartItems.refresh();
-                  Get.snackbar(
-                    'Added to Bag',
-                    '${product['title'] ?? product['name'] ?? "Item"} added to shopping bag',
-                    snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: AppColor.primary,
-                    colorText: AppColor.white,
-                    duration: const Duration(seconds: 2),
-                  );
                 },
                 behavior: HitTestBehavior.opaque,
                 child: Container(

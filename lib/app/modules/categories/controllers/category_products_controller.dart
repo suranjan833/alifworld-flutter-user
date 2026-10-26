@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
 
-import '../../../data/config/app_color.dart';
 import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../bag/controllers/bag_controller.dart';
@@ -358,14 +357,5 @@ class CategoryProductsController extends GetxController {
     });
     await bagCtrl.fetchCart(showLoading: false, force: true);
     bagCtrl.cartItems.refresh();
-
-    Get.snackbar(
-      'Added to Bag',
-      '${product.title ?? "Item"} added to bag',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppColor.primary,
-      colorText: AppColor.white,
-      duration: const Duration(seconds: 2),
-    );
   }
 }

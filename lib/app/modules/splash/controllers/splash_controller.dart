@@ -101,7 +101,7 @@ class SplashController extends GetxController
           arguments: {'referralCode': pendingCode.trim()},
         );
       } else {
-        Get.offNamed(Routes.LOGIN);
+        Get.offAllNamed(Routes.MAIN_NAVIGATION);
       }
     }
   }

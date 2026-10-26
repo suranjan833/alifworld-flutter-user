@@ -135,14 +135,5 @@ class MyWishlistController extends GetxController with SkeletonLoadingMixin {
     await bagCtrl.addItemToBag(item);
     await bagCtrl.fetchCart(showLoading: false, force: true);
     bagCtrl.cartItems.refresh();
-
-    Get.snackbar(
-      'Added to Bag',
-      '${item['title']} moved to bag',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppColor.primary,
-      colorText: AppColor.white,
-      duration: const Duration(seconds: 2),
-    );
   }
 }

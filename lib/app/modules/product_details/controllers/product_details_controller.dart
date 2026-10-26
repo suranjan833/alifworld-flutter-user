@@ -1,6 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../data/config/app_color.dart';
+import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/mixins/skeleton_loading_mixin.dart';
 import '../../../routes/app_pages.dart';
@@ -302,6 +304,33 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
   void buyNow() {
     final p = product.value;
     if (p == null) return;
+
+    final token = getBox.read(USER_TOKEN);
+    final sessionCookie = getBox.read('SESSION_COOKIE');
+    final bool hasAuth = (token != null && token.toString().trim().isNotEmpty) ||
+        (sessionCookie != null && sessionCookie.toString().trim().isNotEmpty);
+
+    if (!hasAuth) {
+      Get.snackbar(
+        'Login Required',
+        'Please log in to continue with your purchase',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColor.error,
+        colorText: AppColor.white,
+        duration: const Duration(seconds: 3),
+        mainButton: TextButton(
+          onPressed: () => Get.toNamed(Routes.LOGIN),
+          child: const Text(
+            'LOG IN',
+            style: TextStyle(
+              color: AppColor.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      );
+      return;
+    }
 
     final priceVal = activePriceValue;
     final qty = selectedQuantity.value;
