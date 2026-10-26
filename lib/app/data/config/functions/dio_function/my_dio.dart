@@ -18,7 +18,8 @@ Future<bool> _refreshToken() async {
   final refreshToken = getBox.read(USER_REFRESH_TOKEN);
   if (refreshToken == null || refreshToken.toString().trim().isEmpty) {
     _isRefreshing = false;
-    _forceLogout();
+    final wasLoggedIn = getBox.read(IS_USER_LOGGED_IN) == true;
+    _forceLogout(isGuest: !wasLoggedIn);
     return false;
   }
 
@@ -67,13 +68,20 @@ Future<bool> _refreshToken() async {
   }
 }
 
-void _forceLogout() {
+void _forceLogout({bool isGuest = false}) {
+  final wasLoggedIn = getBox.read(IS_USER_LOGGED_IN) == true ||
+      (getBox.read(USER_TOKEN) != null &&
+          getBox.read(USER_TOKEN).toString().isNotEmpty);
   getBox.remove(USER_TOKEN);
   getBox.remove(USER_REFRESH_TOKEN);
   getBox.write(IS_USER_LOGGED_IN, false);
   try {
-    showSnack('Session Expired', 'Session expired, please sign in.');
-    Get.offAllNamed(Routes.LOGIN);
+    if (wasLoggedIn && !isGuest) {
+      showSnack('Session Expired', 'Session expired, please sign in.');
+    }
+    if (Get.currentRoute != Routes.LOGIN) {
+      Get.toNamed(Routes.LOGIN);
+    }
   } catch (_) {}
 }
 

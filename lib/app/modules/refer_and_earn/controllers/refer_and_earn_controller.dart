@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart';
@@ -7,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/models/referral_model.dart';
+import '../../../routes/app_pages.dart';
 
 class ReferAndEarnController extends GetxController {
   final isLoading = false.obs;
@@ -16,6 +18,15 @@ class ReferAndEarnController extends GetxController {
   final referralInfo = Rxn<ReferralInfoModel>();
   final historyItems = <ReferralHistoryItem>[].obs;
   final nextCursor = RxnString();
+
+  bool get hasAuth {
+    final token = getBox.read(USER_TOKEN);
+    final sessionCookie = getBox.read('SESSION_COOKIE');
+    final isLoggedIn = getBox.read(IS_USER_LOGGED_IN);
+    return (token != null && token.toString().trim().isNotEmpty) ||
+        (sessionCookie != null && sessionCookie.toString().trim().isNotEmpty) ||
+        (isLoggedIn == true || isLoggedIn == 'true');
+  }
 
   String get referralCode => referralInfo.value?.code ?? '';
   String get shareUrl =>
@@ -28,6 +39,12 @@ class ReferAndEarnController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    if (!hasAuth) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Get.offNamed(Routes.LOGIN);
+      });
+      return;
+    }
     fetchReferralData();
     fetchReferralHistory();
   }

@@ -154,17 +154,23 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
         AccountMenuItem(
           title: 'my_transactions'.tr,
           icon: Iconsax.card,
-          onTap: () => Get.toNamed(Routes.MY_TRANSACTIONS),
+          onTap: () => _hasAuth
+              ? Get.toNamed(Routes.MY_TRANSACTIONS)
+              : Get.toNamed(Routes.LOGIN),
         ),
         AccountMenuItem(
           title: 'my_wishlist'.tr,
           icon: Iconsax.heart,
-          onTap: () => Get.toNamed(Routes.MY_WISHLIST),
+          onTap: () => _hasAuth
+              ? Get.toNamed(Routes.MY_WISHLIST)
+              : Get.toNamed(Routes.LOGIN),
         ),
         AccountMenuItem(
           title: 'wallet'.tr,
           icon: Iconsax.wallet_2,
-          onTap: () => Get.toNamed(Routes.WALLET),
+          onTap: () => _hasAuth
+              ? Get.toNamed(Routes.WALLET)
+              : Get.toNamed(Routes.LOGIN),
         ),
         AccountMenuItem(
           title: 'shopping_list'.tr,
@@ -174,7 +180,9 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
         AccountMenuItem(
           title: 'refer_and_earn'.tr,
           icon: Iconsax.profile_add,
-          onTap: () => Get.toNamed(Routes.REFER_AND_EARN),
+          onTap: () => _hasAuth
+              ? Get.toNamed(Routes.REFER_AND_EARN)
+              : Get.toNamed(Routes.LOGIN),
         ),
       ],
     ),
@@ -241,14 +249,26 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
   }
 
   void openMyProfile() {
+    if (!_hasAuth) {
+      Get.toNamed(Routes.LOGIN);
+      return;
+    }
     Get.toNamed(Routes.MY_PROFILE);
   }
 
   void openMyOrders() {
+    if (!_hasAuth) {
+      Get.toNamed(Routes.LOGIN);
+      return;
+    }
     Get.toNamed(Routes.MY_ORDERS);
   }
 
   void openManageAddresses() {
+    if (!_hasAuth) {
+      Get.toNamed(Routes.LOGIN);
+      return;
+    }
     Get.toNamed(Routes.MANAGE_ADDRESSES);
   }
 
