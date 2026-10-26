@@ -310,24 +310,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
     }
 
     if (!_hasAuth) {
-      Get.snackbar(
-        'Login Required',
-        'Please log in to add items to your shopping bag',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: AppColor.error,
-        colorText: AppColor.white,
-        duration: const Duration(seconds: 3),
-        mainButton: TextButton(
-          onPressed: () => Get.toNamed(Routes.LOGIN),
-          child: const Text(
-            'LOG IN',
-            style: TextStyle(
-              color: AppColor.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      );
+      Get.toNamed(Routes.LOGIN);
       return;
     }
 
@@ -487,24 +470,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
     }
 
     if (!_hasAuth) {
-      Get.snackbar(
-        'Login Required',
-        'Please log in to proceed to checkout',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: AppColor.error,
-        colorText: AppColor.white,
-        duration: const Duration(seconds: 3),
-        mainButton: TextButton(
-          onPressed: () => Get.toNamed(Routes.LOGIN),
-          child: const Text(
-            'LOG IN',
-            style: TextStyle(
-              color: AppColor.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      );
+      Get.toNamed(Routes.LOGIN);
       return;
     }
 

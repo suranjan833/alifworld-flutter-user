@@ -61,7 +61,7 @@ class LoginView extends GetView<LoginController> {
                   Text(
                     controller.isOtpLogin.value
                         ? 'Enter your phone number to receive an OTP.'
-                        : 'Sign in with your Email or Phone and password.',
+                        : 'Sign in with your phone number and password.',
                     style: GoogleFonts.lato(
                       fontSize: 13.sp,
                       fontWeight: FontWeight.normal,
@@ -76,7 +76,7 @@ class LoginView extends GetView<LoginController> {
                   if (!controller.isOtpLogin.value) ...[
                     // --- PASSWORD LOGIN MODE ---
                     Text(
-                      'Email or Phone Number',
+                      'Phone Number',
                       style: GoogleFonts.lato(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.bold,
@@ -86,10 +86,10 @@ class LoginView extends GetView<LoginController> {
                     SizedBox(height: 6.h),
                     TextFormField(
                       controller: controller.identifierController,
-                      keyboardType: TextInputType.emailAddress,
+                      keyboardType: TextInputType.text,
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) {
-                          return 'Please enter your email or phone number';
+                          return 'Please enter your phone number';
                         }
                         return null;
                       },
@@ -99,12 +99,12 @@ class LoginView extends GetView<LoginController> {
                         color: AppColor.textPrimary,
                       ),
                       decoration: InputDecoration(
-                        hintText: 'Enter email or phone',
+                        hintText: 'Enter phone number (e.g. 01XXXXXXXXX)',
                         hintStyle: GoogleFonts.lato(
                           fontSize: 14.sp,
                           color: AppColor.textHint,
                         ),
-                        prefixIcon: const Icon(Icons.person_outline_rounded),
+                        prefixIcon: const Icon(Icons.phone_android_rounded),
                         filled: true,
                         fillColor: AppColor.surface,
                         contentPadding: EdgeInsets.symmetric(
@@ -420,14 +420,14 @@ class LoginView extends GetView<LoginController> {
                       icon: Icon(
                         controller.isOtpLogin.value
                             ? Icons.lock_outline_rounded
-                            : Icons.phone_android_rounded,
+                            : Icons.sms_outlined,
                         size: 18.r,
                         color: AppColor.primary,
                       ),
                       label: Text(
                         controller.isOtpLogin.value
                             ? 'Login with Password instead'
-                            : 'Login with OTP instead',
+                            : 'Login with OTP',
                         style: GoogleFonts.lato(
                           fontSize: 13.5.sp,
                           fontWeight: FontWeight.w700,

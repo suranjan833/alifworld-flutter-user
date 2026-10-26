@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../data/config/app_color.dart';
@@ -272,6 +271,16 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
   }
 
   Future<void> addToBag() async {
+    final token = getBox.read(USER_TOKEN);
+    final sessionCookie = getBox.read('SESSION_COOKIE');
+    final bool hasAuth = (token != null && token.toString().trim().isNotEmpty) ||
+        (sessionCookie != null && sessionCookie.toString().trim().isNotEmpty);
+
+    if (!hasAuth) {
+      Get.toNamed(Routes.LOGIN);
+      return;
+    }
+
     final p = product.value;
     if (p == null) return;
 
@@ -311,24 +320,7 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
         (sessionCookie != null && sessionCookie.toString().trim().isNotEmpty);
 
     if (!hasAuth) {
-      Get.snackbar(
-        'Login Required',
-        'Please log in to continue with your purchase',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: AppColor.error,
-        colorText: AppColor.white,
-        duration: const Duration(seconds: 3),
-        mainButton: TextButton(
-          onPressed: () => Get.toNamed(Routes.LOGIN),
-          child: const Text(
-            'LOG IN',
-            style: TextStyle(
-              color: AppColor.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      );
+      Get.toNamed(Routes.LOGIN);
       return;
     }
 

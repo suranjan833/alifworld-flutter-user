@@ -10,8 +10,8 @@ import '../../../routes/app_pages.dart';
 class LoginController extends GetxController {
   final formKey = GlobalKey<FormState>();
 
-  // Login Mode: true = OTP Login (default), false = Password Login
-  final isOtpLogin = true.obs;
+  // Login Mode: false = Password/Phone Login (default), true = OTP Login
+  final isOtpLogin = false.obs;
   final isPasswordVisible = false.obs;
   final isOtpSent = false.obs;
   final isLoading = false.obs;
