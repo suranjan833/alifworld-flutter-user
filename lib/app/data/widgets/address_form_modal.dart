@@ -724,7 +724,55 @@ class _AddressFormModalState extends State<AddressFormModal> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // --- Quick Geo Search Box ---
+    // --- Recipient & Contact Details ---
+                    Text(
+                      'Recipient & Address Details',
+                      style: GoogleFonts.lato(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.bold,
+                        color: AppColor.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 10.h),
+
+                    // Full Name
+                    _buildTextField(
+                      controller: _nameController,
+                      label: 'Full Name *',
+                      hint: 'Mohan Biswas',
+                      icon: Iconsax.user,
+                    ),
+                    SizedBox(height: 10.h),
+
+                    // Phone Number
+                    _buildTextField(
+                      controller: _phoneController,
+                      label: 'Phone Number (01XXXXXXXXX) *',
+                      hint: '01700000000',
+                      icon: Iconsax.call,
+                      keyboardType: TextInputType.phone,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(11),
+                      ],
+                    ),
+                    SizedBox(height: 30.h),
+
+                
+
+          
+                    // --- 5-Level Cascade Dropdowns ---
+                    Text(
+                      'Select Region (Division › District › Upazila › Union › Area)',
+                      style: GoogleFonts.lato(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.bold,
+                        color: AppColor.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 10.h),
+
+                              // --- Quick Geo Search Box ---
                     Container(
                       padding: EdgeInsets.all(12.r),
                       decoration: BoxDecoration(
@@ -887,16 +935,6 @@ class _AddressFormModalState extends State<AddressFormModal> {
                     ),
                     SizedBox(height: 16.h),
 
-                    // --- 5-Level Cascade Dropdowns ---
-                    Text(
-                      'Select Region (Division › District › Upazila › Union › Area)',
-                      style: GoogleFonts.lato(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.bold,
-                        color: AppColor.textPrimary,
-                      ),
-                    ),
-                    SizedBox(height: 10.h),
 
                     // 1. Division Dropdown
                     _buildDropdown(
@@ -1003,40 +1041,6 @@ class _AddressFormModalState extends State<AddressFormModal> {
                             },
                     ),
                     SizedBox(height: 18.h),
-
-                    // --- Recipient & Contact Details ---
-                    Text(
-                      'Recipient & Address Details',
-                      style: GoogleFonts.lato(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.bold,
-                        color: AppColor.textPrimary,
-                      ),
-                    ),
-                    SizedBox(height: 10.h),
-
-                    // Full Name
-                    _buildTextField(
-                      controller: _nameController,
-                      label: 'Full Name *',
-                      hint: 'Mohan Biswas',
-                      icon: Iconsax.user,
-                    ),
-                    SizedBox(height: 10.h),
-
-                    // Phone Number
-                    _buildTextField(
-                      controller: _phoneController,
-                      label: 'Phone Number (01XXXXXXXXX) *',
-                      hint: '01700000000',
-                      icon: Iconsax.call,
-                      keyboardType: TextInputType.phone,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(11),
-                      ],
-                    ),
-                    SizedBox(height: 10.h),
 
                     // Address Line (House, Road, Block)
                     _buildTextField(
