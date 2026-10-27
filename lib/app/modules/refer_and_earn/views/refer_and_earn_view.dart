@@ -569,7 +569,7 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
         children: [
           Row(
             children: [
-              Icon(Iconsax.hierarchy_2, color: AppColor.primary, size: 20.r),
+              Icon(Iconsax.profile_add, color: AppColor.primary, size: 20.r),
               SizedBox(width: 8.w),
               Text(
                 '3-Level Referral Rates',
