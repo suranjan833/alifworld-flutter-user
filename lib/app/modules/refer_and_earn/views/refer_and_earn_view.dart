@@ -54,9 +54,14 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
         }
 
         final info = controller.referralInfo.value;
-        final bonus = info?.registrationBonus ?? RegistrationBonusConfig.fallback();
-        final counts = info?.counts ?? ReferralCounts.empty();
-        final earnings = info?.earnings ?? ReferralEarnings.empty();
+        if (info == null) {
+          return Center(
+            child: Text(
+              'Failed to load referral details.',
+              style: GoogleFonts.lato(color: AppColor.textSecondary),
+            ),
+          );
+        }
 
         return RefreshIndicator(
           onRefresh: controller.refreshAll,
@@ -68,22 +73,22 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // 1. Hero Promo Card
-                _buildHeroBanner(bonus),
+                _buildHeroBanner(info),
                 SizedBox(height: 16.h),
 
                 // 2. Share Code & Actions
-                _buildReferralCodeCard(context, info?.code ?? ''),
+                _buildReferralCodeCard(context, info),
                 SizedBox(height: 16.h),
 
-                // 3. Stats & Earnings (Separated Registration vs Order)
-                _buildEarningsCard(earnings, counts),
+                // 3. Stats & Earnings (Separated Registration vs Order per §1)
+                _buildEarningsCard(info),
                 SizedBox(height: 16.h),
 
-                // 4. 3-Level Breakdown Tier Card
-                _buildLevelBreakdownCard(bonus),
+                // 4. 3-Level Rates Card (with userCount under level label per §2 & §5)
+                _buildLevelBreakdownCard(info),
                 SizedBox(height: 20.h),
 
-                // 5. Recent Referral History
+                // 5. Recent Referral History (Level under name, date on right per §3 & §5)
                 _buildHistorySection(),
                 SizedBox(height: 24.h),
               ],
@@ -95,7 +100,8 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
   }
 
   /// 1. Hero Banner
-  Widget _buildHeroBanner(RegistrationBonusConfig bonus) {
+  Widget _buildHeroBanner(ReferralInfoModel info) {
+    final bonus = info.registrationBonus;
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(20.r),
@@ -156,7 +162,9 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
                     ),
                     SizedBox(height: 4.h),
                     Text(
-                      'Earn up to ${bonus.formattedAmount}',
+                      bonus.amountMinor > 0
+                          ? 'Earn up to ${bonus.formattedAmount}'
+                          : 'Refer & Earn',
                       style: GoogleFonts.lato(
                         fontSize: 20.sp,
                         fontWeight: FontWeight.bold,
@@ -170,7 +178,7 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
           ),
           SizedBox(height: 12.h),
           Text(
-            'Invite friends to join Alif World! You get paid across 3 referral tiers directly credited to your Customer Main Wallet upon registration.',
+            'Invite friends to join Alif World! You get paid across 3 referral tiers directly credited to your Customer Referral Wallet upon registration.',
             style: GoogleFonts.lato(
               fontSize: 13.sp,
               color: AppColor.white.withValues(alpha: 0.9),
@@ -183,7 +191,8 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
   }
 
   /// 2. Code and Sharing Hub
-  Widget _buildReferralCodeCard(BuildContext context, String code) {
+  Widget _buildReferralCodeCard(BuildContext context, ReferralInfoModel info) {
+    final code = info.code;
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(18.r),
@@ -258,7 +267,7 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
           ),
           SizedBox(height: 16.h),
 
-          // Action Buttons: Share sheet, Copy link, QR Code
+          // Action Buttons: Share Invite, Copy Link, QR Code
           Row(
             children: [
               Expanded(
@@ -332,8 +341,8 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
     );
   }
 
-  /// 3. Stats and Earnings (Strictly separated per §2.5)
-  Widget _buildEarningsCard(ReferralEarnings earnings, ReferralCounts counts) {
+  /// 3. Stats and Earnings (Strictly separated per §1 & §2)
+  Widget _buildEarningsCard(ReferralInfoModel info) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(18.r),
@@ -363,7 +372,7 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Text(
-                  'Total: ${earnings.formattedTotal}',
+                  'Total: ${info.formattedTotalEarnings}',
                   style: GoogleFonts.lato(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w800,
@@ -387,15 +396,15 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
                 _buildEarningsRow(
                   icon: Iconsax.user_add,
                   label: 'Registration Referral',
-                  amount: earnings.formattedRegistration,
-                  subtitle: 'Earned from signup welcome bonus',
+                  amount: info.formattedRegistrationEarnings,
+                  subtitle: 'Earned from signup welcome bonuses',
                   iconColor: AppColor.primary,
                 ),
                 Divider(height: 18.h, color: const Color(0xFFE2E8F0)),
                 _buildEarningsRow(
                   icon: Iconsax.shopping_bag,
                   label: 'Order Referral',
-                  amount: earnings.formattedOrder,
+                  amount: info.formattedOrderEarnings,
                   subtitle: 'Earned on referred users\' order points',
                   iconColor: const Color(0xFFF59E0B),
                 ),
@@ -404,18 +413,55 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
           ),
           SizedBox(height: 14.h),
 
-          // Friends count breakdown
-          Row(
-            children: [
-              _buildCountBadge('Total Friends', counts.total.toString()),
-              SizedBox(width: 8.w),
-              _buildCountBadge('Tier 1', counts.level1.toString()),
-              SizedBox(width: 8.w),
-              _buildCountBadge('Tier 2', counts.level2.toString()),
-              SizedBox(width: 8.w),
-              _buildCountBadge('Tier 3', counts.level3.toString()),
-            ],
-          ),
+          // Users count breakdown
+          if (info.hasUserCounts) ...[
+            Row(
+              children: [
+                _buildCountBadge('Total Users', info.totalUserCount.toString()),
+                SizedBox(width: 8.w),
+                ...info.levels.map((lvl) {
+                  return Expanded(
+                    child: Container(
+                      margin: EdgeInsets.only(
+                        left: lvl.level > 1 ? 8.w : 0,
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: 8.h),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            (lvl.userCount ?? 0).toString(),
+                            style: GoogleFonts.lato(
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w800,
+                              color: AppColor.textPrimary,
+                            ),
+                          ),
+                          Text(
+                            'Level ${lvl.level}',
+                            style: GoogleFonts.lato(
+                              fontSize: 10.sp,
+                              color: AppColor.textSecondary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ] else ...[
+            Row(
+              children: [
+                _buildCountBadge('Direct Referrals', info.referredCount.toString()),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -505,8 +551,11 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
     );
   }
 
-  /// 4. 3-Level Breakdown Tier Card
-  Widget _buildLevelBreakdownCard(RegistrationBonusConfig bonus) {
+  /// 4. 3-Level Rates Card (with userCount under level label per refer.md §2 & §5)
+  Widget _buildLevelBreakdownCard(ReferralInfoModel info) {
+    final currencySymbol = info.currencySymbol;
+    final levels = info.levels;
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(18.r),
@@ -523,7 +572,7 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
               Icon(Iconsax.hierarchy_2, color: AppColor.primary, size: 20.r),
               SizedBox(width: 8.w),
               Text(
-                '3-Level Payout Structure',
+                '3-Level Referral Rates',
                 style: GoogleFonts.lato(
                   fontSize: 15.sp,
                   fontWeight: FontWeight.bold,
@@ -534,12 +583,19 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
           ),
           SizedBox(height: 14.h),
 
-          ...bonus.levels.map((lvl) {
+          ...levels.map((lvl) {
             final rate = lvl.ratePct;
-            final amountForLevel = (bonus.amountMajor * (rate / 100.0));
+            final earningsMajor = lvl.earningsMajor;
+            final userCount = lvl.userCount;
+
+            String countText = '';
+            if (userCount != null) {
+              countText = userCount == 1 ? '1 user' : '$userCount users';
+            }
+
             return Container(
               margin: EdgeInsets.only(bottom: 8.h),
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
               decoration: BoxDecoration(
                 color: const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(10.r),
@@ -548,8 +604,8 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
               child: Row(
                 children: [
                   Container(
-                    width: 28.r,
-                    height: 28.r,
+                    width: 32.r,
+                    height: 32.r,
                     decoration: BoxDecoration(
                       color: AppColor.primary.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
@@ -558,42 +614,42 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
                       child: Text(
                         'L${lvl.level}',
                         style: GoogleFonts.lato(
-                          fontSize: 12.sp,
+                          fontSize: 13.sp,
                           fontWeight: FontWeight.w800,
                           color: AppColor.primary,
                         ),
                       ),
                     ),
                   ),
-                  SizedBox(width: 10.w),
+                  SizedBox(width: 12.w),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          lvl.level == 1
-                              ? 'Level 1 (Direct Referrals)'
-                              : lvl.level == 2
-                                  ? 'Level 2 (Friends of Friends)'
-                                  : 'Level 3 (Extended Network)',
+                          'Level ${lvl.level} · $rate%',
                           style: GoogleFonts.lato(
-                            fontSize: 13.sp,
+                            fontSize: 13.5.sp,
                             fontWeight: FontWeight.w700,
                             color: AppColor.textPrimary,
                           ),
                         ),
-                        Text(
-                          '$rate% of ${bonus.formattedAmount}',
-                          style: GoogleFonts.lato(
-                            fontSize: 11.sp,
-                            color: AppColor.textSecondary,
+                        if (countText.isNotEmpty) ...[
+                          SizedBox(height: 2.h),
+                          Text(
+                            countText,
+                            style: GoogleFonts.lato(
+                              fontSize: 11.5.sp,
+                              fontWeight: FontWeight.w500,
+                              color: AppColor.textSecondary,
+                            ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   ),
                   Text(
-                    '৳${amountForLevel.toStringAsFixed(0)}',
+                    '$currencySymbol${earningsMajor.toStringAsFixed(0)}',
                     style: GoogleFonts.lato(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w800,
@@ -609,7 +665,7 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
     );
   }
 
-  /// 5. Recent Referrals Section
+  /// 5. Recent Referrals Section (per refer.md §3: level under name, date on right)
   Widget _buildHistorySection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -694,79 +750,59 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
                 child: Row(
                   children: [
                     Container(
-                      padding: EdgeInsets.all(8.r),
+                      width: 36.r,
+                      height: 36.r,
                       decoration: BoxDecoration(
-                        color: item.isRegistration
-                            ? AppColor.primary.withValues(alpha: 0.1)
-                            : const Color(0xFFFEF3C7),
+                        color: AppColor.primary.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(
-                        item.isRegistration
-                            ? Iconsax.user_add
-                            : Iconsax.shopping_cart,
-                        size: 18.r,
-                        color: item.isRegistration
-                            ? AppColor.primary
-                            : const Color(0xFFD97706),
+                      child: Center(
+                        child: Text(
+                          item.name.isNotEmpty
+                              ? item.name[0].toUpperCase()
+                              : 'F',
+                          style: GoogleFonts.lato(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.bold,
+                            color: AppColor.primary,
+                          ),
+                        ),
                       ),
                     ),
-                    SizedBox(width: 10.w),
+                    SizedBox(width: 12.w),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            item.referredUser?.name ?? 'Friend',
+                            item.name,
                             style: GoogleFonts.lato(
-                              fontSize: 13.5.sp,
+                              fontSize: 14.sp,
                               fontWeight: FontWeight.w700,
                               color: AppColor.textPrimary,
                             ),
                           ),
-                          Row(
-                            children: [
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 6.w,
-                                  vertical: 1.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF1F5F9),
-                                  borderRadius: BorderRadius.circular(4.r),
-                                ),
-                                child: Text(
-                                  'Level ${item.level}',
-                                  style: GoogleFonts.lato(
-                                    fontSize: 10.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColor.textSecondary,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 6.w),
-                              Text(
-                                item.isRegistration
-                                    ? 'Registration'
-                                    : 'Order',
-                                style: GoogleFonts.lato(
-                                  fontSize: 11.sp,
-                                  color: AppColor.textSecondary,
-                                ),
-                              ),
-                            ],
+                          SizedBox(height: 2.h),
+                          Text(
+                            'Level ${item.level}',
+                            style: GoogleFonts.lato(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColor.textSecondary,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    Text(
-                      '+${item.formattedAmount}',
-                      style: GoogleFonts.lato(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF059669),
+                    if (item.formattedJoinedDate.isNotEmpty)
+                      Text(
+                        item.formattedJoinedDate,
+                        style: GoogleFonts.lato(
+                          fontSize: 12.sp,
+                          color: AppColor.textHint,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               );

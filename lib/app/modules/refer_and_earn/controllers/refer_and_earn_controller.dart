@@ -30,11 +30,8 @@ class ReferAndEarnController extends GetxController {
 
   String get referralCode => referralInfo.value?.code ?? '';
   String get shareUrl =>
-      referralInfo.value?.shareUrl ??
+      referralInfo.value?.link ??
       'https://alifworld.com.bd/register?ref=$referralCode';
-  String get playStoreUrl =>
-      referralInfo.value?.playStoreUrl ??
-      'https://play.google.com/store/apps/details?id=$APP_PACKAGE_NAME&referrer=ref%3D$referralCode';
 
   @override
   void onInit() {
@@ -154,33 +151,44 @@ class ReferAndEarnController extends GetxController {
     showSnack('Copied!', 'Registration link copied to clipboard');
   }
 
-  /// Share via System Share Sheet
+  /// Share via System Share Sheet per refer.md §4
   Future<void> shareInvite() async {
     if (referralCode.isEmpty) return;
 
-    final bonusText = referralInfo.value?.registrationBonus.formattedAmount ?? '৳1,000';
-    final shareText = '''
-🎁 Join me on Alif World and get $bonusText welcome bonus!
+    final info = referralInfo.value;
+    final bonusMinor = info?.registrationBonus.amountMinor ?? 0;
+    final code = info?.code ?? referralCode;
+    final link = info?.link ?? shareUrl;
+    final symbol = info?.currencySymbol ?? '৳';
 
-Use my referral code: $referralCode
-
-👉 Register here:
-$shareUrl
-
-📱 Download Android App:
-$playStoreUrl
-''';
+    String shareText;
+    if (bonusMinor > 0) {
+      final bonusTaka = (bonusMinor / 100).round();
+      shareText =
+          '🎁 Join me on Alif World and get $symbol$bonusTaka welcome bonus!\n\nUse my referral code: $code\n\n👉 Register here:\n$link';
+    } else {
+      shareText =
+          '🎁 Join me on Alif World!\n\nUse my referral code: $code\n\n👉 Register here:\n$link';
+    }
 
     try {
-      await SharePlus.instance.share(
+      final result = await SharePlus.instance.share(
         ShareParams(
           text: shareText,
-          subject: 'Join Alif World - Get Welcome Bonus!',
+          subject: 'Join me on Alif World!',
         ),
       );
-    } catch (e) {
-      log('Error sharing: $e');
-      copyLink();
+
+      // Per refer.md §4:
+      // "If the user cancels the share sheet, stop — do not silently copy."
+      // "If sharing is unavailable, copy the whole message."
+      if (result.status == ShareResultStatus.unavailable) {
+        Clipboard.setData(ClipboardData(text: shareText));
+        showSnack('Copied!', 'Invite message copied to clipboard');
+      }
+    } catch (_) {
+      Clipboard.setData(ClipboardData(text: shareText));
+      showSnack('Copied!', 'Invite message copied to clipboard');
     }
   }
 }
