@@ -109,9 +109,7 @@ class LoginView extends GetView<LoginController> {
                     TextFormField(
                       controller: controller.identifierController,
                       keyboardType: TextInputType.text,
-                      inputFormatters: [
-                        _PhoneOrEmailInputFormatter(),
-                      ],
+                      inputFormatters: [_PhoneOrEmailInputFormatter()],
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) {
                           return 'Please enter your phone number';
@@ -260,7 +258,7 @@ class LoginView extends GetView<LoginController> {
                                   ),
                                   SizedBox(width: 4.w),
                                   Text(
-                                    'Change Number',
+                                    'Edit Number',
                                     style: GoogleFonts.lato(
                                       fontSize: 12.sp,
                                       fontWeight: FontWeight.bold,
@@ -467,7 +465,8 @@ class LoginView extends GetView<LoginController> {
                     width: double.infinity,
                     height: 48.h,
                     child: ElevatedButton(
-                      onPressed: controller.isLoading.value ||
+                      onPressed:
+                          controller.isLoading.value ||
                               (controller.isOtpLogin.value &&
                                   !controller.isOtpSent.value &&
                                   !controller.hasPhoneInput.value)
@@ -497,8 +496,8 @@ class LoginView extends GetView<LoginController> {
                               !controller.isOtpLogin.value
                                   ? 'Sign In'
                                   : (controller.isOtpSent.value
-                                      ? 'Verify & Sign In'
-                                      : 'Verify Phone'),
+                                        ? 'Verify & Sign In'
+                                        : 'Verify Phone'),
                               style: GoogleFonts.lato(
                                 fontSize: 15.sp,
                                 fontWeight: FontWeight.bold,
