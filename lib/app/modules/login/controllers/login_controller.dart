@@ -23,6 +23,8 @@ class LoginController extends GetxController {
   // Controllers for OTP Login
   final phoneController = TextEditingController();
   final otpController = TextEditingController();
+  final phoneFocusNode = FocusNode();
+  String _lastSentPhone = '';
 
   final selectedCountry =
       CountryModel.defaultCountries.first.obs; // Default Bangladesh +880
@@ -50,15 +52,33 @@ class LoginController extends GetxController {
   }
 
   void _onPhoneChanged() {
-    final hasInput = phoneController.text.trim().isNotEmpty;
+    final currentPhone = phoneController.text.trim();
+    final hasInput = currentPhone.isNotEmpty;
     if (hasPhoneInput.value != hasInput) {
       hasPhoneInput.value = hasInput;
     }
+    // If the phone number is edited after OTP was sent, reset OTP state so new number gets a fresh OTP
+    if (isOtpSent.value && currentPhone != _lastSentPhone) {
+      isOtpSent.value = false;
+      otpController.clear();
+    }
+  }
+
+  /// Explicit handler to edit phone number and request a new OTP
+  void editPhoneNumber() {
+    isOtpSent.value = false;
+    otpController.clear();
+    phoneFocusNode.requestFocus();
+    phoneController.selection = TextSelection(
+      baseOffset: 0,
+      extentOffset: phoneController.text.length,
+    );
   }
 
   @override
   void onClose() {
     phoneController.removeListener(_onPhoneChanged);
+    phoneFocusNode.dispose();
     identifierController.dispose();
     passwordController.dispose();
     phoneController.dispose();
@@ -196,6 +216,7 @@ class LoginController extends GetxController {
       isLoading.value = false;
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        _lastSentPhone = phoneController.text.trim();
         isOtpSent.value = true;
 
         String? devCode;

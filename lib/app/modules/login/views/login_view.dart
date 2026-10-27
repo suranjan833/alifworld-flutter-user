@@ -230,13 +230,48 @@ class LoginView extends GetView<LoginController> {
                     ),
                   ] else ...[
                     // --- OTP LOGIN MODE ---
-                    Text(
-                      'Phone Number',
-                      style: GoogleFonts.lato(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.bold,
-                        color: AppColor.textPrimary,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Phone Number',
+                          style: GoogleFonts.lato(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.bold,
+                            color: AppColor.textPrimary,
+                          ),
+                        ),
+                        if (controller.isOtpSent.value)
+                          InkWell(
+                            onTap: controller.editPhoneNumber,
+                            borderRadius: BorderRadius.circular(6.r),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 6.w,
+                                vertical: 2.h,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Iconsax.edit_2,
+                                    size: 13.r,
+                                    color: AppColor.primary,
+                                  ),
+                                  SizedBox(width: 4.w),
+                                  Text(
+                                    'Change Number',
+                                    style: GoogleFonts.lato(
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColor.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                     SizedBox(height: 6.h),
 
@@ -295,6 +330,7 @@ class LoginView extends GetView<LoginController> {
                         Expanded(
                           child: TextFormField(
                             controller: controller.phoneController,
+                            focusNode: controller.phoneFocusNode,
                             keyboardType: TextInputType.phone,
                             inputFormatters: [
                               FilteringTextInputFormatter.digitsOnly,
@@ -394,6 +430,32 @@ class LoginView extends GetView<LoginController> {
                             ),
                           ),
                         ),
+                      ),
+                      SizedBox(height: 8.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Enter 6-digit verification code',
+                            style: GoogleFonts.lato(
+                              fontSize: 11.5.sp,
+                              color: AppColor.textSecondary,
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: controller.isLoading.value
+                                ? null
+                                : controller.requestOtp,
+                            child: Text(
+                              'Resend OTP',
+                              style: GoogleFonts.lato(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.bold,
+                                color: AppColor.primary,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ],
