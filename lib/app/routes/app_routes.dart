@@ -24,7 +24,6 @@ abstract class Routes {
   static const MY_TRANSACTIONS = _Paths.MY_TRANSACTIONS;
   static const MY_WISHLIST = _Paths.MY_WISHLIST;
   static const WALLET = _Paths.WALLET;
-  static const SHOPPING_LIST = _Paths.SHOPPING_LIST;
   static const REFER_AND_EARN = _Paths.REFER_AND_EARN;
   static const NOTIFICATIONS = _Paths.NOTIFICATIONS;
   static const SUPPORT = _Paths.SUPPORT;
@@ -39,6 +38,11 @@ abstract class Routes {
   static const ORDER_SUCCESS = _Paths.ORDER_SUCCESS;
   static const ORDER_DETAILS = _Paths.ORDER_DETAILS;
   static const TOP_BRANDS = _Paths.TOP_BRANDS;
+  static const LEADERBOARDS = _Paths.LEADERBOARDS;
+  static const LOTTERY = _Paths.LOTTERY;
+  static const LOTTERY_DETAIL = _Paths.LOTTERY_DETAIL;
+  static const LOTTERY_RESULTS = _Paths.LOTTERY_RESULTS;
+  static const MY_LOTTERY_TICKETS = _Paths.MY_LOTTERY_TICKETS;
 }
 
 abstract class _Paths {
@@ -60,7 +64,6 @@ abstract class _Paths {
   static const MY_TRANSACTIONS = '/my-transactions';
   static const MY_WISHLIST = '/my-wishlist';
   static const WALLET = '/wallet';
-  static const SHOPPING_LIST = '/shopping-list';
   static const REFER_AND_EARN = '/refer-and-earn';
   static const NOTIFICATIONS = '/notifications';
   static const SUPPORT = '/support';
@@ -75,4 +78,9 @@ abstract class _Paths {
   static const ORDER_SUCCESS = '/order-success';
   static const ORDER_DETAILS = '/order-details';
   static const TOP_BRANDS = '/top-brands';
+  static const LEADERBOARDS = '/leaderboards';
+  static const LOTTERY = '/lottery';
+  static const LOTTERY_DETAIL = '/lottery-detail';
+  static const LOTTERY_RESULTS = '/lottery-results';
+  static const MY_LOTTERY_TICKETS = '/my-lottery-tickets';
 }

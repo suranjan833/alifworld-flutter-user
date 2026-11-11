@@ -7,6 +7,7 @@ import 'package:iconsax/iconsax.dart';
 import '../../../data/config/app_color.dart';
 import '../../../data/models/wallet_model.dart';
 import '../../../data/widgets/skeleton_box.dart';
+import '../../../routes/app_pages.dart';
 import '../controllers/my_transactions_controller.dart';
 
 class MyTransactionsView extends GetView<MyTransactionsController> {
@@ -73,7 +74,12 @@ class MyTransactionsView extends GetView<MyTransactionsController> {
                     );
                   }
 
-                  if (controller.transactions.isEmpty) {
+                  final pendingOrders = (controller.selectedWalletKind.value == 'customer_cashback' &&
+                          controller.pendingPoints.value != null)
+                      ? controller.pendingPoints.value!.orders
+                      : <WalletPendingOrderModel>[];
+
+                  if (controller.transactions.isEmpty && pendingOrders.isEmpty) {
                     return _buildEmptyState();
                   }
 
@@ -87,7 +93,7 @@ class MyTransactionsView extends GetView<MyTransactionsController> {
                       }
                       return false;
                     },
-                    child: ListView.builder(
+                    child: ListView(
                       physics: const AlwaysScrollableScrollPhysics(
                         parent: BouncingScrollPhysics(),
                       ),
@@ -95,11 +101,26 @@ class MyTransactionsView extends GetView<MyTransactionsController> {
                         horizontal: 16.w,
                         vertical: 12.h,
                       ),
-                      itemCount: controller.transactions.length +
-                          (controller.isLoadingMore.value ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        if (index == controller.transactions.length) {
-                          return Padding(
+                      children: [
+                        // Pending cashback orders banner & items (shown above posted history)
+                        if (pendingOrders.isNotEmpty) ...[
+                          _buildPendingCashbackSection(pendingOrders),
+                          SizedBox(height: 16.h),
+                          Text(
+                            'Posted History',
+                            style: GoogleFonts.lato(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.bold,
+                              color: AppColor.textSecondary,
+                            ),
+                          ),
+                          SizedBox(height: 8.h),
+                        ],
+
+                        ...controller.transactions.map((tx) => _buildTransactionCard(tx)),
+
+                        if (controller.isLoadingMore.value)
+                          Padding(
                             padding: EdgeInsets.symmetric(vertical: 16.h),
                             child: const Center(
                               child: CircularProgressIndicator(
@@ -107,12 +128,8 @@ class MyTransactionsView extends GetView<MyTransactionsController> {
                                 strokeWidth: 2.5,
                               ),
                             ),
-                          );
-                        }
-
-                        final tx = controller.transactions[index];
-                        return _buildTransactionCard(tx);
-                      },
+                          ),
+                      ],
                     ),
                   );
                 }),
@@ -291,6 +308,127 @@ class MyTransactionsView extends GetView<MyTransactionsController> {
     );
   }
 
+  Widget _buildPendingCashbackSection(List<WalletPendingOrderModel> pendingOrders) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(Iconsax.clock, color: const Color(0xFFD97706), size: 18.r),
+                SizedBox(width: 6.w),
+                Text(
+                  'Pending Cashback Orders',
+                  style: GoogleFonts.lato(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF92400E),
+                  ),
+                ),
+              ],
+            ),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(6.r),
+              ),
+              child: Text(
+                '${pendingOrders.length} Pending',
+                style: GoogleFonts.lato(
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFFB45309),
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 8.h),
+        ...pendingOrders.map((order) {
+          return InkWell(
+            onTap: () {
+              if (order.orderId.isNotEmpty) {
+                Get.toNamed(Routes.ORDER_DETAILS, arguments: order.orderId);
+              }
+            },
+            borderRadius: BorderRadius.circular(12.r),
+            child: Container(
+              margin: EdgeInsets.only(bottom: 8.h),
+              padding: EdgeInsets.all(12.r),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFBEB),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: const Color(0xFFFDE68A)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 38.r,
+                    height: 38.r,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFEF3C7),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Iconsax.box_time,
+                      color: const Color(0xFFD97706),
+                      size: 20.r,
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          order.orderNumber.isNotEmpty
+                              ? order.orderNumber
+                              : 'Order #${order.orderId}',
+                          style: GoogleFonts.lato(
+                            fontSize: 13.5.sp,
+                            fontWeight: FontWeight.bold,
+                            color: AppColor.textPrimary,
+                          ),
+                        ),
+                        SizedBox(height: 2.h),
+                        Text(
+                          '${order.points} pending pts • Est: ৳${order.estimatedCashback.toStringAsFixed(2)}',
+                          style: GoogleFonts.lato(
+                            fontSize: 11.5.sp,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFFB45309),
+                          ),
+                        ),
+                        if (order.returnWindowEndsAt != null) ...[
+                          SizedBox(height: 2.h),
+                          Text(
+                            'Return window closes: ${order.returnWindowEndsAt!.day}/${order.returnWindowEndsAt!.month}/${order.returnWindowEndsAt!.year}',
+                            style: GoogleFonts.lato(
+                              fontSize: 10.5.sp,
+                              color: AppColor.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 20.r,
+                    color: const Color(0xFFB45309),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
   Widget _buildTransactionCard(WalletTransactionModel tx) {
     return Container(
       margin: EdgeInsets.only(bottom: 10.h),
@@ -309,23 +447,24 @@ class MyTransactionsView extends GetView<MyTransactionsController> {
       ),
       child: Row(
         children: [
+          // Direction arrow: green down-left for money in, red up-right for money out
           Container(
             width: 44.r,
             height: 44.r,
             decoration: BoxDecoration(
               color: tx.isCredit
                   ? const Color(0xFFDCFCE7)
-                  : const Color(0xFFF1F5F9),
+                  : const Color(0xFFFEE2E2),
               shape: BoxShape.circle,
             ),
             child: Center(
               child: Icon(
                 tx.isCredit
-                    ? Icons.arrow_downward_rounded
-                    : Icons.arrow_upward_rounded,
+                    ? Icons.south_west_rounded
+                    : Icons.north_east_rounded,
                 color: tx.isCredit
                     ? const Color(0xFF16A34A)
-                    : AppColor.textPrimary,
+                    : const Color(0xFFDC2626),
                 size: 20.r,
               ),
             ),
@@ -378,6 +517,14 @@ class MyTransactionsView extends GetView<MyTransactionsController> {
                     ],
                   ],
                 ),
+                SizedBox(height: 2.h),
+                Text(
+                  'Balance after: ${tx.formattedBalanceAfter}',
+                  style: GoogleFonts.lato(
+                    fontSize: 11.sp,
+                    color: AppColor.textHint,
+                  ),
+                ),
               ],
             ),
           ),
@@ -389,7 +536,7 @@ class MyTransactionsView extends GetView<MyTransactionsController> {
               fontWeight: FontWeight.bold,
               color: tx.isCredit
                   ? const Color(0xFF16A34A)
-                  : AppColor.textPrimary,
+                  : const Color(0xFFDC2626),
             ),
           ),
         ],
