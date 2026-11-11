@@ -2,69 +2,74 @@
 
 import 'package:get/get.dart';
 
-import '../modules/top_brands/bindings/top_brands_binding.dart';
-import '../modules/top_brands/views/top_brands_view.dart';
-import '../modules/checkout/bindings/checkout_binding.dart';
-import '../modules/checkout/views/checkout_view.dart';
-import '../modules/order_success/bindings/order_success_binding.dart';
-import '../modules/order_success/views/order_success_view.dart';
+import '../modules/about_us/bindings/about_us_binding.dart';
+import '../modules/about_us/views/about_us_view.dart';
 import '../modules/account/bindings/account_binding.dart';
 import '../modules/account/views/account_view.dart';
 import '../modules/bag/bindings/bag_binding.dart';
 import '../modules/bag/views/bag_view.dart';
+import '../modules/categories/bindings/categories_binding.dart';
 import '../modules/categories/bindings/category_products_binding.dart';
+import '../modules/categories/views/categories_view.dart';
 import '../modules/categories/views/category_products_view.dart';
+import '../modules/checkout/bindings/checkout_binding.dart';
+import '../modules/checkout/views/checkout_view.dart';
+import '../modules/discover/bindings/discover_binding.dart';
+import '../modules/discover/views/discover_view.dart';
+import '../modules/home/bindings/home_binding.dart';
+import '../modules/home/views/home_view.dart';
+import '../modules/leaderboards/bindings/leaderboard_binding.dart';
+import '../modules/leaderboards/views/leaderboard_view.dart';
+import '../modules/login/bindings/login_binding.dart';
+import '../modules/login/views/login_view.dart';
+import '../modules/lottery/bindings/lottery_binding.dart';
+import '../modules/lottery/views/lottery_detail_view.dart';
+import '../modules/lottery/views/lottery_list_view.dart';
+import '../modules/lottery/views/lottery_results_view.dart';
+import '../modules/lottery/views/my_lottery_tickets_view.dart';
+import '../modules/main_navigation/bindings/main_navigation_binding.dart';
+import '../modules/main_navigation/views/main_navigation_view.dart';
 import '../modules/manage_addresses/bindings/manage_addresses_binding.dart';
 import '../modules/manage_addresses/views/manage_addresses_view.dart';
 import '../modules/my_orders/bindings/my_orders_binding.dart';
 import '../modules/my_orders/views/my_orders_view.dart';
 import '../modules/my_orders/views/order_details_view.dart';
-import '../modules/about_us/bindings/about_us_binding.dart';
-import '../modules/about_us/views/about_us_view.dart';
-import '../modules/privacy_policy/bindings/privacy_policy_binding.dart';
-import '../modules/privacy_policy/views/privacy_policy_view.dart';
-import '../modules/refund_policy/bindings/refund_policy_binding.dart';
-import '../modules/refund_policy/views/refund_policy_view.dart';
-import '../modules/shipping_policy/bindings/shipping_policy_binding.dart';
-import '../modules/shipping_policy/views/shipping_policy_view.dart';
-import '../modules/terms_and_conditions/bindings/terms_and_conditions_binding.dart';
-import '../modules/terms_and_conditions/views/terms_and_conditions_view.dart';
 import '../modules/my_profile/bindings/my_profile_binding.dart';
 import '../modules/my_profile/views/my_profile_view.dart';
-import '../modules/product_details/bindings/product_details_binding.dart';
-import '../modules/product_details/views/product_details_view.dart';
-import '../modules/seller_details/bindings/seller_details_binding.dart';
-import '../modules/seller_details/views/seller_details_view.dart';
 import '../modules/my_transactions/bindings/my_transactions_binding.dart';
 import '../modules/my_transactions/views/my_transactions_view.dart';
 import '../modules/my_wishlist/bindings/my_wishlist_binding.dart';
 import '../modules/my_wishlist/views/my_wishlist_view.dart';
 import '../modules/notifications/bindings/notifications_binding.dart';
 import '../modules/notifications/views/notifications_view.dart';
-import '../modules/refer_and_earn/bindings/refer_and_earn_binding.dart';
-import '../modules/refer_and_earn/views/refer_and_earn_view.dart';
-import '../modules/shopping_list/bindings/shopping_list_binding.dart';
-import '../modules/shopping_list/views/shopping_list_view.dart';
-import '../modules/support/bindings/support_binding.dart';
-import '../modules/support/views/support_view.dart';
-import '../modules/wallet/bindings/wallet_binding.dart';
-import '../modules/wallet/views/wallet_view.dart';
-import '../modules/categories/bindings/categories_binding.dart';
-import '../modules/categories/views/categories_view.dart';
-import '../modules/discover/bindings/discover_binding.dart';
-import '../modules/discover/views/discover_view.dart';
-import '../modules/home/bindings/home_binding.dart';
-import '../modules/home/views/home_view.dart';
-import '../modules/login/bindings/login_binding.dart';
-import '../modules/login/views/login_view.dart';
-import '../modules/main_navigation/bindings/main_navigation_binding.dart';
-import '../modules/main_navigation/views/main_navigation_view.dart';
 import '../modules/onboarding/bindings/onboarding_binding.dart';
 import '../modules/onboarding/views/onboarding_view.dart';
+import '../modules/order_success/bindings/order_success_binding.dart';
+import '../modules/order_success/views/order_success_view.dart';
+import '../modules/privacy_policy/bindings/privacy_policy_binding.dart';
+import '../modules/privacy_policy/views/privacy_policy_view.dart';
+import '../modules/product_details/bindings/product_details_binding.dart';
+import '../modules/product_details/views/product_details_view.dart';
+import '../modules/refer_and_earn/bindings/refer_and_earn_binding.dart';
+import '../modules/refer_and_earn/views/refer_and_earn_view.dart';
+import '../modules/refund_policy/bindings/refund_policy_binding.dart';
+import '../modules/refund_policy/views/refund_policy_view.dart';
+import '../modules/seller_details/bindings/seller_details_binding.dart';
+import '../modules/seller_details/views/seller_details_view.dart';
+import '../modules/shipping_policy/bindings/shipping_policy_binding.dart';
+import '../modules/shipping_policy/views/shipping_policy_view.dart';
 import '../modules/signup/bindings/signup_binding.dart';
 import '../modules/signup/views/signup_view.dart';
 import '../modules/splash/bindings/splash_binding.dart';
 import '../modules/splash/views/splash_view.dart';
+import '../modules/support/bindings/support_binding.dart';
+import '../modules/support/views/support_view.dart';
+import '../modules/terms_and_conditions/bindings/terms_and_conditions_binding.dart';
+import '../modules/terms_and_conditions/views/terms_and_conditions_view.dart';
+import '../modules/top_brands/bindings/top_brands_binding.dart';
+import '../modules/top_brands/views/top_brands_view.dart';
+import '../modules/wallet/bindings/wallet_binding.dart';
+import '../modules/wallet/views/wallet_view.dart';
 
 part 'app_routes.dart';
 
@@ -78,37 +83,37 @@ class AppPages {
       name: _Paths.SPLASH,
       page: () => const SplashView(),
       binding: SplashBinding(),
-      transition: Transition.fadeIn,
+      transition: Transition.rightToLeft,
     ),
     GetPage(
       name: _Paths.ONBOARDING,
       page: () => const OnboardingView(),
       binding: OnboardingBinding(),
-      transition: Transition.fadeIn,
+      transition: Transition.rightToLeft,
     ),
     GetPage(
       name: _Paths.LOGIN,
       page: () => const LoginView(),
       binding: LoginBinding(),
-      transition: Transition.fadeIn,
+      transition: Transition.rightToLeft,
     ),
     GetPage(
       name: _Paths.SIGNUP,
       page: () => const SignupView(),
       binding: SignupBinding(),
-      transition: Transition.fadeIn,
+      transition: Transition.rightToLeft,
     ),
     GetPage(
       name: _Paths.MAIN_NAVIGATION,
       page: () => const MainNavigationView(),
       binding: MainNavigationBinding(),
-      transition: Transition.fadeIn,
+      transition: Transition.rightToLeft,
     ),
     GetPage(
       name: _Paths.HOME,
       page: () => const HomeView(),
       binding: HomeBinding(),
-      transition: Transition.fadeIn,
+      transition: Transition.rightToLeft,
     ),
     GetPage(
       name: _Paths.CATEGORIES,
@@ -120,19 +125,19 @@ class AppPages {
       name: _Paths.DISCOVER,
       page: () => const DiscoverView(),
       binding: DiscoverBinding(),
-      transition: Transition.fadeIn,
+      transition: Transition.rightToLeft,
     ),
     GetPage(
       name: _Paths.BAG,
       page: () => const BagView(),
       binding: BagBinding(),
-      transition: Transition.fadeIn,
+      transition: Transition.rightToLeft,
     ),
     GetPage(
       name: _Paths.ACCOUNT,
       page: () => const AccountView(),
       binding: AccountBinding(),
-      transition: Transition.fadeIn,
+      transition: Transition.rightToLeft,
     ),
     GetPage(
       name: _Paths.CATEGORY_PRODUCTS,
@@ -174,12 +179,6 @@ class AppPages {
       name: _Paths.WALLET,
       page: () => const WalletView(),
       binding: WalletBinding(),
-      transition: Transition.rightToLeft,
-    ),
-    GetPage(
-      name: _Paths.SHOPPING_LIST,
-      page: () => const ShoppingListView(),
-      binding: ShoppingListBinding(),
       transition: Transition.rightToLeft,
     ),
     GetPage(
@@ -263,6 +262,36 @@ class AppPages {
       name: _Paths.TOP_BRANDS,
       page: () => const TopBrandsView(),
       binding: TopBrandsBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: _Paths.LEADERBOARDS,
+      page: () => const LeaderboardView(),
+      binding: LeaderboardBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: _Paths.LOTTERY,
+      page: () => const LotteryListView(),
+      binding: LotteryBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: _Paths.LOTTERY_DETAIL,
+      page: () => const LotteryDetailView(),
+      binding: LotteryBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: _Paths.LOTTERY_RESULTS,
+      page: () => const LotteryResultsView(),
+      binding: LotteryBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: _Paths.MY_LOTTERY_TICKETS,
+      page: () => const MyLotteryTicketsView(),
+      binding: LotteryBinding(),
       transition: Transition.rightToLeft,
     ),
   ];

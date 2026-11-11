@@ -5,8 +5,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../../../data/config/app_color.dart';
+import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/models/wallet_model.dart';
 import '../../../data/widgets/skeleton_box.dart';
+import '../../../data/widgets/wallet_pin_dialog.dart';
+import '../../../data/widgets/wallet_redeem_sheet.dart';
 import '../../../routes/app_pages.dart';
 import '../controllers/wallet_controller.dart';
 
@@ -39,6 +42,15 @@ class WalletView extends GetView<WalletController> {
         ),
         centerTitle: false,
         actions: [
+          IconButton(
+            tooltip: 'Wallet PIN Settings',
+            icon: Icon(
+              Iconsax.shield_security,
+              color: AppColor.textPrimary,
+              size: 22.r,
+            ),
+            onPressed: () => WalletPinDialog.showManagePinSheet(context),
+          ),
           IconButton(
             tooltip: 'All Transactions',
             icon: Icon(
@@ -237,25 +249,21 @@ class WalletView extends GetView<WalletController> {
               children: [
                 Row(
                   children: [
-                    Container(
-                      padding: EdgeInsets.all(8.r),
-                      decoration: BoxDecoration(
-                        color: AppColor.white.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10.r),
-                      ),
-                      child: Icon(
-                        Iconsax.wallet_2,
-                        color: AppColor.primary,
-                        size: 20.r,
-                      ),
-                    ),
-                    SizedBox(width: 10.w),
                     Text(
-                      'Alif Main Wallet',
+                      'Total Balance',
                       style: GoogleFonts.lato(
                         fontSize: 14.sp,
                         color: const Color(0xFFCBD5E1),
                         fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(width: 4.w),
+                    GestureDetector(
+                      onTap: () => _showTotalCalculationSheet(context),
+                      child: Icon(
+                        Iconsax.info_circle,
+                        size: 16.r,
+                        color: AppColor.primary,
                       ),
                     ),
                   ],
@@ -294,10 +302,10 @@ class WalletView extends GetView<WalletController> {
                 ),
               ],
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: 12.h),
             Obx(
               () => Text(
-                '${controller.currencySymbol.value} ${controller.mainBalance.value.toStringAsFixed(2)}',
+                '${controller.currencySymbol.value} ${controller.totalBalance.value.toStringAsFixed(2)}',
                 style: GoogleFonts.lato(
                   fontSize: 32.sp,
                   fontWeight: FontWeight.w800,
@@ -306,7 +314,7 @@ class WalletView extends GetView<WalletController> {
                 ),
               ),
             ),
-            SizedBox(height: 14.h),
+            SizedBox(height: 12.h),
             Container(
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
               decoration: BoxDecoration(
@@ -316,20 +324,29 @@ class WalletView extends GetView<WalletController> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Total Across All Wallets',
-                    style: GoogleFonts.lato(
-                      fontSize: 12.sp,
-                      color: const Color(0xFF94A3B8),
-                    ),
+                  Row(
+                    children: [
+                      Icon(Iconsax.wallet_2, size: 14.r, color: AppColor.primary),
+                      SizedBox(width: 6.w),
+                      Obx(
+                        () => Text(
+                          'Main: ${controller.currencySymbol.value}${controller.mainBalance.value.toStringAsFixed(2)}',
+                          style: GoogleFonts.lato(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFFE2E8F0),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   Obx(
                     () => Text(
-                      '${controller.currencySymbol.value} ${controller.totalBalance.value.toStringAsFixed(2)}',
+                      'Max ${controller.walletMaxPercent.value}% on checkout',
                       style: GoogleFonts.lato(
-                        fontSize: 13.sp,
+                        fontSize: 11.5.sp,
                         fontWeight: FontWeight.bold,
-                        color: AppColor.primary,
+                        color: const Color(0xFF94A3B8),
                       ),
                     ),
                   ),
@@ -341,10 +358,10 @@ class WalletView extends GetView<WalletController> {
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () => _showDepositSheet(context),
+                    onPressed: () => _showAddMoneyOptionsSheet(context),
                     icon: Icon(Iconsax.add_circle, size: 16.r, color: AppColor.white),
                     label: Text(
-                      'Deposit',
+                      'Add Money',
                       style: GoogleFonts.lato(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.bold,
@@ -362,22 +379,52 @@ class WalletView extends GetView<WalletController> {
                     ),
                   ),
                 ),
-                SizedBox(width: 10.w),
+                SizedBox(width: 8.w),
                 Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _showWithdrawSheet(context),
-                    icon: Icon(Iconsax.export_1, size: 16.r, color: AppColor.white),
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      WalletRedeemSheet.show(
+                        context,
+                        wallets: controller.wallets,
+                        onRedeemSuccess: () => controller.refreshAll(),
+                      );
+                    },
+                    icon: Icon(Iconsax.repeat, size: 16.r, color: AppColor.white),
                     label: Text(
-                      'Withdraw',
+                      'Redeem',
                       style: GoogleFonts.lato(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.bold,
                         color: AppColor.white,
                       ),
                     ),
-                    style: OutlinedButton.styleFrom(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
                       foregroundColor: AppColor.white,
-                      side: BorderSide(color: AppColor.white.withValues(alpha: 0.3)),
+                      elevation: 0,
+                      padding: EdgeInsets.symmetric(vertical: 10.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showWithdrawDisabledNotice(),
+                    icon: Icon(Iconsax.export_1, size: 16.r, color: const Color(0xFF94A3B8)),
+                    label: Text(
+                      'Withdraw',
+                      style: GoogleFonts.lato(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF94A3B8),
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF94A3B8),
+                      side: const BorderSide(color: Color(0xFF475569)),
                       padding: EdgeInsets.symmetric(vertical: 10.h),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.r),
@@ -740,6 +787,605 @@ class WalletView extends GetView<WalletController> {
               color: tx.isCredit
                   ? const Color(0xFF16A34A)
                   : AppColor.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showWithdrawDisabledNotice() {
+    showSnack(
+      'Withdrawals Disabled',
+      'Wallet withdrawal is temporarily disabled on Alifworld.',
+      bg: const Color(0xFF334155),
+    );
+  }
+
+  void _showTotalCalculationSheet(BuildContext context) {
+    final charity = controller.wallets.firstWhereOrNull((w) => w.kind == 'customer_charity');
+    final contributing = controller.wallets
+        .where((w) => w.kind != 'customer_charity' && w.balanceMinor > 0)
+        .toList();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+        decoration: BoxDecoration(
+          color: AppColor.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40.w,
+                  height: 4.h,
+                  margin: EdgeInsets.only(bottom: 16.h),
+                  decoration: BoxDecoration(
+                    color: AppColor.border,
+                    borderRadius: BorderRadius.circular(2.r),
+                  ),
+                ),
+              ),
+              Row(
+                children: [
+                  Container(
+                    width: 42.r,
+                    height: 42.r,
+                    decoration: BoxDecoration(
+                      color: AppColor.primary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Iconsax.calculator, color: AppColor.primary, size: 22.r),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'How your total is calculated',
+                          style: GoogleFonts.lato(
+                            fontSize: 17.sp,
+                            fontWeight: FontWeight.bold,
+                            color: AppColor.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          'Every wallet balance except Charity contributes',
+                          style: GoogleFonts.lato(
+                            fontSize: 12.sp,
+                            color: AppColor.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 18.h),
+
+              if (contributing.isEmpty)
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.h),
+                  child: Text(
+                    'No non-zero contributing balances',
+                    style: GoogleFonts.lato(
+                      fontSize: 13.sp,
+                      color: AppColor.textSecondary,
+                    ),
+                  ),
+                )
+              else
+                ...contributing.map((w) => Padding(
+                      padding: EdgeInsets.symmetric(vertical: 6.h),
+                      child: Row(
+                        children: [
+                          Icon(w.icon, size: 18.r, color: AppColor.primary),
+                          SizedBox(width: 10.w),
+                          Expanded(
+                            child: Text(
+                              w.title,
+                              style: GoogleFonts.lato(
+                                fontSize: 13.5.sp,
+                                color: AppColor.textPrimary,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '৳${w.balance.toStringAsFixed(2)}',
+                            style: GoogleFonts.lato(
+                              fontSize: 13.5.sp,
+                              fontWeight: FontWeight.bold,
+                              color: AppColor.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )),
+
+              const Divider(height: 24, color: AppColor.border),
+
+              // Total Sum
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Total Spendable Balance',
+                    style: GoogleFonts.lato(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.bold,
+                      color: AppColor.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    '৳${controller.totalBalance.value.toStringAsFixed(2)}',
+                    style: GoogleFonts.lato(
+                      fontSize: 17.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColor.primary,
+                    ),
+                  ),
+                ],
+              ),
+
+              SizedBox(height: 14.h),
+
+              // Charity row (Excluded)
+              Container(
+                padding: EdgeInsets.all(12.r),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Iconsax.heart, color: const Color(0xFF0D9488), size: 20.r),
+                    SizedBox(width: 10.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                'Charity Wallet',
+                                style: GoogleFonts.lato(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColor.textPrimary,
+                                ),
+                              ),
+                              SizedBox(width: 6.w),
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.h),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE2E8F0),
+                                  borderRadius: BorderRadius.circular(4.r),
+                                ),
+                                child: Text(
+                                  'EXCLUDED',
+                                  style: GoogleFonts.lato(
+                                    fontSize: 9.sp,
+                                    fontWeight: FontWeight.w800,
+                                    color: const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 2.h),
+                          Text(
+                            'View-only community fund',
+                            style: GoogleFonts.lato(
+                              fontSize: 11.sp,
+                              color: AppColor.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      '৳${(charity?.balance ?? 0.0).toStringAsFixed(2)}',
+                      style: GoogleFonts.lato(
+                        fontSize: 13.5.sp,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: 12.h),
+
+              Text(
+                'Charity wallet balance represents donated contributions for humanitarian purposes. It cannot be used for checkout or withdrawn, and is excluded from your spendable balance.',
+                style: GoogleFonts.lato(
+                  fontSize: 11.sp,
+                  color: AppColor.textSecondary,
+                  height: 1.4,
+                ),
+              ),
+
+              SizedBox(height: 16.h),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showAddMoneyOptionsSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+        decoration: BoxDecoration(
+          color: AppColor.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 40.w,
+                height: 4.h,
+                margin: EdgeInsets.only(bottom: 16.h),
+                decoration: BoxDecoration(
+                  color: AppColor.border,
+                  borderRadius: BorderRadius.circular(2.r),
+                ),
+              ),
+            ),
+            Text(
+              'Add Money Options',
+              style: GoogleFonts.lato(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.bold,
+                color: AppColor.textPrimary,
+              ),
+            ),
+            SizedBox(height: 4.h),
+            Text(
+              'Choose how you want to add funds to your wallets',
+              style: GoogleFonts.lato(
+                fontSize: 12.sp,
+                color: AppColor.textSecondary,
+              ),
+            ),
+            SizedBox(height: 16.h),
+
+            // 1. Main Wallet Service Point Deposit
+            InkWell(
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _showServicePointDepositInfo(context);
+              },
+              borderRadius: BorderRadius.circular(14.r),
+              child: Container(
+                padding: EdgeInsets.all(14.r),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(14.r),
+                  border: Border.all(color: AppColor.border),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44.r,
+                      height: 44.r,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF0F172A),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Iconsax.shop, color: AppColor.white, size: 22),
+                    ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                'Main Wallet Deposit',
+                                style: GoogleFonts.lato(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColor.textPrimary,
+                                ),
+                              ),
+                              SizedBox(width: 6.w),
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.h),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFEF3C7),
+                                  borderRadius: BorderRadius.circular(4.r),
+                                ),
+                                child: Text(
+                                  '1% Fee',
+                                  style: GoogleFonts.lato(
+                                    fontSize: 10.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFFB45309),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 2.h),
+                          Text(
+                            'Cash deposit via authorized Alifworld Service Points',
+                            style: GoogleFonts.lato(
+                              fontSize: 11.5.sp,
+                              color: AppColor.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.chevron_right_rounded, color: AppColor.textSecondary, size: 20.r),
+                  ],
+                ),
+              ),
+            ),
+
+            SizedBox(height: 12.h),
+
+            // 2. Advance Shopping Deposit
+            InkWell(
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _showDepositSheet(context);
+              },
+              borderRadius: BorderRadius.circular(14.r),
+              child: Container(
+                padding: EdgeInsets.all(14.r),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(14.r),
+                  border: Border.all(color: AppColor.border),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44.r,
+                      height: 44.r,
+                      decoration: BoxDecoration(
+                        color: AppColor.primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Iconsax.trend_up, color: AppColor.primary, size: 22),
+                    ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Advance Shopping Deposit',
+                            style: GoogleFonts.lato(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.bold,
+                              color: AppColor.textPrimary,
+                            ),
+                          ),
+                          SizedBox(height: 2.h),
+                          Text(
+                            'Add advance shopping credits for extra purchase perks',
+                            style: GoogleFonts.lato(
+                              fontSize: 11.5.sp,
+                              color: AppColor.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.chevron_right_rounded, color: AppColor.textSecondary, size: 20.r),
+                  ],
+                ),
+              ),
+            ),
+
+            SizedBox(height: 20.h),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showServicePointDepositInfo(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+        decoration: BoxDecoration(
+          color: AppColor.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 40.w,
+                height: 4.h,
+                margin: EdgeInsets.only(bottom: 16.h),
+                decoration: BoxDecoration(
+                  color: AppColor.border,
+                  borderRadius: BorderRadius.circular(2.r),
+                ),
+              ),
+            ),
+            Row(
+              children: [
+                Container(
+                  width: 44.r,
+                  height: 44.r,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF0F172A),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Iconsax.shop, color: AppColor.white, size: 22),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Service Point Cash Deposit',
+                        style: GoogleFonts.lato(
+                          fontSize: 17.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColor.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        'Main Wallet top-up route (1% service fee)',
+                        style: GoogleFonts.lato(
+                          fontSize: 12.sp,
+                          color: AppColor.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 20.h),
+            _buildStepRow(
+              number: '1',
+              title: 'Visit any authorized Alifworld Service Point',
+              subtitle: 'Locate a partner service point near your location.',
+            ),
+            _buildStepRow(
+              number: '2',
+              title: 'Provide your registered mobile number',
+              subtitle: 'The agent will lookup your customer account ID.',
+            ),
+            _buildStepRow(
+              number: '3',
+              title: 'Hand over cash amount (1% fee)',
+              subtitle: 'The agent initiates an official platform deposit with 1% service charge.',
+            ),
+            _buildStepRow(
+              number: '4',
+              title: 'Instant Main Wallet credit',
+              subtitle: 'Funds are credited to your Main Wallet immediately with SMS confirmation.',
+            ),
+            SizedBox(height: 12.h),
+            Container(
+              padding: EdgeInsets.all(12.r),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(10.r),
+                border: Border.all(color: const Color(0xFFFDE68A)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Iconsax.info_circle, color: const Color(0xFFD97706), size: 18.r),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Text(
+                      'Direct online self-service top-up is not supported. All Main Wallet cash deposits must go through authorized Service Points.',
+                      style: GoogleFonts.lato(
+                        fontSize: 11.5.sp,
+                        color: const Color(0xFF92400E),
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 20.h),
+            ElevatedButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0F172A),
+                foregroundColor: AppColor.white,
+                padding: EdgeInsets.symmetric(vertical: 12.h),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+              ),
+              child: Text(
+                'Got It',
+                style: GoogleFonts.lato(fontSize: 14.sp, fontWeight: FontWeight.bold),
+              ),
+            ),
+            SizedBox(height: 10.h),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStepRow({
+    required String number,
+    required String title,
+    required String subtitle,
+  }) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 14.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 24.r,
+            height: 24.r,
+            decoration: BoxDecoration(
+              color: AppColor.primary.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                number,
+                style: GoogleFonts.lato(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.bold,
+                  color: AppColor.primary,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.lato(
+                    fontSize: 13.5.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppColor.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.lato(
+                    fontSize: 11.5.sp,
+                    color: AppColor.textSecondary,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

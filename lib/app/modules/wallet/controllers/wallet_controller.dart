@@ -21,6 +21,8 @@ class WalletController extends GetxController {
   final currency = 'BDT'.obs;
   final mainBalance = 0.0.obs;
   final totalBalance = 0.0.obs;
+  final walletMaxPercent = 60.obs;
+  final pendingPoints = Rxn<WalletPendingPointsResponseModel>();
 
   // Selected wallet filter for transactions (empty = All)
   final selectedWalletKind = ''.obs;
@@ -48,6 +50,7 @@ class WalletController extends GetxController {
     try {
       await Future.wait([
         fetchWallets(),
+        fetchPendingPoints(),
         fetchTransactions(refresh: true),
       ]);
     } finally {
@@ -77,6 +80,7 @@ class WalletController extends GetxController {
           currency.value = resModel.currency;
           mainBalance.value = resModel.mainBalance;
           totalBalance.value = resModel.totalBalance;
+          walletMaxPercent.value = resModel.walletMaxPercent;
         }
       } else {
         _loadFallbackWallets();
@@ -84,6 +88,25 @@ class WalletController extends GetxController {
     } catch (e) {
       debugPrint('Error fetching wallets: $e');
       _loadFallbackWallets();
+    }
+  }
+
+  /// 1.1 GET /api/v1/wallets/pending - Fetch pending points from delivered orders
+  Future<void> fetchPendingPoints() async {
+    if (!hasAuth) return;
+    try {
+      final response = await dioGet('wallets/pending');
+      if (response.statusCode == 200 && response.data != null) {
+        dynamic rawData = response.data;
+        if (rawData is Map && rawData.containsKey('data')) {
+          rawData = rawData['data'];
+        }
+        if (rawData is Map<String, dynamic>) {
+          pendingPoints.value = WalletPendingPointsResponseModel.fromJson(rawData);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching pending points: $e');
     }
   }
 

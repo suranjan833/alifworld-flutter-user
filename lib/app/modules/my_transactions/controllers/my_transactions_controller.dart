@@ -14,6 +14,7 @@ class MyTransactionsController extends GetxController {
   final nextCursor = RxnString();
   final selectedWalletKind = ''.obs;
   final currencySymbol = '৳'.obs;
+  final pendingPoints = Rxn<WalletPendingPointsResponseModel>();
 
   final filterOptions = const [
     {'label': 'All', 'kind': ''},
@@ -93,6 +94,11 @@ class MyTransactionsController extends GetxController {
           }
         }
       }
+
+      // If cashback filter is selected on refresh, fetch pending orders
+      if (refresh && activeKind == 'customer_cashback') {
+        await fetchPendingPoints();
+      }
     } catch (e) {
       debugPrint('Error fetching transactions: $e');
     } finally {
@@ -104,9 +110,31 @@ class MyTransactionsController extends GetxController {
     }
   }
 
+  /// GET /api/v1/wallets/pending - Fetch unsettled orders for cashback wallet
+  Future<void> fetchPendingPoints() async {
+    if (!hasAuth) return;
+    try {
+      final res = await dioGet('wallets/pending');
+      if (res.statusCode == 200 && res.data != null) {
+        dynamic raw = res.data;
+        if (raw is Map && raw.containsKey('data')) {
+          raw = raw['data'];
+        }
+        if (raw is Map<String, dynamic>) {
+          pendingPoints.value = WalletPendingPointsResponseModel.fromJson(raw);
+        }
+      }
+    } catch (_) {
+      // Failed pending fetch must not break posted history
+    }
+  }
+
   void selectFilter(String kind) {
     if (selectedWalletKind.value == kind) return;
     selectedWalletKind.value = kind;
+    if (kind != 'customer_cashback') {
+      pendingPoints.value = null;
+    }
     fetchTransactions(refresh: true);
   }
 

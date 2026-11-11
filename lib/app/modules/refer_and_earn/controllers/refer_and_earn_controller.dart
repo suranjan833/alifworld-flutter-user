@@ -29,9 +29,14 @@ class ReferAndEarnController extends GetxController {
   }
 
   String get referralCode => referralInfo.value?.code ?? '';
-  String get shareUrl =>
-      referralInfo.value?.link ??
-      'https://alifworld.com.bd/register?ref=$referralCode';
+  String get shareUrl {
+    if (referralInfo.value?.link != null &&
+        referralInfo.value!.link.isNotEmpty) {
+      return referralInfo.value!.link;
+    }
+    final web = resolveWebUrl();
+    return web.isNotEmpty ? '$web/register?ref=$referralCode' : '';
+  }
 
   @override
   void onInit() {
