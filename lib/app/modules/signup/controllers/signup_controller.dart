@@ -637,6 +637,10 @@ class SignupController extends GetxController {
   }
 
   void goToLogin() {
-    Get.back();
+    if (Get.previousRoute == Routes.LOGIN) {
+      Get.back();
+    } else {
+      Get.toNamed(Routes.LOGIN);
+    }
   }
 }

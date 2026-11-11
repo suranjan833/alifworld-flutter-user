@@ -7,7 +7,6 @@ import 'package:iconsax/iconsax.dart';
 
 import '../../../data/config/app_color.dart';
 import '../../../data/widgets/country_picker_dialog.dart';
-import '../../../routes/app_pages.dart';
 import '../controllers/login_controller.dart';
 
 class LoginView extends GetView<LoginController> {
@@ -15,38 +14,25 @@ class LoginView extends GetView<LoginController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColor.background,
-      appBar: AppBar(
-        backgroundColor: AppColor.transparent,
-        elevation: 0,
-        toolbarHeight: 44.h,
-        leading: IconButton(
-          icon: Icon(
-            Iconsax.arrow_left_2,
-            color: AppColor.textPrimary,
-            size: 20.r,
-          ),
-          onPressed: () {
-            if (Navigator.canPop(context)) {
-              Get.back();
-            } else {
-              Get.offAllNamed(Routes.MAIN_NAVIGATION);
-            }
-          },
-        ),
-      ),
-      body: SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 20.w),
-          child: Form(
-            key: controller.formKey,
-            child: Obx(
-              () => Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: 12.h),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        // Prevent entering main app page after logout or on login. Minimize/exit app instead.
+        SystemNavigator.pop();
+      },
+      child: Scaffold(
+        backgroundColor: AppColor.background,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: 20.w),
+            child: Form(
+              key: controller.formKey,
+              child: Obx(
+                () => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 20.h),
 
                   // Brand Header Badge / Icon
                   Container(
@@ -567,7 +553,8 @@ class LoginView extends GetView<LoginController> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 }
 

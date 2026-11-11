@@ -7,29 +7,47 @@ import 'package:iconsax/iconsax.dart';
 
 import '../../../data/config/app_color.dart';
 import '../../../data/widgets/country_picker_dialog.dart';
+import '../../../routes/app_pages.dart';
 import '../controllers/signup_controller.dart';
 
 class SignupView extends GetView<SignupController> {
   const SignupView({super.key});
 
+  void _handleBack(BuildContext context) {
+    final prev = Get.previousRoute;
+    final hasRealPrevious =
+        prev.isNotEmpty && prev != Routes.SPLASH && prev != Routes.SIGNUP;
+    if (hasRealPrevious && Navigator.of(context).canPop()) {
+      Get.back();
+    } else {
+      Get.offAllNamed(Routes.MAIN_NAVIGATION);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColor.background,
-      appBar: AppBar(
-        backgroundColor: AppColor.transparent,
-        elevation: 0,
-        toolbarHeight: 44.h,
-        leading: IconButton(
-          icon: Icon(
-            Iconsax.arrow_left_2,
-            color: AppColor.textPrimary,
-            size: 20.r,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _handleBack(context);
+      },
+      child: Scaffold(
+        backgroundColor: AppColor.background,
+        appBar: AppBar(
+          backgroundColor: AppColor.transparent,
+          elevation: 0,
+          toolbarHeight: 44.h,
+          leading: IconButton(
+            icon: Icon(
+              Iconsax.arrow_left_2,
+              color: AppColor.textPrimary,
+              size: 20.r,
+            ),
+            onPressed: () => _handleBack(context),
           ),
-          onPressed: () => Get.back(),
         ),
-      ),
-      body: SafeArea(
+        body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 20.w),
           child: Form(
@@ -471,7 +489,8 @@ class SignupView extends GetView<SignupController> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildFieldLabel(String label) {
