@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -9,17 +10,44 @@ import 'app/data/config/app_color.dart';
 import 'app/data/config/functions/dio_function/app_config.dart';
 import 'app/data/services/app_translations.dart';
 import 'app/data/services/deep_link_service.dart';
+import 'app/data/services/rewards_service.dart';
+import 'app/data/services/wallet_pin_service.dart';
 import 'app/routes/app_pages.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  try {
-    await dotenv.load(fileName: ".env");
-  } catch (e) {
-    debugPrint("Dotenv load error or .env missing: $e");
+  const envFile = String.fromEnvironment('ENV_FILE', defaultValue: '');
+  const envName = String.fromEnvironment('ENV', defaultValue: '');
+
+  String primaryEnv = '.env';
+  if (envFile.isNotEmpty) {
+    primaryEnv = envFile;
+  } else if (envName.isNotEmpty) {
+    primaryEnv = '.env.$envName';
+  } else if (kReleaseMode) {
+    primaryEnv = '.env.production';
   }
+
+  bool loaded = false;
+  try {
+    await dotenv.load(fileName: primaryEnv);
+    loaded = true;
+  } catch (_) {}
+
+  if (!loaded) {
+    for (final candidate in ['.env', '.env.local', '.env.production']) {
+      try {
+        await dotenv.load(fileName: candidate);
+        loaded = true;
+        break;
+      } catch (_) {}
+    }
+  }
+
   initAppConfig();
   await GetStorage.init();
+  Get.put(RewardsService(), permanent: true);
+  Get.put(WalletPinService(), permanent: true);
   Get.put(DeepLinkService(), permanent: true);
   DeepLinkService.to.init();
   runApp(

@@ -10,8 +10,11 @@ import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/mixins/skeleton_loading_mixin.dart';
 import '../../../data/models/user_model.dart';
+import '../../../data/models/wallet_model.dart';
 import '../../../data/services/app_translations.dart';
+import '../../../data/widgets/wallet_pin_dialog.dart';
 import '../../../routes/app_pages.dart';
+import '../../leaderboards/models/leaderboard_model.dart';
 import '../../my_profile/controllers/my_profile_controller.dart';
 
 class AccountMenuItem {
@@ -37,18 +40,36 @@ class AccountSectionData {
 
 class AccountController extends GetxController with SkeletonLoadingMixin {
   final user = Rxn<UserModel>();
-  final userName = 'User'.obs;
-  final userEmail = 'user@example.com'.obs;
-  final userPhone = '+91 98765 43210'.obs;
-  final memberSince = 'Member since Jun-2026'.obs;
+  final userName = ''.obs;
+  final userEmail = ''.obs;
+  final userPhone = ''.obs;
+  final memberSince = ''.obs;
   final currentLanguage = 'English'.obs;
   final currentLangCode = 'en'.obs;
+  final totalBalance = 0.0.obs;
+  final myProgress = Rxn<MyProgressResponseModel>();
+  final selectedClubPeriod = 'daily'.obs; // 'daily', 'weekly', 'monthly', 'yearly'
+  final isLoggedIn = false.obs;
+
+  void changeClubPeriod(String period) {
+    selectedClubPeriod.value = period;
+  }
+
+  void requireLogin(VoidCallback onAuthorized) {
+    if (isLoggedIn.value) {
+      onAuthorized();
+    } else {
+      Get.toNamed(Routes.LOGIN);
+    }
+  }
 
   bool get _hasAuth {
     final token = getBox.read(USER_TOKEN);
     final sessionCookie = getBox.read('SESSION_COOKIE');
-    return (token != null && token.toString().trim().isNotEmpty) ||
+    final isLoggedInVal = getBox.read(IS_USER_LOGGED_IN);
+    final hasToken = (token != null && token.toString().trim().isNotEmpty) ||
         (sessionCookie != null && sessionCookie.toString().trim().isNotEmpty);
+    return hasToken && (isLoggedInVal == true || isLoggedInVal == 'true');
   }
 
   @override
@@ -65,6 +86,16 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
   }
 
   void _loadUserData() {
+    isLoggedIn.value = _hasAuth;
+    if (!_hasAuth) {
+      userName.value = '';
+      userEmail.value = '';
+      userPhone.value = '';
+      memberSince.value = '';
+      totalBalance.value = 0.0;
+      myProgress.value = null;
+      return;
+    }
     final savedName = getBox.read(USER_NAME);
     if (savedName != null && savedName.toString().trim().isNotEmpty) {
       userName.value = savedName.toString().trim();
@@ -81,8 +112,15 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
 
   /// GET /auth/me - Fetch authenticated user profile details
   Future<void> fetchUserProfile() async {
+    isLoggedIn.value = _hasAuth;
     if (!_hasAuth) {
       isLoading.value = false;
+      userName.value = '';
+      userEmail.value = '';
+      userPhone.value = '';
+      memberSince.value = '';
+      totalBalance.value = 0.0;
+      myProgress.value = null;
       return;
     }
 
@@ -125,11 +163,54 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
           }
         }
       }
+
+      // Concurrently fetch wallets total and club achievements
+      await Future.wait([
+        fetchTotalBalance(),
+        fetchMyProgress(),
+      ]);
     } catch (e) {
       debugPrint('Error fetching user profile: $e');
     } finally {
       isLoading.value = false;
     }
+  }
+
+  /// GET /api/v1/wallets - Fetch wallet total excluding charity
+  Future<void> fetchTotalBalance() async {
+    if (!_hasAuth) return;
+    try {
+      final res = await dioGet('wallets');
+      if (res.statusCode == 200 && res.data != null) {
+        dynamic raw = res.data;
+        if (raw is Map && raw.containsKey('data')) {
+          raw = raw['data'];
+        }
+        if (raw is Map<String, dynamic>) {
+          final model = WalletResponseModel.fromJson(raw);
+          totalBalance.value = model.totalBalance;
+        }
+      }
+    } catch (_) {}
+  }
+
+  /// GET /api/v1/leaderboards/my-progress - Fetch customer club progress
+  Future<void> fetchMyProgress() async {
+    if (!_hasAuth) return;
+    try {
+      final res = await dioGet('leaderboards/my-progress');
+      if (res.statusCode == 200 && res.data != null) {
+        dynamic raw = res.data;
+        if (raw is Map && raw.containsKey('data')) {
+          raw = raw['data'];
+        }
+        if (raw is Map<String, dynamic>) {
+          myProgress.value = MyProgressResponseModel.fromJson(raw);
+        }
+      } else if (res.statusCode == 401) {
+        myProgress.value = null;
+      }
+    } catch (_) {}
   }
 
   List<AccountSectionData> get sections => [
@@ -139,50 +220,57 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
         AccountMenuItem(
           title: 'my_profile'.tr,
           icon: Iconsax.user_edit,
-          onTap: () => openMyProfile(),
+          onTap: () => requireLogin(() => Get.toNamed(Routes.MY_PROFILE)),
         ),
         AccountMenuItem(
           title: 'my_orders'.tr,
           icon: Iconsax.shopping_bag,
-          onTap: () => openMyOrders(),
-        ),
-        AccountMenuItem(
-          title: 'manage_addresses'.tr,
-          icon: Iconsax.location,
-          onTap: () => openManageAddresses(),
-        ),
-        AccountMenuItem(
-          title: 'my_transactions'.tr,
-          icon: Iconsax.card,
-          onTap: () => _hasAuth
-              ? Get.toNamed(Routes.MY_TRANSACTIONS)
-              : Get.toNamed(Routes.LOGIN),
-        ),
-        AccountMenuItem(
-          title: 'my_wishlist'.tr,
-          icon: Iconsax.heart,
-          onTap: () => _hasAuth
-              ? Get.toNamed(Routes.MY_WISHLIST)
-              : Get.toNamed(Routes.LOGIN),
+          onTap: () => requireLogin(() => Get.toNamed(Routes.MY_ORDERS)),
         ),
         AccountMenuItem(
           title: 'wallet'.tr,
           icon: Iconsax.wallet_2,
-          onTap: () => _hasAuth
-              ? Get.toNamed(Routes.WALLET)
-              : Get.toNamed(Routes.LOGIN),
+          onTap: () => requireLogin(() => Get.toNamed(Routes.WALLET)),
         ),
         AccountMenuItem(
-          title: 'shopping_list'.tr,
-          icon: Iconsax.clipboard_text,
-          onTap: () => Get.toNamed(Routes.SHOPPING_LIST),
+          title: 'Leaderboards',
+          icon: Iconsax.cup,
+          onTap: () => requireLogin(() => Get.toNamed(Routes.LEADERBOARDS)),
         ),
+        AccountMenuItem(
+          title: 'Good-Luck Lottery',
+          icon: Iconsax.ticket,
+          onTap: () => requireLogin(() => Get.toNamed(Routes.LOTTERY)),
+        ),
+        AccountMenuItem(
+          title: 'Wallet PIN Settings',
+          icon: Iconsax.shield_security,
+          onTap: () => requireLogin(() {
+            if (Get.context != null) {
+              WalletPinDialog.showManagePinSheet(Get.context!);
+            }
+          }),
+        ),
+        AccountMenuItem(
+          title: 'manage_addresses'.tr,
+          icon: Iconsax.location,
+          onTap: () => requireLogin(() => Get.toNamed(Routes.MANAGE_ADDRESSES)),
+        ),
+        AccountMenuItem(
+          title: 'my_transactions'.tr,
+          icon: Iconsax.card,
+          onTap: () => requireLogin(() => Get.toNamed(Routes.MY_TRANSACTIONS)),
+        ),
+        AccountMenuItem(
+          title: 'my_wishlist'.tr,
+          icon: Iconsax.heart,
+          onTap: () => requireLogin(() => Get.toNamed(Routes.MY_WISHLIST)),
+        ),
+
         AccountMenuItem(
           title: 'refer_and_earn'.tr,
           icon: Iconsax.profile_add,
-          onTap: () => _hasAuth
-              ? Get.toNamed(Routes.REFER_AND_EARN)
-              : Get.toNamed(Routes.LOGIN),
+          onTap: () => requireLogin(() => Get.toNamed(Routes.REFER_AND_EARN)),
         ),
       ],
     ),
@@ -822,12 +910,22 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
                     child: ElevatedButton(
                       onPressed: () {
                         getBox.remove(USER_TOKEN);
+                        getBox.remove(USER_REFRESH_TOKEN);
+                        getBox.remove('SESSION_COOKIE');
                         getBox.remove(IS_USER_LOGGED_IN);
                         getBox.remove(USER_ID);
                         getBox.remove(USER_NAME);
                         getBox.remove(USER_EMAIL);
                         getBox.remove(USER_PHONE);
                         getBox.remove(USER_LOGIN);
+                        user.value = null;
+                        isLoggedIn.value = false;
+                        userName.value = '';
+                        userEmail.value = '';
+                        userPhone.value = '';
+                        memberSince.value = '';
+                        totalBalance.value = 0.0;
+                        myProgress.value = null;
                         Get.back();
                         Get.offAllNamed(Routes.LOGIN);
                       },

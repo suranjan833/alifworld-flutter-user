@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 
@@ -112,11 +112,6 @@ class HomeView extends GetView<HomeController> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Product Rails from catalog/showcase matching website
-                            _buildRailsSection(),
-
-                            SizedBox(height: 24.h),
-
                             // 6. Category Showcase Mini Banners (Image-only, Auto-scrolling)
                             Obx(() {
                               final miniBanners =
@@ -127,146 +122,6 @@ class HomeView extends GetView<HomeController> {
                             }),
 
                             SizedBox(height: 24.h),
-
-                            // 7. Level It Up Promo Banner
-                            Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 16.w),
-                              child: InkWell(
-                                onTap: () {
-                                  Get.toNamed(
-                                    Routes.CATEGORY_PRODUCTS,
-                                    arguments: {
-                                      'name': "Men's Fashion",
-                                      'slug': 'fashion',
-                                    },
-                                  );
-                                },
-                                borderRadius: BorderRadius.circular(16.r),
-                                child: Container(
-                                  width: double.infinity,
-                                  padding: EdgeInsets.all(16.w),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF232936),
-                                    borderRadius: BorderRadius.circular(16.r),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(
-                                          10.r,
-                                        ),
-                                        child: Image.network(
-                                          'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?q=80&w=400&auto=format&fit=crop',
-                                          width: 100.w,
-                                          height: 80.h,
-                                          fit: BoxFit.cover,
-                                          errorBuilder:
-                                              (context, error, stackTrace) =>
-                                                  Container(
-                                                    width: 100.w,
-                                                    height: 80.h,
-                                                    color: AppColor.grey.shade700,
-                                                    child: const Icon(
-                                                      Iconsax.shopping_bag,
-                                                      color: AppColor.white,
-                                                    ),
-                                                  ),
-                                        ),
-                                      ),
-                                      SizedBox(width: 14.w),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                const SizedBox(),
-                                                Container(
-                                                  padding: EdgeInsets.symmetric(
-                                                    horizontal: 10.w,
-                                                    vertical: 4.h,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    color: const Color(
-                                                      0xFFFF9900,
-                                                    ),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          6.r,
-                                                        ),
-                                                  ),
-                                                  child: Row(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    children: [
-                                                      Text(
-                                                        'LEVEL IT UP',
-                                                        style: GoogleFonts.lato(
-                                                          fontSize: 10.sp,
-                                                          fontWeight:
-                                                              FontWeight.w900,
-                                                          color: AppColor.white,
-                                                        ),
-                                                      ),
-                                                      SizedBox(width: 2.w),
-                                                      Icon(
-                                                        Icons
-                                                            .north_east_rounded,
-                                                        size: 12.r,
-                                                        color: AppColor.white,
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            SizedBox(height: 4.h),
-                                            Text(
-                                              'BUY 3\nGET EXTRA\n10% OFF',
-                                              style: GoogleFonts.montserrat(
-                                                fontSize: 16.sp,
-                                                fontWeight: FontWeight.w900,
-                                                color: const Color(0xFFFFB800),
-                                                height: 1.1,
-                                              ),
-                                            ),
-                                            SizedBox(height: 8.h),
-                                            Container(
-                                              padding: EdgeInsets.symmetric(
-                                                horizontal: 8.w,
-                                                vertical: 3.h,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: AppColor.white.withValues(
-                                                  alpha: 0.15,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(4.r),
-                                              ),
-                                              child: Text(
-                                                'Offer auto-applies at checkout',
-                                                style: GoogleFonts.lato(
-                                                  fontSize: 9.sp,
-                                                  color: AppColor.white
-                                                      .withValues(alpha: 0.9),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            SizedBox(height: 24.h),
-
                             // 8. Top Brands Section Header
                             Padding(
                               padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -330,6 +185,10 @@ class HomeView extends GetView<HomeController> {
                                 ),
                               ),
                             ),
+                            SizedBox(height: 24.h),
+
+                            // Product Rails from catalog/showcase matching website
+                            _buildRailsSection(),
 
                             SizedBox(height: 30.h),
                           ],
@@ -365,9 +224,9 @@ class HomeView extends GetView<HomeController> {
   Widget _buildSingleRail(ShowcaseRailModel rail) {
     if (rail.products.isEmpty) return const SizedBox.shrink();
 
-    final railTitle = rail.categoryName.toLowerCase().startsWith('handpicked')
+    final railTitle = rail.categoryName.isNotEmpty
         ? rail.categoryName
-        : 'Handpicked From ${rail.categoryName}';
+        : 'Products';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -638,63 +497,69 @@ class HomeView extends GetView<HomeController> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Favorite Button top right
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: GestureDetector(
-                      onTap: () => controller.toggleFavorite(index),
-                      child: Container(
-                        padding: EdgeInsets.all(6.w),
-                        decoration: BoxDecoration(
-                          color: AppColor.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColor.black.withValues(alpha: 0.06),
-                              blurRadius: 6,
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          isFav ? Iconsax.heart5 : Iconsax.heart,
-                          size: 16.r,
-                          color: isFav ? AppColor.red : AppColor.textSecondary,
+                  Stack(
+                    children: [
+                      // Product Image
+                      Center(
+                        child: Image.network(
+                          product['image'] as String,
+                          height: 90.h,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return SkeletonShimmer(
+                              child: Container(
+                                height: 90.h,
+                                width: 90.w,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFECEFF3),
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                                height: 90.h,
+                                color: AppColor.grey.shade100,
+                                child: Icon(
+                                  Iconsax.image,
+                                  size: 32.r,
+                                  color: AppColor.textSecondary,
+                                ),
+                              ),
                         ),
                       ),
-                    ),
-                  ),
-
-                  // Product Image
-                  Center(
-                    child: Image.network(
-                      product['image'] as String,
-                      height: 90.h,
-                      fit: BoxFit.contain,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return SkeletonShimmer(
+                      // Favorite Button top right
+                      Align(
+                        alignment: Alignment.topRight,
+                        child: GestureDetector(
+                          onTap: () => controller.toggleFavorite(index),
                           child: Container(
-                            height: 90.h,
-                            width: 90.w,
+                            padding: EdgeInsets.all(6.w),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFECEFF3),
-                              borderRadius: BorderRadius.circular(8.r),
+                              color: AppColor.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColor.black.withValues(alpha: 0.06),
+                                  blurRadius: 6,
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              isFav ? Iconsax.heart5 : Iconsax.heart,
+                              size: 16.r,
+                              color: isFav
+                                  ? AppColor.red
+                                  : AppColor.textSecondary,
                             ),
                           ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        height: 90.h,
-                        color: AppColor.grey.shade100,
-                        child: Icon(
-                          Iconsax.image,
-                          size: 32.r,
-                          color: AppColor.textSecondary,
                         ),
                       ),
-                    ),
+                    ],
                   ),
-
                   SizedBox(height: 10.h),
 
                   // Title
@@ -1285,8 +1150,8 @@ class HomeView extends GetView<HomeController> {
 
   Widget _buildBrandCard(Map<String, String> brand) {
     return Container(
-      width: 135.w,
-      height: 95.h,
+      width: 95.w,
+      height: 55.h,
       margin: EdgeInsets.only(right: 12.w),
       decoration: BoxDecoration(
         color: const Color(0xFFF3F4F6),
@@ -1313,15 +1178,12 @@ class HomeView extends GetView<HomeController> {
             );
           },
           child: Center(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-              child: BrandLogoWidget(
-                logoUrl: brand['logo'] ?? '',
-                brandName: brand['name'] ?? '',
-                width: 105.w,
-                height: 65.h,
-                fit: BoxFit.contain,
-              ),
+            child: BrandLogoWidget(
+              logoUrl: brand['logo'] ?? '',
+              brandName: brand['name'] ?? '',
+              width: 105.w,
+              height: 65.h,
+              fit: BoxFit.contain,
             ),
           ),
         ),

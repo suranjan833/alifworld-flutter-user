@@ -11,28 +11,37 @@ import '../../app_color.dart';
 
 final getBox = GetStorage();
 
-// Default API Endpoints
-const String _defaultProdUrl = "https://alifworld.com.bd/api/v1/";
-const String _defaultDebugUrl = "https://dev.alifworld.com.bd/api/v1/";
-
 String resolveBaseUrl() {
-  String url;
-  if (kReleaseMode) {
-    url = dotenv.env['PROD_BASE_URL']?.trim() ?? _defaultProdUrl;
-  } else {
-    url = dotenv.env['DEBUG_BASE_URL']?.trim() ?? _defaultDebugUrl;
-  }
-  if (!url.endsWith('/')) {
+  String url = dotenv.env['BASE_URL']?.trim() ?? '';
+  if (url.isNotEmpty && !url.endsWith('/')) {
     url = '$url/';
   }
   return url;
 }
 
+String resolveWebUrl() {
+  final envWeb = dotenv.env['WEB_URL']?.trim();
+  if (envWeb != null && envWeb.isNotEmpty) {
+    return envWeb.endsWith('/')
+        ? envWeb.substring(0, envWeb.length - 1)
+        : envWeb;
+  }
+  if (BASE_URL.isNotEmpty) {
+    try {
+      final uri = Uri.parse(BASE_URL);
+      return '${uri.scheme}://${uri.host}${uri.hasPort ? ':${uri.port}' : ''}';
+    } catch (_) {}
+  }
+  return '';
+}
+
 var BASE_URL = resolveBaseUrl();
+var WEB_URL = resolveWebUrl();
 var isDebugMode = (!kReleaseMode).obs;
 
 void initAppConfig() {
   BASE_URL = resolveBaseUrl();
+  WEB_URL = resolveWebUrl();
   isDebugMode.value = !kReleaseMode;
 }
 
@@ -47,18 +56,16 @@ String resolveImageUrl(String? path) {
     if (trimmed.contains('.vercel.app')) {
       try {
         final deadUri = Uri.parse(trimmed);
-        final activeUri = Uri.parse(BASE_URL);
-        final hostRoot =
-            '${activeUri.scheme}://${activeUri.host}${activeUri.hasPort ? ':${activeUri.port}' : ''}';
-        return '$hostRoot${deadUri.path}${deadUri.hasQuery ? '?${deadUri.query}' : ''}';
+        final hostRoot = resolveWebUrl();
+        if (hostRoot.isNotEmpty) {
+          return '$hostRoot${deadUri.path}${deadUri.hasQuery ? '?${deadUri.query}' : ''}';
+        }
       } catch (_) {}
     }
     return trimmed;
   }
   try {
-    final uri = Uri.parse(BASE_URL);
-    final hostRoot =
-        '${uri.scheme}://${uri.host}${uri.hasPort ? ':${uri.port}' : ''}';
+    final hostRoot = resolveWebUrl();
     if (trimmed.startsWith('/')) {
       return '$hostRoot$trimmed';
     }
