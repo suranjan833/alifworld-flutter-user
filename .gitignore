@@ -73,8 +73,8 @@ order-apis.txt
 checkout_flow.txt
 mera_push.ps1
 mera_push.sh
-.env
-.env.example
+.env*
+!.env.example
 .kotlin/
 android/.kotlin/
 refer.md

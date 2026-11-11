@@ -178,9 +178,11 @@ class WalletResponseModel {
   final String currency;
   final String currencySymbol;
   final String currencySymbolPlacement;
+  final int walletMaxPercent;
 
   WalletResponseModel({
     required this.items,
+    this.walletMaxPercent = 60,
     this.currency = 'BDT',
     this.currencySymbol = '৳',
     this.currencySymbolPlacement = 'left',
@@ -197,10 +199,21 @@ class WalletResponseModel {
   double get mainBalance => mainWallet?.balance ?? 0.0;
 
   int get totalBalanceMinor {
-    return items.fold<int>(0, (sum, item) => sum + item.balanceMinor);
+    // Total balance = every wallet except Charity (Charity is view-only and excluded)
+    return items
+        .where((item) => item.kind != 'customer_charity')
+        .fold<int>(0, (sum, item) => sum + item.balanceMinor);
   }
 
   double get totalBalance => totalBalanceMinor / 100.0;
+
+  WalletItemModel? get charityWallet {
+    try {
+      return items.firstWhere((w) => w.kind == 'customer_charity');
+    } catch (_) {
+      return null;
+    }
+  }
 
   String formatAmount(double amount) {
     if (currencySymbolPlacement == 'right') {
@@ -217,6 +230,7 @@ class WalletResponseModel {
 
     return WalletResponseModel(
       items: list,
+      walletMaxPercent: (json['walletMaxPercent'] as num?)?.toInt() ?? 60,
       currency: json['currency']?.toString() ?? 'BDT',
       currencySymbol: json['currencySymbol']?.toString() ?? '৳',
       currencySymbolPlacement:
@@ -232,6 +246,7 @@ class WalletTransactionModel {
   final String? type;
   final int? balanceAfterMinor;
   final String reason;
+  final String? referenceType;
   final String? referenceId;
   final String? status;
   final DateTime? createdAt;
@@ -243,6 +258,7 @@ class WalletTransactionModel {
     this.type,
     this.balanceAfterMinor,
     required this.reason,
+    this.referenceType,
     this.referenceId,
     this.status,
     this.createdAt,
@@ -260,6 +276,53 @@ class WalletTransactionModel {
   String formattedAmount({String symbol = '৳'}) {
     final sign = isCredit ? '+' : '-';
     return '$sign $symbol ${amount.toStringAsFixed(2)}';
+  }
+
+  String get formattedBalanceAfter {
+    if (balanceAfterMinor == null) return '—';
+    final val = balanceAfterMinor! / 100.0;
+    return '৳${val.toStringAsFixed(2)}';
+  }
+
+  String get displayTitle {
+    switch (reason.toLowerCase()) {
+      case 'order_cashback':
+        return 'Order Cashback';
+      case 'order_payment':
+        return 'Order Payment';
+      case 'redeem':
+        return 'Bonus Redeem';
+      case 'wallet_redeem':
+        return 'Wallet Redeem';
+      case 'lottery_ticket':
+        return 'Lottery Ticket Purchase';
+      case 'lottery_prize':
+        return 'Lottery Prize Win';
+      case 'referral_bonus':
+        return 'Referral Bonus';
+      case 'club_bonus':
+        return 'Club Bonus';
+      case 'star_bonus':
+        return 'Star Bonus';
+      case 'registration_bonus':
+        return 'Welcome Bonus';
+      case 'service_point_deposit':
+        return 'Service Point Deposit';
+      default:
+        if (reason.isNotEmpty) {
+          return reason
+              .replaceAll('_', ' ')
+              .split(' ')
+              .map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '')
+              .join(' ');
+        }
+        if (referenceId != null && referenceId!.isNotEmpty) {
+          return isCredit
+              ? 'Credit: #$referenceId'
+              : 'Payment: #$referenceId';
+        }
+        return isCredit ? 'Wallet Credit' : 'Wallet Debit';
+    }
   }
 
   String get formattedDate {
@@ -286,16 +349,6 @@ class WalletTransactionModel {
     final ampm = dt.hour >= 12 ? 'PM' : 'AM';
     final minuteStr = dt.minute.toString().padLeft(2, '0');
     return '${dt.day} $monthName ${dt.year}, $hour:$minuteStr $ampm';
-  }
-
-  String get displayTitle {
-    if (reason.isNotEmpty) return reason;
-    if (referenceId != null && referenceId!.isNotEmpty) {
-      return isCredit
-          ? 'Credit: #$referenceId'
-          : 'Payment: #$referenceId';
-    }
-    return isCredit ? 'Wallet Credit' : 'Wallet Debit';
   }
 
   String get walletTitle {
@@ -326,6 +379,7 @@ class WalletTransactionModel {
           json['title']?.toString() ??
           json['description']?.toString() ??
           '',
+      referenceType: json['referenceType']?.toString(),
       referenceId: json['referenceId']?.toString() ??
           json['reference']?.toString() ??
           json['orderId']?.toString(),
@@ -364,6 +418,79 @@ class WalletTransactionsResponseModel {
       currencySymbol: json['currencySymbol']?.toString() ?? '৳',
       currencySymbolPlacement:
           json['currencySymbolPlacement']?.toString() ?? 'left',
+    );
+  }
+}
+
+class WalletPendingOrderModel {
+  final String orderId;
+  final String orderNumber;
+  final int points;
+  final int estimatedCashbackMinor;
+  final DateTime? returnWindowEndsAt;
+  final DateTime? deliveredAt;
+
+  WalletPendingOrderModel({
+    required this.orderId,
+    required this.orderNumber,
+    required this.points,
+    required this.estimatedCashbackMinor,
+    this.returnWindowEndsAt,
+    this.deliveredAt,
+  });
+
+  double get estimatedCashback => estimatedCashbackMinor / 100.0;
+
+  factory WalletPendingOrderModel.fromJson(Map<String, dynamic> json) {
+    DateTime? returnEnds;
+    DateTime? delivered;
+    if (json['returnWindowEndsAt'] != null) {
+      try {
+        returnEnds = DateTime.parse(json['returnWindowEndsAt'].toString());
+      } catch (_) {}
+    }
+    if (json['deliveredAt'] != null) {
+      try {
+        delivered = DateTime.parse(json['deliveredAt'].toString());
+      } catch (_) {}
+    }
+    return WalletPendingOrderModel(
+      orderId: json['orderId']?.toString() ?? '',
+      orderNumber: json['orderNumber']?.toString() ?? '',
+      points: (json['points'] as num?)?.toInt() ?? 0,
+      estimatedCashbackMinor:
+          (json['estimatedCashbackMinor'] as num?)?.toInt() ?? 0,
+      returnWindowEndsAt: returnEnds,
+      deliveredAt: delivered,
+    );
+  }
+}
+
+class WalletPendingPointsResponseModel {
+  final int totalPoints;
+  final int estimatedCashbackMinor;
+  final List<WalletPendingOrderModel> orders;
+
+  WalletPendingPointsResponseModel({
+    required this.totalPoints,
+    required this.estimatedCashbackMinor,
+    required this.orders,
+  });
+
+  double get estimatedCashback => estimatedCashbackMinor / 100.0;
+
+  factory WalletPendingPointsResponseModel.fromJson(Map<String, dynamic> json) {
+    final oList = (json['orders'] as List<dynamic>?)
+            ?.map((e) =>
+                WalletPendingOrderModel.fromJson(Map<String, dynamic>.from(e)))
+            .toList() ??
+        [];
+
+    return WalletPendingPointsResponseModel(
+      totalPoints: (json['totalPoints'] as num?)?.toInt() ?? 0,
+      estimatedCashbackMinor:
+          (json['estimatedCashbackMinor'] as num?)?.toInt() ?? 0,
+      orders: oList,
     );
   }
 }

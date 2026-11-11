@@ -1,3 +1,5 @@
+import '../config/functions/dio_function/app_config.dart';
+
 class ReferralInfoModel {
   final String code;
   final String link;
@@ -59,9 +61,10 @@ class ReferralInfoModel {
 
   factory ReferralInfoModel.fromJson(Map<String, dynamic> json) {
     final code = json['code']?.toString() ?? '';
+    final defaultWeb = resolveWebUrl();
     final link = json['link']?.toString() ??
         json['shareUrl']?.toString() ??
-        'https://alifworld.com.bd/register?ref=$code';
+        (defaultWeb.isNotEmpty ? '$defaultWeb/register?ref=$code' : '');
 
     // Parse levels
     List<ReferralLevelModel> parsedLevels = [];
