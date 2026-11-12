@@ -94,6 +94,45 @@ class AboutUsView extends GetView<AboutUsController> {
                       ),
                     ),
                   ),
+                  SizedBox(height: 8.h),
+                  InkWell(
+                    onTap: controller.checkForUpdate,
+                    onLongPress: controller.previewUpdateDialog,
+                    borderRadius: BorderRadius.circular(16.r),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 5.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColor.primaryLight,
+                        borderRadius: BorderRadius.circular(16.r),
+                        border: Border.all(
+                          color: AppColor.primary.withValues(alpha: 0.25),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.system_update_rounded,
+                            size: 14.r,
+                            color: AppColor.primary,
+                          ),
+                          SizedBox(width: 6.w),
+                          Text(
+                            'Check for Updates',
+                            style: GoogleFonts.lato(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.bold,
+                              color: AppColor.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   SizedBox(height: 16.h),
                   Text(
                     'Alif is your premier one-stop e-commerce platform delivering groceries, electronics, fashion, home appliances, and daily essentials right to your doorstep.',
