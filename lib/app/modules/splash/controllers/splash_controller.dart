@@ -2,6 +2,7 @@ import 'package:flutter/animation.dart';
 import 'package:get/get.dart';
 
 import '../../../data/config/functions/dio_function/app_config.dart';
+import '../../../data/services/app_update_service.dart';
 import '../../../routes/app_pages.dart';
 
 class SplashController extends GetxController
@@ -83,6 +84,16 @@ class SplashController extends GetxController
   void _startAnimationAndNavigate() async {
     await animationController.forward();
     await Future.delayed(const Duration(milliseconds: 500));
+
+    // 1. Mandatory App Update Check (Google Play)
+    if (Get.isRegistered<AppUpdateService>()) {
+      final isUpdateRequired = await AppUpdateService.to.checkForUpdate();
+      if (isUpdateRequired) {
+        // Halt navigation — mandatory update popup is displayed
+        return;
+      }
+    }
+
     final token = getBox.read(USER_TOKEN);
     final hasToken = token != null && token.toString().trim().isNotEmpty;
     final loggedInVal = getBox.read(IS_USER_LOGGED_IN);
