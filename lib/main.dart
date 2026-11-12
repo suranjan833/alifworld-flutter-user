@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'app/data/config/app_color.dart';
 import 'app/data/config/functions/dio_function/app_config.dart';
 import 'app/data/services/app_translations.dart';
+import 'app/data/services/app_update_service.dart';
 import 'app/data/services/deep_link_service.dart';
 import 'app/data/services/rewards_service.dart';
 import 'app/data/services/wallet_pin_service.dart';
@@ -49,6 +50,7 @@ void main() async {
   Get.put(RewardsService(), permanent: true);
   Get.put(WalletPinService(), permanent: true);
   Get.put(DeepLinkService(), permanent: true);
+  Get.put(AppUpdateService(), permanent: true);
   DeepLinkService.to.init();
   runApp(
     ScreenUtilInit(
