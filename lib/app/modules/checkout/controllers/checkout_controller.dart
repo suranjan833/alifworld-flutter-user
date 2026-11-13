@@ -34,7 +34,9 @@ class CheckoutController extends GetxController {
   // Wallets & Gateways (§3 & §4 of checkout_flow.txt)
   final userWallets = <Map<String, dynamic>>[].obs;
   final isLoadingWallets = false.obs;
-  final walletMaxPercent = 62.obs;
+  final walletMaxPercent = 100.obs;
+  final mainWalletCapPercent = 100.obs;
+  final shoppingWalletCapPercent = 62.obs;
   final enabledGateways = <String>['cod'].obs;
 
   double get mainWalletBalance {
@@ -62,10 +64,10 @@ class CheckoutController extends GetxController {
   }
 
   double get combinedWalletBalance =>
-      mainWalletBalance + shoppingWalletBalance + advanceWalletBalance;
+      mainWalletBalance + shoppingWalletBalance;
 
-  // Selected wallet kinds (default: customer_main)
-  final selectedWalletKinds = <String>{'customer_main'}.obs;
+  // Selected wallet kinds (default: customer_main & customer_shopping)
+  final selectedWalletKinds = <String>{'customer_main', 'customer_shopping'}.obs;
 
   void toggleWalletKind(String kind) {
     if (selectedWalletKinds.contains(kind)) {
@@ -84,6 +86,20 @@ class CheckoutController extends GetxController {
         double.infinity,
       );
 
+  double get mainWalletCap {
+    final total = orderTotal;
+    final totalMinor = (total * 100).round();
+    final capMinor = (totalMinor * mainWalletCapPercent.value / 100).floor();
+    return capMinor / 100.0;
+  }
+
+  double get shoppingWalletCap {
+    final total = orderTotal;
+    final totalMinor = (total * 100).round();
+    final capMinor = (totalMinor * shoppingWalletCapPercent.value / 100).floor();
+    return capMinor / 100.0;
+  }
+
   double get walletCap {
     final total = orderTotal;
     final totalMinor = (total * 100).round();
@@ -96,8 +112,9 @@ class CheckoutController extends GetxController {
         !selectedWalletKinds.contains('customer_main')) {
       return 0.0;
     }
-    final cap = walletCap;
-    final use = mainWalletBalance >= cap ? cap : mainWalletBalance;
+    final cap = mainWalletCap < walletCap ? mainWalletCap : walletCap;
+    final maxAllowed = mainWalletBalance < cap ? mainWalletBalance : cap;
+    final use = maxAllowed < orderTotal ? maxAllowed : orderTotal;
     return (use * 100).floorToDouble() / 100.0;
   }
 
@@ -106,31 +123,41 @@ class CheckoutController extends GetxController {
         !selectedWalletKinds.contains('customer_shopping')) {
       return 0.0;
     }
-    final cap = walletCap;
-    final remainingCap = (cap - mainWalletWillUse).clamp(0.0, double.infinity);
-    final use = shoppingWalletBalance >= remainingCap
-        ? remainingCap
-        : shoppingWalletBalance;
+    final remainingOrder =
+        (orderTotal - mainWalletWillUse).clamp(0.0, double.infinity);
+    final remainingOverallCap =
+        (walletCap - mainWalletWillUse).clamp(0.0, double.infinity);
+    final cap = shoppingWalletCap < remainingOverallCap
+        ? shoppingWalletCap
+        : remainingOverallCap;
+    final maxAllowed = shoppingWalletBalance < cap ? shoppingWalletBalance : cap;
+    final use = maxAllowed < remainingOrder ? maxAllowed : remainingOrder;
     return (use * 100).floorToDouble() / 100.0;
   }
 
-  double get advanceWalletWillUse {
-    if (selectedPaymentMethod.value != 'Wallet' ||
-        !selectedWalletKinds.contains('customer_advanced_shopping')) {
-      return 0.0;
+  int get totalEarnPoints {
+    int total = 0;
+    for (var item in items) {
+      final rawQty = item['quantity'] ?? item['qty'];
+      final qty = rawQty is num ? rawQty.toInt() : (int.tryParse(rawQty?.toString() ?? '') ?? 1);
+      final rawPts = item['pointsPerUnit'] ?? item['productPoints'];
+      final pts = rawPts is num ? rawPts.toInt() : (int.tryParse(rawPts?.toString() ?? '') ?? 0);
+      final rawLinePts = item['linePoints'];
+      final linePts = rawLinePts is num ? rawLinePts.toInt() : null;
+      if (linePts != null && linePts > 0) {
+        total += linePts;
+      } else if (pts > 0) {
+        total += pts * qty;
+      }
     }
-    final cap = walletCap;
-    final remainingCap =
-        (cap - mainWalletWillUse - shoppingWalletWillUse).clamp(0.0, double.infinity);
-    final use = advanceWalletBalance >= remainingCap
-        ? remainingCap
-        : advanceWalletBalance;
-    return (use * 100).floorToDouble() / 100.0;
+    return total;
   }
+
+  double get advanceWalletWillUse => 0.0;
 
   double get walletDeductionAmount {
     if (selectedPaymentMethod.value != 'Wallet') return 0.0;
-    return mainWalletWillUse + shoppingWalletWillUse + advanceWalletWillUse;
+    return mainWalletWillUse + shoppingWalletWillUse;
   }
 
   double get remainingPayable =>
@@ -239,9 +266,24 @@ class CheckoutController extends GetxController {
                 .toList();
             userWallets.assignAll(list);
           }
+          if (rawData['walletCaps'] is Map) {
+            final caps = rawData['walletCaps'] as Map;
+            if (caps['customer_main'] is num) {
+              mainWalletCapPercent.value =
+                  (caps['customer_main'] as num).toInt();
+            }
+            if (caps['customer_shopping'] is num) {
+              shoppingWalletCapPercent.value =
+                  (caps['customer_shopping'] as num).toInt();
+            }
+          }
           if (rawData['walletMaxPercent'] is num) {
             walletMaxPercent.value = (rawData['walletMaxPercent'] as num)
                 .toInt();
+          } else {
+            walletMaxPercent.value =
+                (mainWalletCapPercent.value + shoppingWalletCapPercent.value)
+                    .clamp(0, 100);
           }
         }
       }
@@ -725,6 +767,7 @@ class CheckoutController extends GetxController {
         'paymentId': paymentId,
         'paymentMethod': paymentMethod,
         'totalAmount': finalPayable,
+        'totalPoints': totalEarnPoints,
         'itemCount': items.length,
         'address': selectedAddr['address'] ?? '',
         'items': items,

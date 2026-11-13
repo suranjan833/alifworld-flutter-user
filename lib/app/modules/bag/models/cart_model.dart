@@ -17,6 +17,8 @@ class CartItemModel {
   final int? maxStock;
   final int? unitPriceMinor;
   final int? lineTotalMinor;
+  final int? pointsPerUnit;
+  final int? linePoints;
 
   CartItemModel({
     required this.id,
@@ -33,6 +35,8 @@ class CartItemModel {
     this.maxStock,
     this.unitPriceMinor,
     this.lineTotalMinor,
+    this.pointsPerUnit,
+    this.linePoints,
   });
 
   /// Factory constructor to parse cart items from various API response shapes
@@ -178,6 +182,16 @@ class CartItemModel {
       extractedStock = rawStock.toInt();
     }
 
+    final rawPtsPerUnit = json['pointsPerUnit'] ??
+        variantObj?['productPoints'] ??
+        productObj?['productPoints'];
+    final int? extractedPtsPerUnit =
+        rawPtsPerUnit is num ? rawPtsPerUnit.toInt() : null;
+
+    final rawLinePts = json['linePoints'];
+    final int? extractedLinePts =
+        rawLinePts is num ? rawLinePts.toInt() : null;
+
     return CartItemModel(
       id: extractedId,
       productId: extractedProductId,
@@ -193,6 +207,8 @@ class CartItemModel {
       maxStock: extractedStock,
       unitPriceMinor: extractedUnitPriceMinor,
       lineTotalMinor: extractedLineTotalMinor,
+      pointsPerUnit: extractedPtsPerUnit,
+      linePoints: extractedLinePts,
     );
   }
 
@@ -212,6 +228,8 @@ class CartItemModel {
       if (maxStock != null) 'maxStock': maxStock,
       if (unitPriceMinor != null) 'unitPriceMinor': unitPriceMinor,
       if (lineTotalMinor != null) 'lineTotalMinor': lineTotalMinor,
+      if (pointsPerUnit != null) 'pointsPerUnit': pointsPerUnit,
+      if (linePoints != null) 'linePoints': linePoints,
     };
   }
 
@@ -230,6 +248,8 @@ class CartItemModel {
     int? maxStock,
     int? unitPriceMinor,
     int? lineTotalMinor,
+    int? pointsPerUnit,
+    int? linePoints,
   }) {
     return CartItemModel(
       id: id ?? this.id,
@@ -246,7 +266,17 @@ class CartItemModel {
       maxStock: maxStock ?? this.maxStock,
       unitPriceMinor: unitPriceMinor ?? this.unitPriceMinor,
       lineTotalMinor: lineTotalMinor ?? this.lineTotalMinor,
+      pointsPerUnit: pointsPerUnit ?? this.pointsPerUnit,
+      linePoints: linePoints ?? this.linePoints,
     );
+  }
+
+  int get calculatedLinePoints {
+    if (linePoints != null && linePoints! > 0) return linePoints!;
+    if (pointsPerUnit != null && pointsPerUnit! > 0) {
+      return pointsPerUnit! * quantity;
+    }
+    return 0;
   }
 
   double get lineTotal => price * quantity;
@@ -477,6 +507,10 @@ class CartModel {
   }
 
   int get totalItemCount => items.fold(0, (sum, item) => sum + item.quantity);
+  int get computedTotalPoints {
+    if (totalPoints > 0) return totalPoints;
+    return items.fold(0, (sum, item) => sum + item.calculatedLinePoints);
+  }
   bool get isEmpty => items.isEmpty;
   bool get isNotEmpty => items.isNotEmpty;
 }

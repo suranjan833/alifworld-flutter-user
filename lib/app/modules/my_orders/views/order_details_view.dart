@@ -1039,6 +1039,18 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                                     color: AppColor.textSecondary,
                                   ),
                                 ),
+                                if (item.pointsPerUnit != null &&
+                                    item.pointsPerUnit! > 0) ...[
+                                  SizedBox(width: 8.w),
+                                  Text(
+                                    '• ${item.pointsPerUnit} pts / unit',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11.5.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFFD97706),
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
                           ],
@@ -1346,6 +1358,69 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                 ),
               ],
             ),
+          ],
+          if (o.points != null && o.points!.status != null) ...[
+            SizedBox(height: 14.h),
+            const Divider(color: Color(0xFFF1F5F9), height: 1),
+            SizedBox(height: 12.h),
+            if (o.points!.isPending)
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.hourglass_empty_rounded,
+                      size: 16.r,
+                      color: const Color(0xFFB45309),
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: Text(
+                        '⏳ ${o.points!.points} points pending${o.points!.formattedWindowEndDate.isNotEmpty ? ' · Posts on ${o.points!.formattedWindowEndDate}' : ''}',
+                        style: GoogleFonts.inter(
+                          fontSize: 12.5.sp,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFFB45309),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else if (o.points!.isPosted)
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDCFCE7),
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.check_circle_rounded,
+                      size: 16.r,
+                      color: const Color(0xFF15803D),
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: Text(
+                        '✓ ${o.points!.points} points earned',
+                        style: GoogleFonts.inter(
+                          fontSize: 12.5.sp,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF15803D),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ],
       ),

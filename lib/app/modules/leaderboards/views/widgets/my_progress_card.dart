@@ -190,7 +190,7 @@ class MyProgressCard extends StatelessWidget {
 
   Widget _buildStarSection(MyProgressStarModel star) {
     final rankText = star.rank != null ? '#${star.rank}' : 'Unranked';
-    final bandName = star.band?.displayName ?? 'No Star Band';
+    final bandName = star.displayBand.isNotEmpty ? star.displayBand : 'No Star Band';
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -217,13 +217,26 @@ class MyProgressCard extends StatelessWidget {
               ),
           ],
         ),
-        Text(
-          bandName,
-          style: GoogleFonts.lato(
-            fontSize: 12.sp,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF60A5FA),
-          ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              bandName,
+              style: GoogleFonts.lato(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF60A5FA),
+              ),
+            ),
+            if (star.ranksToNext > 0 && star.displayNextBand.isNotEmpty)
+              Text(
+                '${star.ranksToNext} ranks to ${star.displayNextBand}',
+                style: GoogleFonts.lato(
+                  fontSize: 10.sp,
+                  color: const Color(0xFF94A3B8),
+                ),
+              ),
+          ],
         ),
       ],
     );

@@ -100,6 +100,12 @@ class LeaderboardView extends GetView<LeaderboardController> {
                     // Pool Summary Header (if pool is enabled)
                     if (hasPool) _buildPoolBanner(lb!.pool!),
 
+                    // Your Position Strip (§12 - hidden when signed out or in seller tab)
+                    if (controller.hasAuth &&
+                        controller.selectedKind.value == 'customer' &&
+                        myProg != null)
+                      _buildYourPositionStrip(myProg),
+
                     // List Section
                     if (entries.isEmpty)
                       _buildEmptyState()
@@ -121,7 +127,9 @@ class LeaderboardView extends GetView<LeaderboardController> {
                             ),
                             Expanded(
                               child: Text(
-                                'Customer',
+                                controller.selectedKind.value == 'seller'
+                                    ? 'Store'
+                                    : 'Customer',
                                 style: GoogleFonts.lato(
                                   fontSize: 12.sp,
                                   fontWeight: FontWeight.bold,
@@ -131,7 +139,7 @@ class LeaderboardView extends GetView<LeaderboardController> {
                             ),
                             if (hasPool) ...[
                               SizedBox(
-                                width: 85.w,
+                                width: 95.w,
                                 child: Text(
                                   'Reward Pool',
                                   textAlign: TextAlign.right,
@@ -142,7 +150,7 @@ class LeaderboardView extends GetView<LeaderboardController> {
                                   ),
                                 ),
                               ),
-                              SizedBox(width: 12.w),
+                              SizedBox(width: 10.w),
                             ],
                             SizedBox(
                               width: 65.w,
@@ -181,47 +189,185 @@ class LeaderboardView extends GetView<LeaderboardController> {
     return Container(
       color: AppColor.white,
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-      child: Obx(() {
-        final active = controller.selectedPeriod.value;
-        const periods = [
-          {'key': 'daily', 'label': 'Daily (24h)'},
-          {'key': 'weekly', 'label': 'Weekly (7d)'},
-          {'key': 'monthly', 'label': 'Monthly (30d)'},
-          {'key': 'yearly', 'label': 'Yearly (365d)'},
-        ];
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Kind toggle: Customer vs Seller per §12
+          Obx(() {
+            final isCustomer = controller.selectedKind.value == 'customer';
+            return Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(4.r),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => controller.changeKind('customer'),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(vertical: 8.h),
+                        decoration: BoxDecoration(
+                          color: isCustomer ? AppColor.white : AppColor.transparent,
+                          borderRadius: BorderRadius.circular(10.r),
+                          boxShadow: isCustomer
+                              ? [
+                                  BoxShadow(
+                                    color: AppColor.black.withValues(alpha: 0.05),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Customers',
+                            style: GoogleFonts.lato(
+                              fontSize: 13.5.sp,
+                              fontWeight:
+                                  isCustomer ? FontWeight.bold : FontWeight.w600,
+                              color: isCustomer
+                                  ? AppColor.primaryDark
+                                  : AppColor.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => controller.changeKind('seller'),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(vertical: 8.h),
+                        decoration: BoxDecoration(
+                          color: !isCustomer ? AppColor.white : AppColor.transparent,
+                          borderRadius: BorderRadius.circular(10.r),
+                          boxShadow: !isCustomer
+                              ? [
+                                  BoxShadow(
+                                    color: AppColor.black.withValues(alpha: 0.05),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Sellers',
+                            style: GoogleFonts.lato(
+                              fontSize: 13.5.sp,
+                              fontWeight:
+                                  !isCustomer ? FontWeight.bold : FontWeight.w600,
+                              color: !isCustomer
+                                  ? AppColor.primaryDark
+                                  : AppColor.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
 
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          child: Row(
-            children: periods.map((p) {
-              final isSelected = active == p['key'];
-              return Padding(
-                padding: EdgeInsets.only(right: 8.w),
-                child: ChoiceChip(
-                  label: Text(p['label']!),
-                  selected: isSelected,
-                  onSelected: (_) => controller.changePeriod(p['key']!),
-                  selectedColor: AppColor.primary,
-                  backgroundColor: const Color(0xFFF8F9FA),
-                  side: BorderSide(
-                    color: isSelected ? AppColor.primary : AppColor.border,
-                  ),
-                  labelStyle: GoogleFonts.lato(
-                    fontSize: 12.sp,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                    color: isSelected ? AppColor.white : AppColor.textSecondary,
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20.r),
-                  ),
+          SizedBox(height: 10.h),
+
+          // Period Chips
+          Obx(() {
+            final active = controller.selectedPeriod.value;
+            const periods = [
+              {'key': 'daily', 'label': 'Daily (24h)'},
+              {'key': 'weekly', 'label': 'Weekly (7d)'},
+              {'key': 'monthly', 'label': 'Monthly (30d)'},
+              {'key': 'yearly', 'label': 'Yearly (365d)'},
+            ];
+
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: periods.map((p) {
+                  final isSelected = active == p['key'];
+                  return Padding(
+                    padding: EdgeInsets.only(right: 8.w),
+                    child: ChoiceChip(
+                      label: Text(p['label']!),
+                      selected: isSelected,
+                      onSelected: (_) => controller.changePeriod(p['key']!),
+                      selectedColor: AppColor.primary,
+                      backgroundColor: const Color(0xFFF8F9FA),
+                      side: BorderSide(
+                        color: isSelected ? AppColor.primary : AppColor.border,
+                      ),
+                      labelStyle: GoogleFonts.lato(
+                        fontSize: 12.sp,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.w500,
+                        color: isSelected ? AppColor.white : AppColor.textSecondary,
+                      ),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20.r),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildYourPositionStrip(MyProgressPeriodModel progress) {
+    final rank = progress.star?.rank;
+    final points = progress.points;
+    if (rank == null) return const SizedBox.shrink();
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF6FF),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: const Color(0xFFBFDBFE)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Icon(Iconsax.profile_circle, color: const Color(0xFF2563EB), size: 18.r),
+              SizedBox(width: 8.w),
+              Text(
+                'Your Position: Rank #$rank',
+                style: GoogleFonts.lato(
+                  fontSize: 13.5.sp,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF1E40AF),
                 ),
-              );
-            }).toList(),
+              ),
+            ],
           ),
-        );
-      }),
+          Text(
+            '$points pts',
+            style: GoogleFonts.lato(
+              fontSize: 13.5.sp,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF1E40AF),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -377,30 +523,35 @@ class LeaderboardView extends GetView<LeaderboardController> {
           // Pool reward column
           if (showPool) ...[
             SizedBox(
-              width: 85.w,
+              width: 95.w,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    poolBand != null ? '${poolBand.pct}%' : '—',
+                    poolBand != null
+                        ? '${poolBand.key.toUpperCase()} · ${poolBand.pct}%'
+                        : '—',
                     style: GoogleFonts.lato(
-                      fontSize: 12.sp,
+                      fontSize: 11.5.sp,
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFF059669),
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   if (poolBand != null)
                     Text(
                       '৳${poolBand.poolAmount.toStringAsFixed(2)}',
                       style: GoogleFonts.lato(
-                        fontSize: 10.sp,
+                        fontSize: 10.5.sp,
+                        fontWeight: FontWeight.w600,
                         color: AppColor.textSecondary,
                       ),
                     ),
                 ],
               ),
             ),
-            SizedBox(width: 12.w),
+            SizedBox(width: 10.w),
           ],
 
           // Points

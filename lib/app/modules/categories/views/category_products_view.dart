@@ -6,6 +6,7 @@ import 'package:iconsax/iconsax.dart';
 
 import '../../../data/config/app_color.dart';
 import '../../../data/widgets/brand_logo_widget.dart';
+import '../../../data/widgets/points_badge.dart';
 import '../../../data/widgets/skeleton_box.dart';
 import '../../../routes/app_pages.dart';
 import '../../bag/controllers/bag_controller.dart';
@@ -769,6 +770,13 @@ class CategoryProductsView extends GetView<CategoryProductsController> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  if ((product.productPoints ?? 0) > 0) ...[
+                    SizedBox(height: 4.h),
+                    PointsBadge(
+                      points: product.productPoints!,
+                      compact: true,
+                    ),
+                  ],
                   SizedBox(height: 6.h),
 
                   // Price Row (Responsive Wrap to prevent overflow on large numbers)
