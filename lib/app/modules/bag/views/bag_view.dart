@@ -246,6 +246,14 @@ class BagView extends GetView<BagController> {
                                 '৳${controller.tax.toStringAsFixed(2)}',
                               ),
                             ],
+                            if (controller.totalPoints > 0) ...[
+                              SizedBox(height: 8.h),
+                              _buildSummaryRow(
+                                'You Earn',
+                                '${controller.totalPoints} points',
+                                isGreen: true,
+                              ),
+                            ],
                             SizedBox(height: 12.h),
                             const Divider(color: Color(0xFFF1F5F9), height: 1),
                             SizedBox(height: 12.h),
@@ -538,13 +546,27 @@ class BagView extends GetView<BagController> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        '৳${price.toStringAsFixed(2)}',
-                        style: GoogleFonts.lato(
-                          fontSize: 15.5.sp,
-                          fontWeight: FontWeight.w800,
-                          color: AppColor.textPrimary,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '৳${price.toStringAsFixed(2)}',
+                            style: GoogleFonts.lato(
+                              fontSize: 15.5.sp,
+                              fontWeight: FontWeight.w800,
+                              color: AppColor.textPrimary,
+                            ),
+                          ),
+                          if (item.calculatedLinePoints > 0)
+                            Text(
+                              'Earns ${item.calculatedLinePoints} pts',
+                              style: GoogleFonts.lato(
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFFD97706),
+                              ),
+                            ),
+                        ],
                       ),
 
                       // Quantity Controls

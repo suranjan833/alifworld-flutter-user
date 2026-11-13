@@ -1,86 +1,238 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
-import '../../../data/config/app_color.dart';
+import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../routes/app_pages.dart';
-import '../../home/models/showcase_model.dart';
+
+class ShopProductItem {
+  final String id;
+  final String name;
+  final String slug;
+  final int priceMinor;
+  final int productPoints;
+  final int stockQty;
+  final String imageUrl;
+  final int? campaignSaleMinor;
+  final int? campaignDiscountMinor;
+  final String? campaignName;
+
+  ShopProductItem({
+    required this.id,
+    required this.name,
+    required this.slug,
+    required this.priceMinor,
+    required this.productPoints,
+    required this.stockQty,
+    required this.imageUrl,
+    this.campaignSaleMinor,
+    this.campaignDiscountMinor,
+    this.campaignName,
+  });
+
+  double get price {
+    if (campaignSaleMinor != null && campaignSaleMinor! > 0) {
+      return campaignSaleMinor! / 100.0;
+    }
+    return priceMinor / 100.0;
+  }
+
+  double? get originalPrice {
+    if (campaignSaleMinor != null && campaignSaleMinor! > 0 && priceMinor > campaignSaleMinor!) {
+      return priceMinor / 100.0;
+    }
+    return null;
+  }
+
+  String get formattedPrice =>
+      '৳${price.toStringAsFixed(price.truncateToDouble() == price ? 0 : 2)}';
+
+  String? get formattedOriginalPrice {
+    final orig = originalPrice;
+    if (orig != null && orig > price) {
+      return '৳${orig.toStringAsFixed(orig.truncateToDouble() == orig ? 0 : 2)}';
+    }
+    return null;
+  }
+
+  String get discount {
+    final orig = originalPrice;
+    if (orig != null && orig > price && price > 0) {
+      final pct = (((orig - price) / orig) * 100).round();
+      if (pct > 0) return '$pct% OFF';
+    }
+    return '';
+  }
+
+  factory ShopProductItem.fromJson(Map<String, dynamic> json) {
+    String img = json['imageUrl']?.toString() ??
+        json['image']?.toString() ??
+        json['thumbnail']?.toString() ??
+        '';
+    if (img.isNotEmpty) img = resolveImageUrl(img);
+
+    return ShopProductItem(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? json['title']?.toString() ?? 'Product',
+      slug: json['slug']?.toString() ?? '',
+      priceMinor: (json['priceMinor'] as num?)?.toInt() ?? 0,
+      productPoints: (json['productPoints'] as num?)?.toInt() ?? 0,
+      stockQty: (json['stockQty'] as num?)?.toInt() ?? 0,
+      imageUrl: img,
+      campaignSaleMinor: (json['campaignSaleMinor'] as num?)?.toInt(),
+      campaignDiscountMinor: (json['campaignDiscountMinor'] as num?)?.toInt(),
+      campaignName: json['campaignName']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toDetailsMap() => {
+        'id': id,
+        'productId': id,
+        'name': name,
+        'title': name,
+        'slug': slug,
+        'price': formattedPrice,
+        'originalPrice': formattedOriginalPrice,
+        'discount': discount,
+        'image': imageUrl,
+        'productPoints': productPoints,
+        'stockQty': stockQty,
+      };
+}
+
+class ShopInfoModel {
+  final String id;
+  final String shopName;
+  final String slug;
+  final String logoUrl;
+  final String bannerUrl;
+  final String description;
+
+  ShopInfoModel({
+    required this.id,
+    required this.shopName,
+    required this.slug,
+    required this.logoUrl,
+    required this.bannerUrl,
+    required this.description,
+  });
+
+  String get fullLogoUrl => logoUrl.isNotEmpty ? resolveImageUrl(logoUrl) : '';
+  String get fullBannerUrl =>
+      bannerUrl.isNotEmpty ? resolveImageUrl(bannerUrl) : '';
+
+  factory ShopInfoModel.fromJson(Map<String, dynamic> json) {
+    return ShopInfoModel(
+      id: json['id']?.toString() ?? '',
+      shopName: json['shopName']?.toString() ?? 'Store',
+      slug: json['slug']?.toString() ?? '',
+      logoUrl: json['logoUrl']?.toString() ?? json['logo']?.toString() ?? '',
+      bannerUrl:
+          json['bannerUrl']?.toString() ?? json['banner']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+    );
+  }
+}
 
 class SellerDetailsController extends GetxController {
-  final seller = <String, dynamic>{}.obs;
-  final isFollowing = false.obs;
-  final sellerProducts = <Map<String, dynamic>>[].obs;
+  final shopSlug = ''.obs;
+  final shop = Rxn<ShopInfoModel>();
+  final products = <ShopProductItem>[].obs;
+  final nextCursor = RxnString();
+
   final isLoading = false.obs;
+  final isLoadingMore = false.obs;
+  final isNotFound = false.obs;
 
   @override
   void onInit() {
     super.onInit();
     final args = Get.arguments;
-    if (args != null && args is Map<String, dynamic>) {
-      seller.value = Map<String, dynamic>.from(args);
-    } else {
-      seller.value = {
-        'name': 'Alif Store',
-        'rating': 4.9,
-        'reviewsCount': '1.8k',
-        'joinedDate': 'Member since 2024',
-        'location': 'Dhaka, Bangladesh',
-        'responseRate': '99%',
-        'isVerified': true,
-        'avatar':
-            'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
-        'bio':
-            'Official verified seller offering authentic products on Alif.',
-      };
+    if (args is String) {
+      shopSlug.value = args;
+    } else if (args is Map) {
+      final s = args['slug']?.toString() ?? '';
+      shopSlug.value = s;
+      if (args['shopName'] != null || args['name'] != null) {
+        shop.value = ShopInfoModel.fromJson(Map<String, dynamic>.from(args));
+      }
     }
-    fetchSellerProducts();
+    if (shopSlug.value.isNotEmpty) {
+      fetchShop(refresh: true);
+    }
   }
 
-  Future<void> fetchSellerProducts() async {
-    isLoading.value = true;
+  /// GET /api/v1/catalog/shops/[slug]?limit=20
+  Future<void> fetchShop({bool refresh = true}) async {
+    final slug = shopSlug.value;
+    if (slug.isEmpty) return;
+
+    if (refresh) {
+      isLoading.value = true;
+      isNotFound.value = false;
+      nextCursor.value = null;
+    } else {
+      if (nextCursor.value == null || isLoadingMore.value) return;
+      isLoadingMore.value = true;
+    }
+
     try {
-      final res = await dioGet('catalog/search');
+      String query = 'limit=20';
+      if (!refresh && nextCursor.value != null) {
+        query += '&cursor=${nextCursor.value}';
+      }
+
+      final res = await dioGet('catalog/shops/$slug?$query');
       if (res.statusCode == 200 && res.data != null) {
         dynamic raw = res.data;
-        if (raw is Map<String, dynamic> && raw.containsKey('data')) {
+        if (raw is Map && raw.containsKey('data')) {
           raw = raw['data'];
         }
-        if (raw is List) {
-          final list = <Map<String, dynamic>>[];
-          for (var p in raw) {
-            if (p is Map<String, dynamic>) {
-              final prod = ShowcaseProductModel.fromJson(p);
-              list.add(prod.toDetailsMap());
-            }
+
+        if (raw is Map<String, dynamic>) {
+          if (raw['shop'] is Map<String, dynamic>) {
+            shop.value = ShopInfoModel.fromJson(
+              Map<String, dynamic>.from(raw['shop']),
+            );
           }
-          sellerProducts.assignAll(list);
-        } else {
-          sellerProducts.clear();
+
+          final prods = (raw['products'] as List<dynamic>?)
+                  ?.map((e) =>
+                      ShopProductItem.fromJson(Map<String, dynamic>.from(e)))
+                  .toList() ??
+              [];
+
+          if (refresh) {
+            products.assignAll(prods);
+          } else {
+            products.addAll(prods);
+          }
+
+          nextCursor.value = raw['nextCursor']?.toString();
         }
-      } else {
-        sellerProducts.clear();
+      } else if (res.statusCode == 404) {
+        isNotFound.value = true;
       }
-    } catch (_) {
-      sellerProducts.clear();
+    } catch (e) {
+      debugPrint('Error fetching shop $slug: $e');
+      if (refresh && shop.value == null) {
+        isNotFound.value = true;
+      }
     } finally {
-      isLoading.value = false;
+      if (refresh) {
+        isLoading.value = false;
+      } else {
+        isLoadingMore.value = false;
+      }
     }
   }
 
-  void toggleFollow() {
-    isFollowing.value = !isFollowing.value;
-    Get.snackbar(
-      isFollowing.value ? 'Following Store' : 'Unfollowed Store',
-      isFollowing.value
-          ? 'You are now following ${seller['name']}'
-          : 'You unfollowed ${seller['name']}',
-      snackPosition: SnackPosition.TOP,
-      backgroundColor: AppColor.textPrimary,
-      colorText: AppColor.white,
-      duration: const Duration(seconds: 2),
-    );
+  void loadMore() {
+    fetchShop(refresh: false);
   }
 
-  void openProductDetails(Map<String, dynamic> product) {
-    Get.toNamed(Routes.PRODUCT_DETAILS, arguments: product);
+  void openProductDetails(ShopProductItem product) {
+    Get.toNamed(Routes.PRODUCT_DETAILS, arguments: product.toDetailsMap());
   }
 }
+

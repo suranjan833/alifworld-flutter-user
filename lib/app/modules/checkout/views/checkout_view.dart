@@ -607,7 +607,7 @@ class CheckoutView extends GetView<CheckoutController> {
                               id: 'Wallet',
                               title: 'Pay from Wallet',
                               subtitle:
-                                  'Use your Main, Shopping or Advanced wallet balance',
+                                  'Use your Main or Shopping wallet balance',
                               extraText: controller.combinedWalletBalance > 0
                                   ? 'Combined balance: ৳${controller.combinedWalletBalance.toStringAsFixed(2)}'
                                   : null,
@@ -780,6 +780,14 @@ class CheckoutView extends GetView<CheckoutController> {
                             _buildDetailRow(
                               'Wallet',
                               '- ৳${controller.walletDeductionAmount.toStringAsFixed(2)}',
+                              isGreen: true,
+                            ),
+                          ],
+                          if (controller.totalEarnPoints > 0) ...[
+                            SizedBox(height: 8.h),
+                            _buildDetailRow(
+                              'You Earn',
+                              '${controller.totalEarnPoints} points',
                               isGreen: true,
                             ),
                           ],
@@ -1106,7 +1114,6 @@ class CheckoutView extends GetView<CheckoutController> {
       final remainingAmount = controller.remainingPayable;
       final mainBal = controller.mainWalletBalance;
       final shoppingBal = controller.shoppingWalletBalance;
-      final advanceBal = controller.advanceWalletBalance;
 
       return Container(
         margin: EdgeInsets.only(top: 8.h, bottom: 4.h),
@@ -1124,7 +1131,7 @@ class CheckoutView extends GetView<CheckoutController> {
           children: [
             // 1. Notice banner
             Text(
-              'You can pay up to $maxPercent% of the order total from your wallets. The rest is payable on delivery.',
+              'You can pay up to $maxPercent% of the order total from your wallets (Main up to ${controller.mainWalletCapPercent.value}%, Shopping up to ${controller.shoppingWalletCapPercent.value}%). The rest is payable on delivery.',
               style: GoogleFonts.lato(
                 fontSize: 12.5.sp,
                 color: const Color(0xFF78350F),
@@ -1149,15 +1156,6 @@ class CheckoutView extends GetView<CheckoutController> {
               title: 'Shopping Wallet',
               balance: shoppingBal,
               willUseAmount: controller.shoppingWalletWillUse,
-            ),
-            SizedBox(height: 8.h),
-
-            // 4. Advanced Shopping Row
-            _buildWalletKindRow(
-              kind: 'customer_advanced_shopping',
-              title: 'Advanced Shopping',
-              balance: advanceBal,
-              willUseAmount: controller.advanceWalletWillUse,
             ),
 
             if (remainingAmount > 0) ...[

@@ -9,6 +9,7 @@ class OrderSuccessController extends GetxController {
   final paymentId = ''.obs;
   final paymentMethod = 'Cash on Delivery'.obs;
   final totalAmount = 0.0.obs;
+  final earnedPoints = 0.obs;
   final itemCount = 1.obs;
   final deliveryAddress = ''.obs;
 
@@ -64,6 +65,7 @@ class OrderSuccessController extends GetxController {
       paymentMethod.value =
           args['paymentMethod'] as String? ?? 'Cash on Delivery';
       totalAmount.value = (args['totalAmount'] as num?)?.toDouble() ?? 0.0;
+      earnedPoints.value = (args['totalPoints'] as num?)?.toInt() ?? 0;
       itemCount.value = (args['itemCount'] as num?)?.toInt() ?? 1;
       deliveryAddress.value = args['address'] as String? ?? '';
     }

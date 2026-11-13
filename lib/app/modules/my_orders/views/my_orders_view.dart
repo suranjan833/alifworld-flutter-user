@@ -408,6 +408,60 @@ class MyOrdersView extends GetView<MyOrdersController> {
           const Divider(color: Color(0xFFF1F5F9), height: 1),
           SizedBox(height: 12.h),
 
+          // Points Status Banner per §9
+          if (order.points != null && order.points!.status != null) ...[
+            if (order.points!.isPending)
+              Container(
+                margin: EdgeInsets.only(bottom: 10.h),
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.hourglass_empty_rounded, size: 14.r, color: const Color(0xFFB45309)),
+                    SizedBox(width: 6.w),
+                    Expanded(
+                      child: Text(
+                        '⏳ ${order.points!.points} points pending${order.points!.formattedWindowEndDate.isNotEmpty ? ' · Posts on ${order.points!.formattedWindowEndDate}' : ''}',
+                        style: GoogleFonts.lato(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFFB45309),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else if (order.points!.isPosted)
+              Container(
+                margin: EdgeInsets.only(bottom: 10.h),
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDCFCE7),
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.check_circle_rounded, size: 14.r, color: const Color(0xFF15803D)),
+                    SizedBox(width: 6.w),
+                    Expanded(
+                      child: Text(
+                        '✓ ${order.points!.points} points earned',
+                        style: GoogleFonts.lato(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF15803D),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+
           // Total & Details Action
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

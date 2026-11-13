@@ -9,6 +9,7 @@ import '../../../data/config/app_color.dart';
 import '../../../data/config/app_image.dart';
 import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/widgets/brand_logo_widget.dart';
+import '../../../data/widgets/points_badge.dart';
 import '../../../data/widgets/skeleton_box.dart';
 import '../../../data/widgets/typewriter_search_hint.dart';
 import '../../../routes/app_pages.dart';
@@ -589,6 +590,15 @@ class HomeView extends GetView<HomeController> {
                     ),
 
                   SizedBox(height: 4.h),
+
+                  // Points Badge (if points > 0)
+                  if (((product['productPoints'] as num?)?.toInt() ?? 0) > 0) ...[
+                    PointsBadge(
+                      points: (product['productPoints'] as num).toInt(),
+                      compact: true,
+                    ),
+                    SizedBox(height: 4.h),
+                  ],
 
                   // Price and Original Price (Responsive Wrap without overflow)
                   Padding(

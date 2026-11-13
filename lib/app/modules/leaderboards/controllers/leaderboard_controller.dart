@@ -9,6 +9,7 @@ import '../models/leaderboard_model.dart';
 import '../views/widgets/star_bands_sheet.dart';
 
 class LeaderboardController extends GetxController {
+  final selectedKind = 'customer'.obs; // 'customer', 'seller'
   final selectedPeriod = 'daily'.obs; // 'daily', 'weekly', 'monthly', 'yearly'
 
   final isLoading = false.obs;
@@ -39,17 +40,24 @@ class LeaderboardController extends GetxController {
     ]);
   }
 
+  void changeKind(String kind) {
+    if (selectedKind.value == kind) return;
+    selectedKind.value = kind;
+    fetchLeaderboard();
+  }
+
   void changePeriod(String period) {
     if (selectedPeriod.value == period) return;
     selectedPeriod.value = period;
     fetchLeaderboard();
   }
 
-  /// GET /api/v1/leaderboards?kind=customer&period=daily|weekly|monthly|yearly
+  /// GET /api/v1/leaderboards?kind=customer|seller&period=daily|weekly|monthly|yearly
   Future<void> fetchLeaderboard() async {
     try {
       isLoading.value = true;
-      final url = 'leaderboards?kind=customer&period=${selectedPeriod.value}';
+      final url =
+          'leaderboards?kind=${selectedKind.value}&period=${selectedPeriod.value}';
       final response = await dioGet(url);
 
       if (response.statusCode == 200 && response.data != null) {

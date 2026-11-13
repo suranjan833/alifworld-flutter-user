@@ -20,6 +20,8 @@ import '../modules/home/bindings/home_binding.dart';
 import '../modules/home/views/home_view.dart';
 import '../modules/leaderboards/bindings/leaderboard_binding.dart';
 import '../modules/leaderboards/views/leaderboard_view.dart';
+import '../modules/points_help/bindings/points_help_binding.dart';
+import '../modules/points_help/views/points_help_view.dart';
 import '../modules/login/bindings/login_binding.dart';
 import '../modules/login/views/login_view.dart';
 import '../modules/lottery/bindings/lottery_binding.dart';
@@ -268,6 +270,12 @@ class AppPages {
       name: _Paths.LEADERBOARDS,
       page: () => const LeaderboardView(),
       binding: LeaderboardBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: _Paths.POINTS_HELP,
+      page: () => const PointsHelpView(),
+      binding: PointsHelpBinding(),
       transition: Transition.rightToLeft,
     ),
     GetPage(

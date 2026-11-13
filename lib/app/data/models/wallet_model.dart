@@ -173,20 +173,44 @@ class WalletItemModel {
   }
 }
 
+class WalletCapsModel {
+  final int customerMain;
+  final int customerShopping;
+
+  WalletCapsModel({
+    this.customerMain = 100,
+    this.customerShopping = 62,
+  });
+
+  factory WalletCapsModel.fromJson(Map<String, dynamic> json) {
+    return WalletCapsModel(
+      customerMain: (json['customer_main'] as num?)?.toInt() ?? 100,
+      customerShopping: (json['customer_shopping'] as num?)?.toInt() ?? 62,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'customer_main': customerMain,
+        'customer_shopping': customerShopping,
+      };
+}
+
 class WalletResponseModel {
   final List<WalletItemModel> items;
   final String currency;
   final String currencySymbol;
   final String currencySymbolPlacement;
   final int walletMaxPercent;
+  final WalletCapsModel walletCaps;
 
   WalletResponseModel({
     required this.items,
-    this.walletMaxPercent = 60,
+    this.walletMaxPercent = 100,
+    WalletCapsModel? walletCaps,
     this.currency = 'BDT',
     this.currencySymbol = '৳',
     this.currencySymbolPlacement = 'left',
-  });
+  }) : walletCaps = walletCaps ?? WalletCapsModel();
 
   WalletItemModel? get mainWallet {
     try {
@@ -228,9 +252,21 @@ class WalletResponseModel {
             .toList() ??
         [];
 
+    final caps = json['walletCaps'] is Map<String, dynamic>
+        ? WalletCapsModel.fromJson(
+            Map<String, dynamic>.from(json['walletCaps']))
+        : (json['walletCaps'] is Map
+            ? WalletCapsModel.fromJson(
+                Map<String, dynamic>.from(json['walletCaps'] as Map))
+            : WalletCapsModel());
+
+    final maxPct = (json['walletMaxPercent'] as num?)?.toInt() ??
+        ((caps.customerMain + caps.customerShopping).clamp(0, 100));
+
     return WalletResponseModel(
       items: list,
-      walletMaxPercent: (json['walletMaxPercent'] as num?)?.toInt() ?? 60,
+      walletMaxPercent: maxPct,
+      walletCaps: caps,
       currency: json['currency']?.toString() ?? 'BDT',
       currencySymbol: json['currencySymbol']?.toString() ?? '৳',
       currencySymbolPlacement:
@@ -440,6 +476,16 @@ class WalletPendingOrderModel {
   });
 
   double get estimatedCashback => estimatedCashbackMinor / 100.0;
+
+  String get formattedPostsDate {
+    if (returnWindowEndsAt == null) return 'Pending';
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    final dt = returnWindowEndsAt!;
+    return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
+  }
 
   factory WalletPendingOrderModel.fromJson(Map<String, dynamic> json) {
     DateTime? returnEnds;

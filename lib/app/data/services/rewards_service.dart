@@ -54,6 +54,10 @@ class RewardsService extends GetxService {
   }
 
   int get pointValueMinor => info.value.pointValueMinor;
+  double pointsToMoney(int points) => info.value.pointsToMoney(points);
+  String formatPointsMoney(int points) => info.value.formatPointsMoney(points);
   CustomerSplitModel get customerSplit => info.value.customerSplit;
   List<StarBandModel> get customerStarBands => info.value.customerStarBands;
+  GeoPctModel get geoPct => info.value.geoPct;
+  Map<String, ClubPeriodTiersModel> get customerClub => info.value.customerClub;
 }

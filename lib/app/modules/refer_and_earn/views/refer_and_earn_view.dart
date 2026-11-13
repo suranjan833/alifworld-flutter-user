@@ -101,7 +101,6 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
 
   /// 1. Hero Banner
   Widget _buildHeroBanner(ReferralInfoModel info) {
-    final bonus = info.registrationBonus;
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(20.r),
@@ -162,9 +161,7 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
                     ),
                     SizedBox(height: 4.h),
                     Text(
-                      bonus.amountMinor > 0
-                          ? 'Earn up to ${bonus.formattedAmount}'
-                          : 'Refer & Earn',
+                      'Earn up to ${controller.formattedRegistrationBonus}',
                       style: GoogleFonts.lato(
                         fontSize: 20.sp,
                         fontWeight: FontWeight.bold,
@@ -551,10 +548,12 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
     );
   }
 
-  /// 4. 3-Level Rates Card (with userCount under level label per refer.md §2 & §5)
+  /// 4. 3-Level Rates Card (both Registration & Order tables per §14)
   Widget _buildLevelBreakdownCard(ReferralInfoModel info) {
     final currencySymbol = info.currencySymbol;
     final levels = info.levels;
+    final regPcts = controller.registrationReferralPcts;
+    final orderPcts = controller.orderReferralPcts;
 
     return Container(
       width: double.infinity,
@@ -581,10 +580,20 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
               ),
             ],
           ),
-          SizedBox(height: 14.h),
+          SizedBox(height: 12.h),
 
+          // Table 1: Registration Referral Rates
+          Text(
+            '1. Registration Referral Rates (% of welcome bonus)',
+            style: GoogleFonts.lato(
+              fontSize: 12.5.sp,
+              fontWeight: FontWeight.bold,
+              color: AppColor.primaryDark,
+            ),
+          ),
+          SizedBox(height: 8.h),
           ...levels.map((lvl) {
-            final rate = lvl.ratePct;
+            final regPct = regPcts.length >= lvl.level ? regPcts[lvl.level - 1] : lvl.ratePct;
             final earningsMajor = lvl.earningsMajor;
             final userCount = lvl.userCount;
 
@@ -595,7 +604,7 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
 
             return Container(
               margin: EdgeInsets.only(bottom: 8.h),
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
               decoration: BoxDecoration(
                 color: const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(10.r),
@@ -627,7 +636,7 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Level ${lvl.level} · $rate%',
+                          'Level ${lvl.level} · $regPct%',
                           style: GoogleFonts.lato(
                             fontSize: 13.5.sp,
                             fontWeight: FontWeight.w700,
@@ -660,6 +669,66 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
               ),
             );
           }),
+
+          SizedBox(height: 12.h),
+
+          // Table 2: Order Referral Rates
+          Text(
+            '2. Order Referral Rates (% of order points value)',
+            style: GoogleFonts.lato(
+              fontSize: 12.5.sp,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFFD97706),
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Row(
+            children: [
+              for (int i = 0; i < 3; i++) ...[
+                if (i > 0) SizedBox(width: 8.w),
+                Expanded(
+                  child: Container(
+                    padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 8.w),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(10.r),
+                      border: Border.all(color: const Color(0xFFFDE68A)),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Level ${i + 1}',
+                          style: GoogleFonts.lato(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF92400E),
+                          ),
+                        ),
+                        SizedBox(height: 2.h),
+                        Text(
+                          '${orderPcts.length > i ? orderPcts[i] : (3 - i)}%',
+                          style: GoogleFonts.lato(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFFB45309),
+                          ),
+                        ),
+                        SizedBox(height: 2.h),
+                        Text(
+                          'of order points',
+                          style: GoogleFonts.lato(
+                            fontSize: 10.sp,
+                            color: const Color(0xFF92400E),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ],
       ),
     );

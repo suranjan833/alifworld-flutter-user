@@ -4,6 +4,7 @@ import '../../../data/config/app_color.dart';
 import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/mixins/skeleton_loading_mixin.dart';
+import '../../../data/services/recently_viewed_service.dart';
 import '../../../routes/app_pages.dart';
 import '../../bag/controllers/bag_controller.dart';
 import '../../home/models/showcase_model.dart';
@@ -90,6 +91,8 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
     if (selectedVariantIndex.value >= merged.variants.length) {
       selectedVariantIndex.value = 0;
     }
+
+    _recordRecentlyViewed();
   }
 
   Future<void> fetchProductBySlug(String slug) async {
@@ -207,11 +210,90 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
 
   bool get isOpenBoxDelivery => product.value?.openBoxDelivery ?? false;
 
+  int get activeProductPoints {
+    final sv = selectedVariant;
+    if (sv != null && sv.productPoints != null) {
+      return sv.productPoints!;
+    }
+    return product.value?.productPoints ?? 0;
+  }
+
+  int get activePriceMinor {
+    final sv = selectedVariant;
+    if (sv != null) {
+      return sv.effectivePriceMinor;
+    }
+    return product.value?.priceMinor ?? 0;
+  }
+
+  int? get activeCompareAtPriceMinor {
+    final sv = selectedVariant;
+    if (sv != null && sv.compareAtPriceMinor != null) {
+      return sv.compareAtPriceMinor;
+    }
+    return product.value?.compareAtPriceMinor;
+  }
+
+  bool get isCampaignActive => selectedVariant?.isCampaignActive ?? false;
+
+  bool get hasMrpSaving {
+    if (isCampaignActive) return false;
+    final comp = activeCompareAtPriceMinor;
+    final price = activePriceMinor;
+    return comp != null && comp > price && price > 0;
+  }
+
+  double get mrpSavingAmount {
+    final comp = activeCompareAtPriceMinor ?? 0;
+    final price = activePriceMinor;
+    if (comp > price) {
+      return (comp - price) / 100.0;
+    }
+    return 0.0;
+  }
+
+  int get mrpSavingPct {
+    final comp = activeCompareAtPriceMinor ?? 0;
+    final price = activePriceMinor;
+    if (comp > price && comp > 0) {
+      return (((comp - price) / comp) * 100).round();
+    }
+    return 0;
+  }
+
+  String get displayTitleWithVariant =>
+      product.value?.titleWithVariant(selectedVariant) ?? '';
+
   void selectVariant(int index) {
     if (index >= 0 && index < variants.length) {
       selectedVariantIndex.value = index;
       selectedQuantity.value = 1;
       selectedImageIndex.value = 0;
+      _recordRecentlyViewed();
+    }
+  }
+
+  void _recordRecentlyViewed() {
+    final p = product.value;
+    if (p == null || p.slug.isEmpty) return;
+    final sv = selectedVariant;
+    if (Get.isRegistered<RecentlyViewedService>()) {
+      RecentlyViewedService.to.recordView(
+        slug: p.slug,
+        productId: p.id,
+        name: p.name,
+        brandName: p.brandName,
+        variantId: sv?.id,
+        variantLabel: sv?.label,
+        imageUrl: (sv != null && sv.images.isNotEmpty)
+            ? sv.images.first
+            : (p.images.isNotEmpty ? p.images.first : p.displayImage),
+        priceMinor: activePriceMinor,
+        compareAtPriceMinor: activeCompareAtPriceMinor,
+        campaignActive: isCampaignActive,
+        productPoints: activeProductPoints,
+        sellerName: seller.value?.shopName,
+      );
     }
   }
 
@@ -354,6 +436,7 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
         'deliveryFee': deliveryFee,
         'tax': tax,
         'totalAmount': totalAmount,
+        'totalPoints': activeProductPoints * qty,
         'isDirectBuy': true,
       },
     );
@@ -362,7 +445,11 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
   void openSellerDetails() {
     final s = seller.value;
     if (s != null) {
-      Get.toNamed(Routes.SELLER_DETAILS, arguments: s.toJson());
+      final map = s.toJson();
+      if (s.slug.isNotEmpty) {
+        map['slug'] = s.slug;
+      }
+      Get.toNamed(Routes.SELLER_DETAILS, arguments: map);
     } else {
       Get.toNamed(Routes.SELLER_DETAILS);
     }

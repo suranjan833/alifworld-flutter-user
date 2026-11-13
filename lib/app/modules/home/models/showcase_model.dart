@@ -126,6 +126,7 @@ class ShowcaseProductModel {
   final double? rating;
   final int? reviews;
   final int? stockQty;
+  final int? productPoints;
   final String? description;
   bool isFavorite;
 
@@ -145,6 +146,7 @@ class ShowcaseProductModel {
     this.rating,
     this.reviews,
     this.stockQty,
+    this.productPoints,
     this.description,
     this.isFavorite = false,
   });
@@ -248,6 +250,16 @@ class ShowcaseProductModel {
       parsedStock = json['stockQty'] as int;
     }
 
+    int? parsedPoints = (json['productPoints'] as num?)?.toInt();
+    if (parsedVariants.isNotEmpty) {
+      for (var v in parsedVariants) {
+        final vp = (v['productPoints'] as num?)?.toInt();
+        if (vp != null && (parsedPoints == null || vp > parsedPoints)) {
+          parsedPoints = vp;
+        }
+      }
+    }
+
     return ShowcaseProductModel(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? json['title']?.toString() ?? 'Product',
@@ -264,6 +276,7 @@ class ShowcaseProductModel {
       rating: parsedRating,
       reviews: parsedReviews,
       stockQty: parsedStock,
+      productPoints: parsedPoints,
       description: json['description']?.toString(),
       isFavorite: json['isFavorite'] == true,
     );
@@ -300,6 +313,7 @@ class ShowcaseProductModel {
       'rating': rating ?? 4.8,
       'reviews': reviews ?? 24,
       'stockQty': stockQty,
+      'productPoints': productPoints,
       'description': description,
       'isFavorite': isFavorite,
     };
@@ -322,6 +336,7 @@ class ShowcaseProductModel {
       'rating': rating,
       'reviews': reviews,
       'stockQty': stockQty,
+      'productPoints': productPoints,
       'description': description,
       'isFavorite': isFavorite,
     };

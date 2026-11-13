@@ -20,6 +20,7 @@ class ProductModel {
   final Map<String, dynamic>? seller;
   final String? categoryName;
   final int? stockQty;
+  final int? productPoints;
 
   ProductModel({
     this.id,
@@ -39,6 +40,7 @@ class ProductModel {
     this.seller,
     this.categoryName,
     this.stockQty,
+    this.productPoints,
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
@@ -67,6 +69,16 @@ class ProductModel {
       parsedVariants = (json['variants'] as List)
           .whereType<Map<String, dynamic>>()
           .toList();
+    }
+
+    int? parsedPoints = (json['productPoints'] as num?)?.toInt();
+    if (parsedVariants != null && parsedVariants.isNotEmpty) {
+      for (var v in parsedVariants) {
+        final vp = (v['productPoints'] as num?)?.toInt();
+        if (vp != null && (parsedPoints == null || vp > parsedPoints)) {
+          parsedPoints = vp;
+        }
+      }
     }
 
     // Check first variant if price is 0
@@ -193,6 +205,7 @@ class ProductModel {
       seller: parsedSeller,
       categoryName: json['categoryName']?.toString(),
       stockQty: json['stockQty'] is int ? json['stockQty'] as int : null,
+      productPoints: parsedPoints,
     );
   }
 
@@ -215,6 +228,7 @@ class ProductModel {
       'seller': seller,
       'categoryName': categoryName,
       'stockQty': stockQty,
+      'productPoints': productPoints,
     };
   }
 
