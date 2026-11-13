@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/models/referral_model.dart';
+import '../../../data/services/rewards_service.dart';
 import '../../../routes/app_pages.dart';
 
 class ReferAndEarnController extends GetxController {
@@ -18,6 +19,32 @@ class ReferAndEarnController extends GetxController {
   final referralInfo = Rxn<ReferralInfoModel>();
   final historyItems = <ReferralHistoryItem>[].obs;
   final nextCursor = RxnString();
+
+  int get liveRegistrationBonusMinor {
+    if (Get.isRegistered<RewardsService>()) {
+      return RewardsService.to.info.value.registrationBonusMinor;
+    }
+    return referralInfo.value?.registrationBonus.amountMinor ?? 100000;
+  }
+
+  String get formattedRegistrationBonus {
+    final taka = liveRegistrationBonusMinor / 100.0;
+    return '৳${taka.toStringAsFixed(taka.truncateToDouble() == taka ? 0 : 2)}';
+  }
+
+  List<num> get registrationReferralPcts {
+    if (Get.isRegistered<RewardsService>()) {
+      return RewardsService.to.info.value.registrationReferralPct;
+    }
+    return const [70, 30, 10];
+  }
+
+  List<num> get orderReferralPcts {
+    if (Get.isRegistered<RewardsService>()) {
+      return RewardsService.to.info.value.referralPct;
+    }
+    return const [3, 2, 1];
+  }
 
   bool get hasAuth {
     final token = getBox.read(USER_TOKEN);

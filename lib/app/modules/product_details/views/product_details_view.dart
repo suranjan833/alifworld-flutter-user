@@ -5,6 +5,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../../../data/config/app_color.dart';
+import '../../../data/services/recently_viewed_service.dart';
+import '../../../data/services/rewards_service.dart';
+import '../../../data/widgets/points_badge.dart';
 import '../../../routes/app_pages.dart';
 import '../../bag/controllers/bag_controller.dart';
 import '../controllers/product_details_controller.dart';
@@ -214,6 +217,9 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
 
                     // 7. Seller Details Card
                     _buildSellerCard(),
+
+                    // 8. Recently Viewed Strip (§5)
+                    _buildRecentlyViewedStrip(),
                     SizedBox(height: 20.h),
                   ],
                 ),
@@ -418,7 +424,9 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
             ),
             SizedBox(height: 6.h),
             Text(
-              title.toString(),
+              controller.displayTitleWithVariant.isNotEmpty
+                  ? controller.displayTitleWithVariant
+                  : title.toString(),
               style: GoogleFonts.lato(
                 fontSize: 18.sp,
                 fontWeight: FontWeight.bold,
@@ -494,16 +502,146 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                 ],
               ],
             ),
+
+            // Points Badge (top, under price) per §4.1
+            if (controller.activeProductPoints > 0) ...[
+              SizedBox(height: 10.h),
+              PointsBadge(
+                points: controller.activeProductPoints,
+                showInfoButton: true,
+                onInfoTap: () => Get.toNamed(Routes.POINTS_HELP),
+                fontSize: 13.sp,
+                iconSize: 17.r,
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+              ),
+            ],
+
+            // Price Breakdown per §4.2 (only when MRP saving exists and not campaign price)
+            if (controller.hasMrpSaving) ...[
+              SizedBox(height: 14.h),
+              _buildPriceBreakdown(),
+            ],
           ],
         ),
       );
     });
   }
 
+  Widget _buildPriceBreakdown() {
+    final mrpMinor = controller.activeCompareAtPriceMinor ?? 0;
+    final mrp = mrpMinor / 100.0;
+    final savingAmount = controller.mrpSavingAmount;
+    final savingPct = controller.mrpSavingPct;
+    final pts = controller.activeProductPoints;
+
+    int pointValueMinor = 100;
+    if (Get.isRegistered<RewardsService>()) {
+      pointValueMinor = RewardsService.to.pointValueMinor;
+    }
+    final pointsMoney = (pts * pointValueMinor) / 100.0;
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(12.r),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Price Breakdown',
+            style: GoogleFonts.lato(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.bold,
+              color: AppColor.textPrimary,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          _buildBreakdownRow('MRP', '৳${mrp.toStringAsFixed(2)}'),
+          SizedBox(height: 5.h),
+          _buildBreakdownRow(
+            'Discount −$savingPct%',
+            '−৳${savingAmount.toStringAsFixed(2)}',
+            valueColor: const Color(0xFF16A34A),
+          ),
+          if (pts > 0) ...[
+            SizedBox(height: 5.h),
+            _buildBreakdownRow(
+              'Points value ($pts pts)',
+              '৳${pointsMoney.toStringAsFixed(2)}',
+              subtitle: 'Value earned, NOT subtracted from price',
+              valueColor: const Color(0xFFD97706),
+            ),
+          ],
+          SizedBox(height: 8.h),
+          const Divider(color: Color(0xFFE2E8F0), height: 1),
+          SizedBox(height: 8.h),
+          _buildBreakdownRow(
+            'You save ($savingPct%)',
+            '৳${savingAmount.toStringAsFixed(2)}',
+            isBold: true,
+            valueColor: const Color(0xFF16A34A),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBreakdownRow(
+    String label,
+    String value, {
+    String? subtitle,
+    Color? valueColor,
+    bool isBold = false,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: GoogleFonts.lato(
+                  fontSize: 12.5.sp,
+                  fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
+                  color: isBold ? AppColor.textPrimary : AppColor.textSecondary,
+                ),
+              ),
+              if (subtitle != null)
+                Text(
+                  subtitle,
+                  style: GoogleFonts.lato(
+                    fontSize: 10.sp,
+                    fontStyle: FontStyle.italic,
+                    color: const Color(0xFFB45309),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.lato(
+            fontSize: 12.5.sp,
+            fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+            color: valueColor ?? AppColor.textPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildVariantsSection() {
     return Obx(() {
       final variants = controller.variants;
-      if (variants.isEmpty) return const SizedBox.shrink();
+      // §4.3: One variant -> no variant UI at all
+      if (variants.length <= 1) return const SizedBox.shrink();
 
       return Container(
         width: double.infinity,
@@ -529,26 +667,48 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                 final v = variants[index];
                 final label = v.label;
                 final isSelected = controller.selectedVariantIndex.value == index;
+                final inStock = v.inStock;
 
                 return InkWell(
-                  onTap: () => controller.selectVariant(index),
+                  onTap: inStock ? () => controller.selectVariant(index) : null,
                   borderRadius: BorderRadius.circular(12.r),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-                    decoration: BoxDecoration(
-                      color: isSelected ? AppColor.primary.withValues(alpha: 0.1) : const Color(0xFFF8F9FA),
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(
-                        color: isSelected ? AppColor.primary : const Color(0xFFE2E8F0),
-                        width: isSelected ? 1.5.r : 1.r,
+                  child: Opacity(
+                    opacity: inStock ? 1.0 : 0.45,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColor.primary.withValues(alpha: 0.1)
+                            : const Color(0xFFF8F9FA),
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(
+                          color: isSelected ? AppColor.primary : const Color(0xFFE2E8F0),
+                          width: isSelected ? 1.5.r : 1.r,
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      label,
-                      style: GoogleFonts.lato(
-                        fontSize: 13.sp,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                        color: isSelected ? AppColor.primaryDark : AppColor.textPrimary,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            label,
+                            style: GoogleFonts.lato(
+                              fontSize: 13.sp,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                              color: isSelected ? AppColor.primaryDark : AppColor.textPrimary,
+                            ),
+                          ),
+                          if (!inStock) ...[
+                            SizedBox(width: 4.w),
+                            Text(
+                              '(Out of Stock)',
+                              style: GoogleFonts.lato(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFFDC2626),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                   ),
@@ -832,6 +992,164 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
         ),
       );
     });
+  }
+
+  Widget _buildRecentlyViewedStrip() {
+    if (!Get.isRegistered<RecentlyViewedService>()) return const SizedBox.shrink();
+
+    return Obx(() {
+      final currentSlug = controller.product.value?.slug;
+      final recent = RecentlyViewedService.to.getItemsExcept(currentSlug);
+      if (recent.isEmpty) return const SizedBox.shrink();
+
+      return Container(
+        width: double.infinity,
+        color: AppColor.white,
+        margin: EdgeInsets.only(top: 10.h),
+        padding: EdgeInsets.symmetric(vertical: 16.h),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.w),
+              child: Text(
+                'Recently viewed',
+                style: GoogleFonts.lato(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.bold,
+                  color: AppColor.textPrimary,
+                ),
+              ),
+            ),
+            SizedBox(height: 12.h),
+            SizedBox(
+              height: 240.h,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                itemCount: recent.length,
+                itemBuilder: (context, index) {
+                  final item = recent[index];
+                  return _buildRecentlyViewedCard(item);
+                },
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _buildRecentlyViewedCard(RecentlyViewedItem item) {
+    return GestureDetector(
+      onTap: () {
+        Get.toNamed(
+          Routes.PRODUCT_DETAILS,
+          arguments: item.toDetailsMap(),
+          preventDuplicates: false,
+        );
+      },
+      child: Container(
+        width: 150.w,
+        margin: EdgeInsets.only(right: 12.w),
+        decoration: BoxDecoration(
+          color: AppColor.white,
+          borderRadius: BorderRadius.circular(14.r),
+          border: Border.all(color: const Color(0xFFF1F5F9)),
+          boxShadow: [
+            BoxShadow(
+              color: AppColor.black.withValues(alpha: 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(8.r),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Product Image
+              Container(
+                height: 95.h,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10.r),
+                  child: item.imageUrl.isNotEmpty
+                      ? Image.network(
+                          item.imageUrl,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(Iconsax.image),
+                        )
+                      : const Icon(Iconsax.image),
+                ),
+              ),
+              SizedBox(height: 6.h),
+              Text(
+                item.displayTitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.lato(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.bold,
+                  color: AppColor.textPrimary,
+                  height: 1.2,
+                ),
+              ),
+              if (item.productPoints > 0) ...[
+                SizedBox(height: 4.h),
+                PointsBadge(
+                  points: item.productPoints,
+                  compact: true,
+                ),
+              ],
+              const Spacer(),
+              if (item.discount.isNotEmpty)
+                Text(
+                  item.discount,
+                  style: GoogleFonts.lato(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF16A34A),
+                  ),
+                ),
+              Row(
+                children: [
+                  Text(
+                    item.formattedPrice,
+                    style: GoogleFonts.lato(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColor.textPrimary,
+                    ),
+                  ),
+                  if (item.formattedOriginalPrice != null) ...[
+                    SizedBox(width: 4.w),
+                    Flexible(
+                      child: Text(
+                        item.formattedOriginalPrice!,
+                        style: GoogleFonts.lato(
+                          fontSize: 10.sp,
+                          color: AppColor.textHint,
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildBottomActionBar() {

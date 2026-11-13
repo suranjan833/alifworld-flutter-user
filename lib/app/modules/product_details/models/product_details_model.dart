@@ -8,8 +8,12 @@ class ProductVariantModel {
   final int? compareAtPriceMinor;
   final int? productPoints;
   final int? stockQty;
+  final int? campaignSaleMinor;
+  final int? campaignDiscountMinor;
+  final String? campaignName;
   final List<String> images;
   final Map<String, dynamic>? attributes;
+  final List<Map<String, dynamic>> dimensions;
 
   ProductVariantModel({
     required this.id,
@@ -19,14 +23,31 @@ class ProductVariantModel {
     this.compareAtPriceMinor,
     this.productPoints,
     this.stockQty,
+    this.campaignSaleMinor,
+    this.campaignDiscountMinor,
+    this.campaignName,
     this.images = const [],
     this.attributes,
+    this.dimensions = const [],
   });
 
-  double get price => (priceMinor ?? 0) / 100.0;
+  bool get isCampaignActive =>
+      campaignSaleMinor != null && campaignSaleMinor! > 0;
 
-  double? get originalPrice =>
-      compareAtPriceMinor != null ? compareAtPriceMinor! / 100.0 : null;
+  int get effectivePriceMinor =>
+      isCampaignActive ? campaignSaleMinor! : (priceMinor ?? 0);
+
+  double get price => effectivePriceMinor / 100.0;
+
+  double? get originalPrice {
+    if (compareAtPriceMinor != null) {
+      return compareAtPriceMinor! / 100.0;
+    }
+    if (isCampaignActive && priceMinor != null && priceMinor! > effectivePriceMinor) {
+      return priceMinor! / 100.0;
+    }
+    return null;
+  }
 
   String get priceFormatted =>
       '৳${price.toStringAsFixed(price.truncateToDouble() == price ? 0 : 2)}';
@@ -40,13 +61,10 @@ class ProductVariantModel {
   }
 
   String get discount {
-    if (compareAtPriceMinor != null &&
-        priceMinor != null &&
-        compareAtPriceMinor! > priceMinor! &&
-        priceMinor! > 0) {
-      final pct =
-          (((compareAtPriceMinor! - priceMinor!) / compareAtPriceMinor!) * 100)
-              .round();
+    final origMinor = compareAtPriceMinor ??
+        (isCampaignActive && priceMinor != null ? priceMinor : null);
+    if (origMinor != null && origMinor > effectivePriceMinor && effectivePriceMinor > 0) {
+      final pct = (((origMinor - effectivePriceMinor) / origMinor) * 100).round();
       if (pct > 0) return '$pct% OFF';
     }
     return '';
@@ -96,6 +114,14 @@ class ProductVariantModel {
                 ? (json['quantity'] as num).toInt()
                 : null));
 
+    List<Map<String, dynamic>> dims = [];
+    if (json['dimensions'] is List) {
+      dims = (json['dimensions'] as List)
+          .whereType<Map>()
+          .map((d) => Map<String, dynamic>.from(d))
+          .toList();
+    }
+
     return ProductVariantModel(
       id: json['id']?.toString() ?? '',
       sku: json['sku']?.toString() ?? '',
@@ -109,10 +135,14 @@ class ProductVariantModel {
           ? (json['productPoints'] as num).toInt()
           : null,
       stockQty: sQty,
+      campaignSaleMinor: (json['campaignSaleMinor'] as num?)?.toInt(),
+      campaignDiscountMinor: (json['campaignDiscountMinor'] as num?)?.toInt(),
+      campaignName: json['campaignName']?.toString(),
       images: imgs,
       attributes: json['attributes'] is Map
           ? Map<String, dynamic>.from(json['attributes'] as Map)
           : null,
+      dimensions: dims,
     );
   }
 
@@ -125,8 +155,12 @@ class ProductVariantModel {
       'compareAtPriceMinor': compareAtPriceMinor,
       'productPoints': productPoints,
       'stockQty': stockQty,
+      'campaignSaleMinor': campaignSaleMinor,
+      'campaignDiscountMinor': campaignDiscountMinor,
+      'campaignName': campaignName,
       'images': images,
       'attributes': attributes,
+      'dimensions': dimensions,
     };
   }
 }
@@ -282,6 +316,17 @@ class ProductDetailsModel {
   }
 
   String get displayTitle => name;
+
+  String titleWithVariant(ProductVariantModel? variant) {
+    if (variant == null || variants.length <= 1) return name;
+    final vLabel = variant.label.trim();
+    if (vLabel.isEmpty ||
+        vLabel.toLowerCase() == name.toLowerCase() ||
+        vLabel.toLowerCase() == 'default') {
+      return name;
+    }
+    return '$name ($vLabel)';
+  }
 
   String get displayBrand => brandName ?? 'Alif';
 

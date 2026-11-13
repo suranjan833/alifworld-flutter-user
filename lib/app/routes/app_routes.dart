@@ -39,6 +39,7 @@ abstract class Routes {
   static const ORDER_DETAILS = _Paths.ORDER_DETAILS;
   static const TOP_BRANDS = _Paths.TOP_BRANDS;
   static const LEADERBOARDS = _Paths.LEADERBOARDS;
+  static const POINTS_HELP = _Paths.POINTS_HELP;
   static const LOTTERY = _Paths.LOTTERY;
   static const LOTTERY_DETAIL = _Paths.LOTTERY_DETAIL;
   static const LOTTERY_RESULTS = _Paths.LOTTERY_RESULTS;
@@ -79,6 +80,7 @@ abstract class _Paths {
   static const ORDER_DETAILS = '/order-details';
   static const TOP_BRANDS = '/top-brands';
   static const LEADERBOARDS = '/leaderboards';
+  static const POINTS_HELP = '/points-help';
   static const LOTTERY = '/lottery';
   static const LOTTERY_DETAIL = '/lottery-detail';
   static const LOTTERY_RESULTS = '/lottery-results';

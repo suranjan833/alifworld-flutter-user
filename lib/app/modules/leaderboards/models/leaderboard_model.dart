@@ -160,6 +160,8 @@ class MyProgressClubModel {
 class MyProgressStarModel {
   final int? rank;
   final int? totalRanked;
+  final String? bandKey;
+  final String? nextBandKey;
   final StarBandModel? band;
   final StarBandModel? nextBand;
   final int ranksToNext;
@@ -167,21 +169,73 @@ class MyProgressStarModel {
   MyProgressStarModel({
     this.rank,
     this.totalRanked,
+    this.bandKey,
+    this.nextBandKey,
     this.band,
     this.nextBand,
     this.ranksToNext = 0,
   });
 
+  String get displayBand {
+    if (band != null) return band!.displayName;
+    if (bandKey != null && bandKey!.isNotEmpty) {
+      switch (bandKey!.toLowerCase()) {
+        case 'mega':
+          return 'Mega Star';
+        case 'super':
+          return 'Super Star';
+        case 'star':
+          return 'Star';
+        default:
+          return bandKey!;
+      }
+    }
+    return '';
+  }
+
+  String get displayNextBand {
+    if (nextBand != null) return nextBand!.displayName;
+    if (nextBandKey != null && nextBandKey!.isNotEmpty) {
+      switch (nextBandKey!.toLowerCase()) {
+        case 'mega':
+          return 'Mega Star';
+        case 'super':
+          return 'Super Star';
+        case 'star':
+          return 'Star';
+        default:
+          return nextBandKey!;
+      }
+    }
+    return '';
+  }
+
   factory MyProgressStarModel.fromJson(Map<String, dynamic> json) {
+    String? bKey;
+    StarBandModel? bModel;
+    if (json['band'] is Map) {
+      bModel = StarBandModel.fromJson(Map<String, dynamic>.from(json['band'] as Map));
+      bKey = bModel.key;
+    } else if (json['band'] != null) {
+      bKey = json['band'].toString();
+    }
+
+    String? nbKey;
+    StarBandModel? nbModel;
+    if (json['nextBand'] is Map) {
+      nbModel = StarBandModel.fromJson(Map<String, dynamic>.from(json['nextBand'] as Map));
+      nbKey = nbModel.key;
+    } else if (json['nextBand'] != null) {
+      nbKey = json['nextBand'].toString();
+    }
+
     return MyProgressStarModel(
       rank: (json['rank'] as num?)?.toInt(),
       totalRanked: (json['totalRanked'] as num?)?.toInt(),
-      band: json['band'] is Map<String, dynamic>
-          ? StarBandModel.fromJson(Map<String, dynamic>.from(json['band']))
-          : null,
-      nextBand: json['nextBand'] is Map<String, dynamic>
-          ? StarBandModel.fromJson(Map<String, dynamic>.from(json['nextBand']))
-          : null,
+      bandKey: bKey,
+      nextBandKey: nbKey,
+      band: bModel,
+      nextBand: nbModel,
       ranksToNext: (json['ranksToNext'] as num?)?.toInt() ?? 0,
     );
   }

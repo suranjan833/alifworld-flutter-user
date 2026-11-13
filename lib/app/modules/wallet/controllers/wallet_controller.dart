@@ -21,7 +21,8 @@ class WalletController extends GetxController {
   final currency = 'BDT'.obs;
   final mainBalance = 0.0.obs;
   final totalBalance = 0.0.obs;
-  final walletMaxPercent = 60.obs;
+  final walletMaxPercent = 100.obs;
+  final walletCaps = Rx<WalletCapsModel>(WalletCapsModel());
   final pendingPoints = Rxn<WalletPendingPointsResponseModel>();
 
   // Selected wallet filter for transactions (empty = All)
@@ -81,6 +82,7 @@ class WalletController extends GetxController {
           mainBalance.value = resModel.mainBalance;
           totalBalance.value = resModel.totalBalance;
           walletMaxPercent.value = resModel.walletMaxPercent;
+          walletCaps.value = resModel.walletCaps;
         }
       } else {
         _loadFallbackWallets();
@@ -329,6 +331,8 @@ class WalletController extends GetxController {
     ]);
     mainBalance.value = 0.0;
     totalBalance.value = 0.0;
+    walletMaxPercent.value = 100;
+    walletCaps.value = WalletCapsModel();
   }
 
   void navigateToLogin() {

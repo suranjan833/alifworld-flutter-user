@@ -132,6 +132,11 @@ class WalletView extends GetView<WalletController> {
 
                 SizedBox(height: 20.h),
 
+                // 2.1 Pending Points Section (§10)
+                _buildPendingPointsSection(context),
+
+                SizedBox(height: 20.h),
+
                 // 3. Advance Shopping Promotion Banner
                 _buildAdvanceShoppingBanner(context),
 
@@ -551,6 +556,152 @@ class WalletView extends GetView<WalletController> {
         ),
       ),
     );
+  }
+
+  Widget _buildPendingPointsSection(BuildContext context) {
+    return Obx(() {
+      final pp = controller.pendingPoints.value;
+      final orders = pp?.orders ?? [];
+
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w),
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(16.r),
+          decoration: BoxDecoration(
+            color: AppColor.white,
+            borderRadius: BorderRadius.circular(18.r),
+            border: Border.all(color: const Color(0xFFFDE68A)),
+            boxShadow: [
+              BoxShadow(
+                color: AppColor.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(8.r),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFEF3C7),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.hourglass_empty_rounded,
+                            size: 18.r, color: Color(0xFFD97706)),
+                      ),
+                      SizedBox(width: 10.w),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Pending Points',
+                            style: GoogleFonts.lato(
+                              fontSize: 15.5.sp,
+                              fontWeight: FontWeight.bold,
+                              color: AppColor.textPrimary,
+                            ),
+                          ),
+                          Text(
+                            orders.isNotEmpty
+                                ? '${pp!.totalPoints} points pending posting'
+                                : 'Posts after return window closes',
+                            style: GoogleFonts.lato(
+                              fontSize: 11.5.sp,
+                              color: AppColor.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  TextButton.icon(
+                    onPressed: () => Get.toNamed(Routes.POINTS_HELP),
+                    icon: Icon(Icons.info_outline_rounded,
+                        size: 16.r, color: AppColor.primaryDark),
+                    label: Text(
+                      'Points Info',
+                      style: GoogleFonts.lato(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.bold,
+                        color: AppColor.primaryDark,
+                      ),
+                    ),
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                    ),
+                  ),
+                ],
+              ),
+              if (orders.isNotEmpty) ...[
+                SizedBox(height: 12.h),
+                const Divider(color: Color(0xFFF1F5F9), height: 1),
+                SizedBox(height: 10.h),
+                ...orders.map((o) => Container(
+                      margin: EdgeInsets.only(bottom: 8.h),
+                      padding: EdgeInsets.all(12.r),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFFBEB),
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(color: const Color(0xFFFEF3C7)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  o.orderNumber,
+                                  style: GoogleFonts.lato(
+                                    fontSize: 13.5.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColor.textPrimary,
+                                  ),
+                                ),
+                                SizedBox(height: 2.h),
+                                Text(
+                                  'Est. cashback: ৳${o.estimatedCashback.toStringAsFixed(2)} · Posts: ${o.formattedPostsDate}',
+                                  style: GoogleFonts.lato(
+                                    fontSize: 11.5.sp,
+                                    color: const Color(0xFF92400E),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 8.w, vertical: 4.h),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFDE68A),
+                              borderRadius: BorderRadius.circular(6.r),
+                            ),
+                            child: Text(
+                              '${o.points} pts',
+                              style: GoogleFonts.lato(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF78350F),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )),
+              ],
+            ],
+          ),
+        ),
+      );
+    });
   }
 
   Widget _buildTransactionsSection() {

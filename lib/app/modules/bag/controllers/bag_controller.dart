@@ -167,6 +167,14 @@ class BagController extends GetxController with SkeletonLoadingMixin {
   double get tax => 0.0;
   double get totalAmount => subtotal + deliveryFee + tax;
 
+  int get totalPoints {
+    int total = 0;
+    for (var item in cartItems) {
+      total += item.calculatedLinePoints;
+    }
+    return total;
+  }
+
   /// 2. PATCH /cart/items/{id} - Increment quantity
   Future<void> incrementQuantity(int index) async {
     if (index < 0 || index >= cartItems.length) return;
@@ -498,6 +506,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
         'deliveryFee': deliveryFee,
         'tax': tax,
         'totalAmount': totalAmount,
+        'totalPoints': totalPoints,
         'isDirectBuy': false,
       },
     );

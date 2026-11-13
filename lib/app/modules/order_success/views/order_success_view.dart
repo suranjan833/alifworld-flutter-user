@@ -116,6 +116,53 @@ class OrderSuccessView extends GetView<OrderSuccessController> {
                         isHighlight: true,
                       ),
                     ),
+                    Obx(() {
+                      if (controller.earnedPoints.value <= 0) {
+                        return const SizedBox.shrink();
+                      }
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(height: 10.h),
+                          _buildInfoRow(
+                            'Points Earned',
+                            '${controller.earnedPoints.value} points',
+                          ),
+                          SizedBox(height: 8.h),
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 10.w,
+                              vertical: 6.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEF3C7),
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.hourglass_empty_rounded,
+                                  size: 14.r,
+                                  color: const Color(0xFFB45309),
+                                ),
+                                SizedBox(width: 6.w),
+                                Expanded(
+                                  child: Text(
+                                    'Points post after delivery, once the return window closes.',
+                                    style: GoogleFonts.lato(
+                                      fontSize: 11.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFFB45309),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
                     // Estimated Delivery commented out for now
                     /*
                     SizedBox(height: 12.h),

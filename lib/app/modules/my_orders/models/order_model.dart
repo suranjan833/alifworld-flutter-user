@@ -1,3 +1,48 @@
+class OrderPointsModel {
+  final String? status; // 'pending' | 'posted' | null
+  final int points;
+  final DateTime? returnWindowEndsAt;
+
+  OrderPointsModel({
+    this.status,
+    required this.points,
+    this.returnWindowEndsAt,
+  });
+
+  bool get isPending => status?.toLowerCase() == 'pending';
+  bool get isPosted => status?.toLowerCase() == 'posted';
+
+  String get formattedWindowEndDate {
+    if (returnWindowEndsAt == null) return '';
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    final dt = returnWindowEndsAt!;
+    return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
+  }
+
+  factory OrderPointsModel.fromJson(Map<String, dynamic> json) {
+    DateTime? windowEnd;
+    if (json['returnWindowEndsAt'] != null) {
+      try {
+        windowEnd = DateTime.parse(json['returnWindowEndsAt'].toString());
+      } catch (_) {}
+    }
+    return OrderPointsModel(
+      status: json['status']?.toString(),
+      points: (json['points'] as num?)?.toInt() ?? 0,
+      returnWindowEndsAt: windowEnd,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'status': status,
+    'points': points,
+    'returnWindowEndsAt': returnWindowEndsAt?.toIso8601String(),
+  };
+}
+
 class OrderItemModel {
   final String id;
   final String productId;
@@ -7,6 +52,7 @@ class OrderItemModel {
   final int quantity;
   final double price;
   final double lineTotal;
+  final int? pointsPerUnit;
 
   OrderItemModel({
     required this.id,
@@ -17,6 +63,7 @@ class OrderItemModel {
     this.quantity = 1,
     this.price = 0.0,
     this.lineTotal = 0.0,
+    this.pointsPerUnit,
   });
 
   factory OrderItemModel.fromJson(Map<String, dynamic> json) {
@@ -71,6 +118,9 @@ class OrderItemModel {
         prod?['name']?.toString() ??
         'Product';
 
+    final ptsPerUnit = (json['pointsPerUnit'] as num?)?.toInt() ??
+        (prod?['productPoints'] as num?)?.toInt();
+
     return OrderItemModel(
       id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
       productId:
@@ -81,6 +131,7 @@ class OrderItemModel {
       quantity: q,
       price: parsedPrice,
       lineTotal: parsedLineTotal,
+      pointsPerUnit: ptsPerUnit,
     );
   }
 
@@ -94,6 +145,7 @@ class OrderItemModel {
       'quantity': quantity,
       'price': price,
       'lineTotal': lineTotal,
+      'pointsPerUnit': pointsPerUnit,
     };
   }
 }
@@ -121,6 +173,8 @@ class OrderModel {
   final bool openBoxDelivery;
   final String? deliveryOtp;
   final List<Map<String, dynamic>> timeline;
+  final OrderPointsModel? points;
+  final DateTime? returnDeadline;
 
   OrderModel({
     required this.id,
@@ -145,6 +199,8 @@ class OrderModel {
     this.openBoxDelivery = false,
     this.deliveryOtp,
     this.timeline = const [],
+    this.points,
+    this.returnDeadline,
   });
 
   OrderModel copyWith({
@@ -482,6 +538,20 @@ class OrderModel {
 
     final remaining = (total - walletPaidAmount) > 0 ? (total - walletPaidAmount) : 0.0;
 
+    OrderPointsModel? orderPoints;
+    if (json['points'] is Map) {
+      orderPoints = OrderPointsModel.fromJson(
+        Map<String, dynamic>.from(json['points'] as Map),
+      );
+    }
+
+    DateTime? retDeadline;
+    if (json['returnDeadline'] != null) {
+      try {
+        retDeadline = DateTime.parse(json['returnDeadline'].toString());
+      } catch (_) {}
+    }
+
     return OrderModel(
       id: rawId,
       orderId: code,
@@ -516,6 +586,8 @@ class OrderModel {
       openBoxDelivery: json['openBoxDelivery'] == true || json['open_box_delivery'] == true,
       deliveryOtp: json['deliveryOtp']?.toString() ?? json['delivery_otp']?.toString(),
       timeline: parsedTimeline,
+      points: orderPoints,
+      returnDeadline: retDeadline,
     );
   }
 
