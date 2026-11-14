@@ -88,11 +88,14 @@ class _AddressFormModalState extends State<AddressFormModal> {
     final defaultName = getBox.read(USER_NAME)?.toString() ?? '';
     final defaultPhone = getBox.read(USER_PHONE)?.toString() ?? '';
 
+    final rawPhone = a != null ? a.phone : defaultPhone;
+    final initialPhone = _normalizeBdPhone(rawPhone);
+
     _nameController = TextEditingController(
       text: a != null ? a.fullName : defaultName,
     );
     _phoneController = TextEditingController(
-      text: a != null ? a.phone : defaultPhone,
+      text: initialPhone,
     );
     _addressLineController = TextEditingController(
       text: a != null ? a.addressLine : '',
@@ -119,14 +122,21 @@ class _AddressFormModalState extends State<AddressFormModal> {
     super.dispose();
   }
 
-  // Helper to normalize Bangladeshi phone to 01XXXXXXXXX
-  String _normalizeBdPhone(String input) {
+  // Helper to normalize Bangladeshi phone to 01XXXXXXXXX by stripping 88 / +88
+  static String _normalizeBdPhone(String input) {
     var digits = input.replaceAll(RegExp(r'\D'), '');
     if (digits.startsWith('880')) {
-      digits = digits.substring(3);
-    }
-    if (digits.length == 10 && digits.startsWith('1')) {
+      digits = digits.substring(2); // removes '88', leaves '01...'
+    } else if (digits.startsWith('88')) {
+      digits = digits.substring(2); // removes '88'
+      if (digits.isNotEmpty && !digits.startsWith('0')) {
+        digits = '0$digits';
+      }
+    } else if (digits.length == 10 && digits.startsWith('1')) {
       digits = '0$digits';
+    }
+    if (digits.length > 11) {
+      digits = digits.substring(0, 11);
     }
     return digits;
   }
@@ -753,7 +763,7 @@ class _AddressFormModalState extends State<AddressFormModal> {
                       keyboardType: TextInputType.phone,
                       inputFormatters: [
                         FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(11),
+                        _BdPhoneInputFormatter(),
                       ],
                     ),
                     SizedBox(height: 30.h),
@@ -1329,6 +1339,20 @@ class _AddressFormModalState extends State<AddressFormModal> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _BdPhoneInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final clean = _AddressFormModalState._normalizeBdPhone(newValue.text);
+    return TextEditingValue(
+      text: clean,
+      selection: TextSelection.collapsed(offset: clean.length),
     );
   }
 }

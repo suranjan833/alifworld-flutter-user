@@ -19,6 +19,7 @@ class CartItemModel {
   final int? lineTotalMinor;
   final int? pointsPerUnit;
   final int? linePoints;
+  final int? compareAtPriceMinor;
 
   CartItemModel({
     required this.id,
@@ -37,6 +38,7 @@ class CartItemModel {
     this.lineTotalMinor,
     this.pointsPerUnit,
     this.linePoints,
+    this.compareAtPriceMinor,
   });
 
   /// Factory constructor to parse cart items from various API response shapes
@@ -192,6 +194,37 @@ class CartItemModel {
     final int? extractedLinePts =
         rawLinePts is num ? rawLinePts.toInt() : null;
 
+    int? extractedCompareAtPriceMinor;
+    final rawComparePriceMinor = json['compareAtPriceMinor'] ??
+        variantObj?['compareAtPriceMinor'] ??
+        productObj?['compareAtPriceMinor'] ??
+        variantObj?['comparePriceMinor'] ??
+        productObj?['comparePriceMinor'];
+    if (rawComparePriceMinor is num) {
+      extractedCompareAtPriceMinor = rawComparePriceMinor.toInt();
+    } else {
+      final rawComparePrice = json['compareAtPrice'] ??
+          variantObj?['compareAtPrice'] ??
+          productObj?['compareAtPrice'] ??
+          variantObj?['originalPrice'] ??
+          productObj?['originalPrice'];
+      if (rawComparePrice is num) {
+        extractedCompareAtPriceMinor = (rawComparePrice * 100).round();
+      } else if (rawComparePrice != null) {
+        final clean = rawComparePrice
+            .toString()
+            .replaceAll('৳', '')
+            .replaceAll('₹', '')
+            .replaceAll('\$', '')
+            .replaceAll(',', '')
+            .trim();
+        final parsed = double.tryParse(clean);
+        if (parsed != null) {
+          extractedCompareAtPriceMinor = (parsed * 100).round();
+        }
+      }
+    }
+
     return CartItemModel(
       id: extractedId,
       productId: extractedProductId,
@@ -209,6 +242,7 @@ class CartItemModel {
       lineTotalMinor: extractedLineTotalMinor,
       pointsPerUnit: extractedPtsPerUnit,
       linePoints: extractedLinePts,
+      compareAtPriceMinor: extractedCompareAtPriceMinor,
     );
   }
 
@@ -230,6 +264,7 @@ class CartItemModel {
       if (lineTotalMinor != null) 'lineTotalMinor': lineTotalMinor,
       if (pointsPerUnit != null) 'pointsPerUnit': pointsPerUnit,
       if (linePoints != null) 'linePoints': linePoints,
+      if (compareAtPriceMinor != null) 'compareAtPriceMinor': compareAtPriceMinor,
     };
   }
 
@@ -250,6 +285,7 @@ class CartItemModel {
     int? lineTotalMinor,
     int? pointsPerUnit,
     int? linePoints,
+    int? compareAtPriceMinor,
   }) {
     return CartItemModel(
       id: id ?? this.id,
@@ -268,8 +304,28 @@ class CartItemModel {
       lineTotalMinor: lineTotalMinor ?? this.lineTotalMinor,
       pointsPerUnit: pointsPerUnit ?? this.pointsPerUnit,
       linePoints: linePoints ?? this.linePoints,
+      compareAtPriceMinor: compareAtPriceMinor ?? this.compareAtPriceMinor,
     );
   }
+
+  double? get compareAtPrice =>
+      compareAtPriceMinor != null ? compareAtPriceMinor! / 100.0 : null;
+
+  int get unitDiscountMinor {
+    if (compareAtPriceMinor != null &&
+        unitPriceMinor != null &&
+        compareAtPriceMinor! > unitPriceMinor!) {
+      return compareAtPriceMinor! - unitPriceMinor!;
+    }
+    if (compareAtPrice != null && compareAtPrice! > price) {
+      return ((compareAtPrice! - price) * 100).round();
+    }
+    return 0;
+  }
+
+  double get unitDiscount => unitDiscountMinor / 100.0;
+
+  double get lineDiscount => unitDiscount * quantity;
 
   int get calculatedLinePoints {
     if (linePoints != null && linePoints! > 0) return linePoints!;
@@ -455,6 +511,11 @@ class CartModel {
       calcDiscount = (json['discountMinor'] as num).toDouble() / 100.0;
     } else if (json['discount'] is num) {
       calcDiscount = (json['discount'] as num).toDouble();
+    }
+    if (calcDiscount == 0.0) {
+      for (var item in parsedItems) {
+        calcDiscount += item.lineDiscount;
+      }
     }
 
     double calcTax = 0.0;

@@ -102,15 +102,22 @@ class _SkeletonShimmerState extends State<SkeletonShimmer>
 
 /// Shimmering skeleton list of rows: [leading] circle + two text bars.
 class SkeletonList extends StatelessWidget {
-  const SkeletonList({super.key, this.itemCount = 6, this.padding});
+  const SkeletonList({
+    super.key,
+    this.itemCount = 6,
+    this.padding,
+    this.shrinkWrap = true,
+  });
 
   final int itemCount;
   final EdgeInsetsGeometry? padding;
+  final bool shrinkWrap;
 
   @override
   Widget build(BuildContext context) {
     return SkeletonShimmer(
       child: ListView.separated(
+        shrinkWrap: shrinkWrap,
         physics: const NeverScrollableScrollPhysics(),
         padding:
             padding ?? EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
@@ -162,16 +169,19 @@ class SkeletonCardGrid extends StatelessWidget {
     this.itemCount = 6,
     this.aspectRatio = 0.62,
     this.padding,
+    this.shrinkWrap = true,
   });
 
   final int itemCount;
   final double aspectRatio;
   final EdgeInsetsGeometry? padding;
+  final bool shrinkWrap;
 
   @override
   Widget build(BuildContext context) {
     return SkeletonShimmer(
       child: GridView.builder(
+        shrinkWrap: shrinkWrap,
         physics: const NeverScrollableScrollPhysics(),
         padding:
             padding ?? EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
@@ -236,14 +246,20 @@ class _SkeletonCard extends StatelessWidget {
 
 /// Shimmering skeleton for detail screens: hero block + text lines + tiles.
 class SkeletonDetail extends StatelessWidget {
-  const SkeletonDetail({super.key, this.showActions = false});
+  const SkeletonDetail({
+    super.key,
+    this.showActions = false,
+    this.shrinkWrap = true,
+  });
 
   final bool showActions;
+  final bool shrinkWrap;
 
   @override
   Widget build(BuildContext context) {
     return SkeletonShimmer(
       child: ListView(
+        shrinkWrap: shrinkWrap,
         physics: const NeverScrollableScrollPhysics(),
         padding: EdgeInsets.all(16.w),
         children: [
@@ -312,14 +328,20 @@ class _SkeletonStatTile extends StatelessWidget {
 
 /// Shimmering skeleton for profile screens: avatar + name lines + menu rows.
 class SkeletonProfile extends StatelessWidget {
-  const SkeletonProfile({super.key, this.itemCount = 8});
+  const SkeletonProfile({
+    super.key,
+    this.itemCount = 8,
+    this.shrinkWrap = true,
+  });
 
   final int itemCount;
+  final bool shrinkWrap;
 
   @override
   Widget build(BuildContext context) {
     return SkeletonShimmer(
       child: ListView(
+        shrinkWrap: shrinkWrap,
         physics: const NeverScrollableScrollPhysics(),
         padding: EdgeInsets.all(16.w),
         children: [

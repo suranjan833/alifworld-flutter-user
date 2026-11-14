@@ -10,22 +10,45 @@ import '../config/app_color.dart';
 import '../config/functions/dio_function/app_config.dart';
 import '../services/wallet_pin_service.dart';
 
+typedef WalletPinSubmitCallback = Future<WalletPinActionResult> Function(String pin);
+
+class WalletPinActionResult {
+  final bool success;
+  final String? errorCode;
+  final String? errorMessage;
+  final dynamic data;
+
+  const WalletPinActionResult.success([this.data])
+      : success = true,
+        errorCode = null,
+        errorMessage = null;
+
+  const WalletPinActionResult.failure({
+    this.errorCode,
+    this.errorMessage,
+  })  : success = false,
+        data = null;
+}
+
 class WalletPinDialog {
   WalletPinDialog._();
 
   /// Prompts user to enter or set their 6-digit wallet PIN.
   /// If no PIN is set, guides the user through setting one and returns the new PIN.
+  /// If [onConfirm] is provided, executes the action directly while keeping the sheet
+  /// open on `WALLET_PIN_*` errors (such as wrong attempts left or lock).
   /// Returns the 6-digit PIN if successfully entered/set, or `null` if dismissed.
   static Future<String?> promptPin(
     BuildContext context, {
     String title = 'Wallet PIN Required',
     String? subtitle,
+    WalletPinSubmitCallback? onConfirm,
   }) async {
     final pinService = Get.isRegistered<WalletPinService>()
         ? Get.find<WalletPinService>()
         : Get.put(WalletPinService(), permanent: true);
 
-    // Check current PIN status
+    // Check current PIN status per §3.1
     final status = await pinService.checkStatus();
     if (!context.mounted) return null;
 
@@ -39,6 +62,7 @@ class WalletPinDialog {
         title: title,
         subtitle: subtitle,
         status: status,
+        onConfirm: onConfirm,
       ),
     );
   }
@@ -69,12 +93,14 @@ class _WalletPinSheet extends StatefulWidget {
   final String? subtitle;
   final WalletPinStatus? status;
   final bool isManageMode;
+  final WalletPinSubmitCallback? onConfirm;
 
   const _WalletPinSheet({
     this.title = 'Wallet PIN',
     this.subtitle,
     this.status,
     this.isManageMode = false,
+    this.onConfirm,
   });
 
   @override
@@ -163,8 +189,59 @@ class _WalletPinSheetState extends State<_WalletPinSheet> {
       setState(() => _errorMessage = 'Please enter a valid 6-digit PIN');
       return;
     }
-    // Return the entered pin to the caller
-    Navigator.of(context).pop(pin);
+    if (widget.onConfirm != null) {
+      await _executeActionWithPin(pin);
+    } else {
+      // Return the entered pin to the caller
+      Navigator.of(context).pop(pin);
+    }
+  }
+
+  Future<void> _executeActionWithPin(String pin) async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final result = await widget.onConfirm!(pin);
+      if (!mounted) return;
+
+      if (result.success) {
+        setState(() => _isLoading = false);
+        Navigator.of(context).pop(pin);
+      } else {
+        final code = result.errorCode ?? '';
+        final msg = result.errorMessage ?? 'Action failed';
+
+        if (code == 'WALLET_PIN_LOCKED') {
+          setState(() {
+            _isLoading = false;
+            _lockedUntil = DateTime.now().add(const Duration(minutes: 30));
+            _mode = _PinViewMode.locked;
+            _errorMessage = null;
+          });
+          _startLockTimer();
+        } else if (code.startsWith('WALLET_PIN_')) {
+          // Keep sheet open, show server message (e.g., attempts left)
+          setState(() {
+            _isLoading = false;
+            _pinController.clear();
+            _errorMessage = msg;
+          });
+        } else {
+          // Other failures close sheet so underlying screen displays the error
+          setState(() => _isLoading = false);
+          Navigator.of(context).pop();
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'An unexpected error occurred: $e';
+      });
+    }
   }
 
   Future<void> _handleSetSubmit() async {
@@ -195,6 +272,9 @@ class _WalletPinSheetState extends State<_WalletPinSheet> {
       showSnack('Success', 'Wallet PIN set successfully', bg: AppColor.green);
       if (widget.isManageMode) {
         Navigator.of(context).pop();
+      } else if (widget.onConfirm != null) {
+        // Immediately run the pending action with the new PIN!
+        await _executeActionWithPin(pin);
       } else {
         // Return newly set pin so caller can proceed with action immediately
         Navigator.of(context).pop(pin);
@@ -315,6 +395,9 @@ class _WalletPinSheetState extends State<_WalletPinSheet> {
       showSnack('Success', 'Wallet PIN reset successfully', bg: AppColor.green);
       if (widget.isManageMode) {
         Navigator.of(context).pop();
+      } else if (widget.onConfirm != null) {
+        // Immediately run the pending action with the new PIN!
+        await _executeActionWithPin(newPin);
       } else {
         // Return new PIN
         Navigator.of(context).pop(newPin);
