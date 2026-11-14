@@ -89,11 +89,16 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                         ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFF5A00),
-                          shape:
-                              count > 9 ? BoxShape.rectangle : BoxShape.circle,
-                          borderRadius:
-                              count > 9 ? BorderRadius.circular(10.r) : null,
-                          border: Border.all(color: AppColor.white, width: 1.5.r),
+                          shape: count > 9
+                              ? BoxShape.rectangle
+                              : BoxShape.circle,
+                          borderRadius: count > 9
+                              ? BorderRadius.circular(10.r)
+                              : null,
+                          border: Border.all(
+                            color: AppColor.white,
+                            width: 1.5.r,
+                          ),
                         ),
                         constraints: BoxConstraints(
                           minWidth: 16.r,
@@ -120,7 +125,8 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
         ],
       ),
       body: Obx(() {
-        if (controller.isLoadingDetails.value && controller.product.value == null) {
+        if (controller.isLoadingDetails.value &&
+            controller.product.value == null) {
           return const Center(
             child: CircularProgressIndicator(color: AppColor.primary),
           );
@@ -270,11 +276,12 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                             child: Image.network(
                               imgUrl,
                               fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) => Icon(
-                                Iconsax.image,
-                                size: 60.r,
-                                color: AppColor.textSecondary,
-                              ),
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Icon(
+                                    Iconsax.image,
+                                    size: 60.r,
+                                    color: AppColor.textSecondary,
+                                  ),
                             ),
                           ),
                         );
@@ -351,7 +358,9 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                   images.length,
                   (index) => Container(
                     margin: EdgeInsets.symmetric(horizontal: 3.w),
-                    width: controller.selectedImageIndex.value == index ? 18.w : 6.w,
+                    width: controller.selectedImageIndex.value == index
+                        ? 18.w
+                        : 6.w,
                     height: 6.h,
                     decoration: BoxDecoration(
                       color: controller.selectedImageIndex.value == index
@@ -402,12 +411,19 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                 ),
                 if (stock != null)
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 8.w,
+                      vertical: 3.h,
+                    ),
                     decoration: BoxDecoration(
-                      color: stock > 0 ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2),
+                      color: stock > 0
+                          ? const Color(0xFFF0FDF4)
+                          : const Color(0xFFFEF2F2),
                       borderRadius: BorderRadius.circular(6.r),
                       border: Border.all(
-                        color: stock > 0 ? const Color(0xFF86EFAC) : const Color(0xFFFCA5A5),
+                        color: stock > 0
+                            ? const Color(0xFF86EFAC)
+                            : const Color(0xFFFCA5A5),
                         width: 1.r,
                       ),
                     ),
@@ -416,7 +432,9 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                       style: GoogleFonts.lato(
                         fontSize: 11.sp,
                         fontWeight: FontWeight.bold,
-                        color: stock > 0 ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                        color: stock > 0
+                            ? const Color(0xFF16A34A)
+                            : const Color(0xFFDC2626),
                       ),
                     ),
                   ),
@@ -569,12 +587,12 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
           ),
           if (pts > 0) ...[
             SizedBox(height: 5.h),
-            _buildBreakdownRow(
-              'Points value ($pts pts)',
-              '৳${pointsMoney.toStringAsFixed(2)}',
-              subtitle: 'Value earned, NOT subtracted from price',
-              valueColor: const Color(0xFFD97706),
-            ),
+            // _buildBreakdownRow(
+            //   'Points value ($pts pts)',
+            //   '৳${pointsMoney.toStringAsFixed(2)}',
+
+            //   valueColor: const Color(0xFFD97706),
+            // ),
           ],
           SizedBox(height: 8.h),
           const Divider(color: Color(0xFFE2E8F0), height: 1),
@@ -666,7 +684,8 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
               children: List.generate(variants.length, (index) {
                 final v = variants[index];
                 final label = v.label;
-                final isSelected = controller.selectedVariantIndex.value == index;
+                final isSelected =
+                    controller.selectedVariantIndex.value == index;
                 final inStock = v.inStock;
 
                 return InkWell(
@@ -675,14 +694,19 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                   child: Opacity(
                     opacity: inStock ? 1.0 : 0.45,
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 14.w,
+                        vertical: 8.h,
+                      ),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? AppColor.primary.withValues(alpha: 0.1)
                             : const Color(0xFFF8F9FA),
                         borderRadius: BorderRadius.circular(12.r),
                         border: Border.all(
-                          color: isSelected ? AppColor.primary : const Color(0xFFE2E8F0),
+                          color: isSelected
+                              ? AppColor.primary
+                              : const Color(0xFFE2E8F0),
                           width: isSelected ? 1.5.r : 1.r,
                         ),
                       ),
@@ -693,8 +717,12 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                             label,
                             style: GoogleFonts.lato(
                               fontSize: 13.sp,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                              color: isSelected ? AppColor.primaryDark : AppColor.textPrimary,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.w600,
+                              color: isSelected
+                                  ? AppColor.primaryDark
+                                  : AppColor.textPrimary,
                             ),
                           ),
                           if (!inStock) ...[
@@ -746,7 +774,11 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
             child: Row(
               children: [
                 IconButton(
-                  icon: Icon(Icons.remove, size: 18.r, color: AppColor.textPrimary),
+                  icon: Icon(
+                    Icons.remove,
+                    size: 18.r,
+                    color: AppColor.textPrimary,
+                  ),
                   onPressed: () => controller.decrementQuantity(),
                 ),
                 Obx(
@@ -763,7 +795,11 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.add, size: 18.r, color: AppColor.textPrimary),
+                  icon: Icon(
+                    Icons.add,
+                    size: 18.r,
+                    color: AppColor.textPrimary,
+                  ),
                   onPressed: () => controller.incrementQuantity(),
                 ),
               ],
@@ -866,8 +902,7 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
           SizedBox(height: 8.h),
           Obx(
             () => Text(
-              controller.product.value?.cleanDescription ??
-                  'High-quality premium product featuring sleek modern design, durable build, and advanced technology. Perfect for everyday usage with industry-leading performance and customer warranty.',
+              controller.product.value?.cleanDescription ?? 'High-quality premium product featuring sleek modern design, durable build, and advanced technology. Perfect for everyday usage with industry-leading performance and customer warranty.',
               style: GoogleFonts.lato(
                 fontSize: 14.sp,
                 color: AppColor.textSecondary,
@@ -995,7 +1030,8 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
   }
 
   Widget _buildRecentlyViewedStrip() {
-    if (!Get.isRegistered<RecentlyViewedService>()) return const SizedBox.shrink();
+    if (!Get.isRegistered<RecentlyViewedService>())
+      return const SizedBox.shrink();
 
     return Obx(() {
       final currentSlug = controller.product.value?.slug;
@@ -1104,10 +1140,7 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
               ),
               if (item.productPoints > 0) ...[
                 SizedBox(height: 4.h),
-                PointsBadge(
-                  points: item.productPoints,
-                  compact: true,
-                ),
+                PointsBadge(points: item.productPoints, compact: true),
               ],
               const Spacer(),
               if (item.discount.isNotEmpty)
@@ -1182,10 +1215,7 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                 ),
                 style: OutlinedButton.styleFrom(
                   padding: EdgeInsets.symmetric(vertical: 14.h),
-                  side: const BorderSide(
-                    color: AppColor.border,
-                    width: 1.5,
-                  ),
+                  side: const BorderSide(color: AppColor.border, width: 1.5),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14.r),
                   ),

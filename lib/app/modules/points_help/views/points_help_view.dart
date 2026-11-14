@@ -559,14 +559,76 @@ class PointsHelpView extends GetView<PointsHelpController> {
               color: AppColor.textPrimary,
             ),
           ),
-          SizedBox(height: 4.h),
+          SizedBox(height: 6.h),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Bronze: $bronze', style: GoogleFonts.lato(fontSize: 11.5.sp, color: const Color(0xFFB45309))),
-              Text('Silver: $silver', style: GoogleFonts.lato(fontSize: 11.5.sp, color: const Color(0xFF64748B))),
-              Text('Gold: $gold', style: GoogleFonts.lato(fontSize: 11.5.sp, color: const Color(0xFFD97706), fontWeight: FontWeight.bold)),
+              Expanded(
+                child: _buildTierPill(
+                  tier: 'Bronze',
+                  pts: bronze,
+                  color: const Color(0xFFB45309),
+                  bg: const Color(0xFFFEF3C7),
+                ),
+              ),
+              SizedBox(width: 6.w),
+              Expanded(
+                child: _buildTierPill(
+                  tier: 'Silver',
+                  pts: silver,
+                  color: const Color(0xFF475569),
+                  bg: const Color(0xFFF1F5F9),
+                ),
+              ),
+              SizedBox(width: 6.w),
+              Expanded(
+                child: _buildTierPill(
+                  tier: 'Gold',
+                  pts: gold,
+                  color: const Color(0xFFD97706),
+                  bg: const Color(0xFFFFFBEB),
+                ),
+              ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTierPill({
+    required String tier,
+    required String pts,
+    required Color color,
+    required Color bg,
+  }) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 5.h),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            tier,
+            style: GoogleFonts.lato(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
+          ),
+          SizedBox(height: 1.h),
+          Text(
+            pts,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.lato(
+              fontSize: 10.5.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColor.textPrimary,
+            ),
           ),
         ],
       ),

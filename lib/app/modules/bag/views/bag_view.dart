@@ -231,6 +231,14 @@ class BagView extends GetView<BagController> {
                               'Subtotal (${controller.totalItemCount} items)',
                               '৳${controller.subtotal.toStringAsFixed(2)}',
                             ),
+                            if (controller.totalDiscount > 0) ...[
+                              SizedBox(height: 8.h),
+                              _buildSummaryRow(
+                                'Discount',
+                                '- ৳${controller.totalDiscount.toStringAsFixed(2)}',
+                                isGreen: true,
+                              ),
+                            ],
                             SizedBox(height: 8.h),
                             _buildSummaryRow(
                               'Delivery Fee',
@@ -249,7 +257,7 @@ class BagView extends GetView<BagController> {
                             if (controller.totalPoints > 0) ...[
                               SizedBox(height: 8.h),
                               _buildSummaryRow(
-                                'You Earn',
+                                'Points',
                                 '${controller.totalPoints} points',
                                 isGreen: true,
                               ),
@@ -262,6 +270,44 @@ class BagView extends GetView<BagController> {
                               '৳${controller.totalAmount.toStringAsFixed(2)}',
                               isBold: true,
                             ),
+                            if (controller.totalDiscount > 0) ...[
+                              SizedBox(height: 10.h),
+                              Container(
+                                width: double.infinity,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 10.w,
+                                  vertical: 7.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFDCFCE7),
+                                  borderRadius: BorderRadius.circular(8.r),
+                                  border: Border.all(
+                                    color: const Color(0xFF86EFAC),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Iconsax.discount_shape,
+                                      size: 15.r,
+                                      color: const Color(0xFF16A34A),
+                                    ),
+                                    SizedBox(width: 6.w),
+                                    Expanded(
+                                      child: Text(
+                                        'You will save ৳${controller.totalDiscount.toStringAsFixed(2)} on this order',
+                                        style: GoogleFonts.lato(
+                                          fontSize: 12.sp,
+                                          fontWeight: FontWeight.w700,
+                                          color: const Color(0xFF15803D),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -545,29 +591,97 @@ class BagView extends GetView<BagController> {
                   SizedBox(height: 8.h),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '৳${price.toStringAsFixed(2)}',
-                            style: GoogleFonts.lato(
-                              fontSize: 15.5.sp,
-                              fontWeight: FontWeight.w800,
-                              color: AppColor.textPrimary,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 6.w,
+                              runSpacing: 2.h,
+                              children: [
+                                Text(
+                                  '৳${price.toStringAsFixed(2)}',
+                                  style: GoogleFonts.lato(
+                                    fontSize: 15.sp,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColor.textPrimary,
+                                  ),
+                                ),
+                                if (item.compareAtPrice != null &&
+                                    item.compareAtPrice! > item.price)
+                                  Text(
+                                    '৳${item.compareAtPrice!.toStringAsFixed(2)}',
+                                    style: GoogleFonts.lato(
+                                      fontSize: 11.5.sp,
+                                      color: AppColor.textSecondary,
+                                      decoration: TextDecoration.lineThrough,
+                                      decorationColor: AppColor.textSecondary,
+                                    ),
+                                  ),
+                              ],
                             ),
-                          ),
-                          if (item.calculatedLinePoints > 0)
-                            Text(
-                              'Earns ${item.calculatedLinePoints} pts',
-                              style: GoogleFonts.lato(
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.bold,
-                                color: const Color(0xFFD97706),
+                            if (item.calculatedLinePoints > 0) ...[
+                              SizedBox(height: 3.h),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 14.r,
+                                    height: 14.r,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: const LinearGradient(
+                                        colors: [
+                                          Color(0xFFFFDF59),
+                                          Color(0xFFF59E0B),
+                                          Color(0xFFD97706),
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      border: Border.all(
+                                        color: const Color(0xFFA85E00),
+                                        width: 1.2,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xFFA85E00)
+                                              .withValues(alpha: 0.25),
+                                          blurRadius: 2,
+                                          offset: const Offset(0, 1),
+                                        ),
+                                      ],
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      '৳',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 8.5.sp,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.white,
+                                        height: 1.05,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 4.w),
+                                  Text(
+                                    '${item.calculatedLinePoints} pts',
+                                    style: GoogleFonts.lato(
+                                      fontSize: 11.5.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFFD97706),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                        ],
+                            ],
+                          ],
+                        ),
                       ),
+                      SizedBox(width: 8.w),
 
                       // Quantity Controls
                       Container(
@@ -589,10 +703,11 @@ class BagView extends GetView<BagController> {
                               onPressed: () =>
                                   controller.decrementQuantity(index),
                               constraints: const BoxConstraints(),
+                              visualDensity: VisualDensity.compact,
                               padding: EdgeInsets.all(6.r),
                             ),
                             Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 8.w),
+                              padding: EdgeInsets.symmetric(horizontal: 6.w),
                               child: Text(
                                 '$qty',
                                 style: GoogleFonts.lato(
@@ -614,6 +729,7 @@ class BagView extends GetView<BagController> {
                                   ? () => controller.incrementQuantity(index)
                                   : () => controller.incrementQuantity(index),
                               constraints: const BoxConstraints(),
+                              visualDensity: VisualDensity.compact,
                               padding: EdgeInsets.all(6.r),
                             ),
                           ],

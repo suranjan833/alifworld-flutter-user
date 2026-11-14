@@ -1022,7 +1022,10 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                               ),
                             ],
                             SizedBox(height: 4.h),
-                            Row(
+                            Wrap(
+                              spacing: 8.w,
+                              runSpacing: 2.h,
+                              crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
                                 Text(
                                   'Qty: ${item.quantity}',
@@ -1031,17 +1034,15 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                                     color: AppColor.textSecondary,
                                   ),
                                 ),
-                                SizedBox(width: 10.w),
                                 Text(
-                                  '৳${item.price.toStringAsFixed(2)} each',
+                                  '• ৳${item.price.toStringAsFixed(2)} each',
                                   style: GoogleFonts.inter(
                                     fontSize: 12.sp,
                                     color: AppColor.textSecondary,
                                   ),
                                 ),
                                 if (item.pointsPerUnit != null &&
-                                    item.pointsPerUnit! > 0) ...[
-                                  SizedBox(width: 8.w),
+                                    item.pointsPerUnit! > 0)
                                   Text(
                                     '• ${item.pointsPerUnit} pts / unit',
                                     style: GoogleFonts.inter(
@@ -1050,7 +1051,6 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                                       color: const Color(0xFFD97706),
                                     ),
                                   ),
-                                ],
                               ],
                             ),
                           ],

@@ -20,27 +20,62 @@ class MyProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-      padding: EdgeInsets.all(16.r),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.15),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16.r),
+      child: Container(
+        margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16.r),
+          gradient: const LinearGradient(
+            begin: Alignment.bottomLeft,
+            end: Alignment.topRight,
+            colors: [
+              Color(0xFF0F1123),
+              Color(0xFF151833),
+              Color(0xFF1D1B44),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+          border: Border.all(
+            color: const Color(0xFF6366F1).withValues(alpha: 0.20),
+            width: 1.0,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0F1123).withValues(alpha: 0.35),
+              blurRadius: 12,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            // Top-right purple / violet luminous ambient wave aura
+            Positioned(
+              right: -30.w,
+              top: -30.h,
+              child: Container(
+                width: 170.w,
+                height: 130.h,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      const Color(0xFF818CF8).withValues(alpha: 0.30),
+                      const Color(0xFF6366F1).withValues(alpha: 0.18),
+                      const Color(0xFF4338CA).withValues(alpha: 0.08),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Card Content
+            Padding(
+              padding: EdgeInsets.all(16.r),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
           // Period Header & Total Points
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -74,20 +109,7 @@ class MyProgressCard extends StatelessWidget {
                   ),
                 ],
               ),
-              Row(
-                children: [
-                  Icon(Iconsax.star, color: const Color(0xFFFBBF24), size: 16.r),
-                  SizedBox(width: 4.w),
-                  Text(
-                    '${progress.points} pts',
-                    style: GoogleFonts.lato(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w800,
-                      color: AppColor.white,
-                    ),
-                  ),
-                ],
-              ),
+              _GlowingPointsBadge(points: progress.points),
             ],
           ),
 
@@ -126,6 +148,10 @@ class MyProgressCard extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    ),
+  ],
+),
       ),
     );
   }
@@ -239,6 +265,124 @@ class MyProgressCard extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+/// Circular golden points token (`<circle cx="12" cy="12" r="10" fill="url(#pts-_r_0_)" stroke="#A85E00" stroke-width="1.4">`)
+/// along with animated left-to-right glowing points text.
+class _GlowingPointsBadge extends StatefulWidget {
+  final int points;
+  const _GlowingPointsBadge({required this.points});
+
+  @override
+  State<_GlowingPointsBadge> createState() => _GlowingPointsBadgeState();
+}
+
+class _GlowingPointsBadgeState extends State<_GlowingPointsBadge>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animController;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2400),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animController,
+      builder: (context, child) {
+        final progress = _animController.value;
+        final slide = -1.0 + (progress * 3.0);
+
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: 19.r,
+              height: 19.r,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFFFF3B0),
+                    Color(0xFFFFD54F),
+                    Color(0xFFF59E0B),
+                    Color(0xFFD97706),
+                  ],
+                  stops: [0.0, 0.35, 0.7, 1.0],
+                ),
+                border: Border.all(
+                  color: const Color(0xFFA85E00),
+                  width: 1.4,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.45),
+                    blurRadius: 5,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              alignment: Alignment.center,
+              child: Icon(
+                Icons.star_rounded,
+                size: 11.r,
+                color: const Color(0xFF78350F),
+              ),
+            ),
+            SizedBox(width: 5.w),
+            ShaderMask(
+              shaderCallback: (bounds) {
+                return LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  stops: [
+                    (slide - 0.3).clamp(0.0, 1.0),
+                    slide.clamp(0.0, 1.0),
+                    (slide + 0.3).clamp(0.0, 1.0),
+                  ],
+                  colors: const [
+                    Color(0xFFFFFFFF),
+                    Color(0xFFFFE082),
+                    Color(0xFFFFFFFF),
+                  ],
+                ).createShader(bounds);
+              },
+              blendMode: BlendMode.srcIn,
+              child: Text(
+                '${widget.points} pts',
+                style: GoogleFonts.lato(
+                  fontSize: 14.5.sp,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  letterSpacing: 0.3,
+                  shadows: [
+                    Shadow(
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.5),
+                      blurRadius: 8,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
