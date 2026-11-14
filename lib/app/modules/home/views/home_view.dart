@@ -225,9 +225,12 @@ class HomeView extends GetView<HomeController> {
   Widget _buildSingleRail(ShowcaseRailModel rail) {
     if (rail.products.isEmpty) return const SizedBox.shrink();
 
-    final railTitle = rail.categoryName.isNotEmpty
-        ? rail.categoryName
-        : 'Products';
+    final categoryName = rail.categoryName.trim();
+    final railTitle = categoryName.isNotEmpty
+        ? (categoryName.toLowerCase().startsWith('handpicked')
+            ? categoryName
+            : 'Handpicked From $categoryName')
+        : 'Handpicked Products';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -266,17 +269,17 @@ class HomeView extends GetView<HomeController> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'See All',
+                        'View All',
                         style: GoogleFonts.lato(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w700,
                           color: AppColor.primary,
                         ),
                       ),
-                      SizedBox(width: 2.w),
+                      SizedBox(width: 3.w),
                       Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        size: 11.r,
+                        Icons.arrow_forward_rounded,
+                        size: 14.r,
                         color: AppColor.primary,
                       ),
                     ],
