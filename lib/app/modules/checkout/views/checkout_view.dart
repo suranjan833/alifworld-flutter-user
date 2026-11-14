@@ -606,8 +606,10 @@ class CheckoutView extends GetView<CheckoutController> {
                             _buildPaymentMethodTile(
                               id: 'Wallet',
                               title: 'Pay from Wallet',
-                              subtitle:
-                                  'Use your Main or Shopping wallet balance',
+                              subtitle: controller.combinedWalletBalance <= 0
+                                  ? 'There is no balance in wallet'
+                                  : 'Use your Main or Shopping wallet balance',
+                              isDisabled: controller.combinedWalletBalance <= 0,
                               extraText: controller.combinedWalletBalance > 0
                                   ? 'Combined balance: ৳${controller.combinedWalletBalance.toStringAsFixed(2)}'
                                   : null,
@@ -615,7 +617,9 @@ class CheckoutView extends GetView<CheckoutController> {
                                 width: 36.r,
                                 height: 36.r,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFF630F),
+                                  color: controller.combinedWalletBalance <= 0
+                                      ? const Color(0xFF9CA3AF)
+                                      : const Color(0xFFFF630F),
                                   borderRadius: BorderRadius.circular(10.r),
                                 ),
                                 child: const Center(
@@ -628,7 +632,8 @@ class CheckoutView extends GetView<CheckoutController> {
                               ),
                             ),
                             if (controller.selectedPaymentMethod.value ==
-                                'Wallet') ...[
+                                    'Wallet' &&
+                                controller.combinedWalletBalance > 0) ...[
                               SizedBox(height: 6.h),
                               _buildWalletSelectionSection(),
                             ],
@@ -786,7 +791,7 @@ class CheckoutView extends GetView<CheckoutController> {
                           if (controller.totalEarnPoints > 0) ...[
                             SizedBox(height: 8.h),
                             _buildDetailRow(
-                              'You Earn',
+                              'Points',
                               '${controller.totalEarnPoints} points',
                               isGreen: true,
                             ),
@@ -963,60 +968,72 @@ class CheckoutView extends GetView<CheckoutController> {
     required String subtitle,
     required Widget iconWidget,
     String? extraText,
+    bool isDisabled = false,
   }) {
-    final isSelected = controller.selectedPaymentMethod.value == id;
+    final isSelected = controller.selectedPaymentMethod.value == id && !isDisabled;
 
-    return InkWell(
-      onTap: () => controller.selectPaymentMethod(id),
-      borderRadius: BorderRadius.circular(12.r),
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFF0F9FF) : AppColor.transparent,
-          borderRadius: BorderRadius.circular(12.r),
-        ),
-        child: Row(
-          children: [
-            Radio<String>(value: id, activeColor: const Color(0xFF0284C7)),
-            iconWidget,
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: GoogleFonts.lato(
-                      fontSize: 14.5.sp,
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.w600,
-                      color: AppColor.textPrimary,
-                    ),
-                  ),
-                  SizedBox(height: 2.h),
-                  Text(
-                    subtitle,
-                    style: GoogleFonts.lato(
-                      fontSize: 12.sp,
-                      color: AppColor.textSecondary,
-                    ),
-                  ),
-                  if (extraText != null && extraText.isNotEmpty) ...[
-                    SizedBox(height: 3.h),
+    return Opacity(
+      opacity: isDisabled ? 0.6 : 1.0,
+      child: InkWell(
+        onTap: () => controller.selectPaymentMethod(id),
+        borderRadius: BorderRadius.circular(12.r),
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFFF0F9FF) : AppColor.transparent,
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+          child: Row(
+            children: [
+              Radio<String>(
+                value: id,
+                activeColor: const Color(0xFF0284C7),
+              ),
+              iconWidget,
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      extraText,
+                      title,
                       style: GoogleFonts.lato(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFFFF630F),
+                        fontSize: 14.5.sp,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.w600,
+                        color: isDisabled
+                            ? AppColor.textSecondary
+                            : AppColor.textPrimary,
                       ),
                     ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.lato(
+                        fontSize: 12.sp,
+                        color: isDisabled
+                            ? const Color(0xFFDC2626)
+                            : AppColor.textSecondary,
+                        fontWeight: isDisabled ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
+                    if (extraText != null && extraText.isNotEmpty && !isDisabled) ...[
+                      SizedBox(height: 3.h),
+                      Text(
+                        extraText,
+                        style: GoogleFonts.lato(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFFFF630F),
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1030,19 +1047,21 @@ class CheckoutView extends GetView<CheckoutController> {
   }) {
     return Obx(() {
       final isChecked = controller.isWalletKindSelected(kind);
+      final hasBalance = balance > 0;
 
       return InkWell(
-        onTap: () => controller.toggleWalletKind(kind),
+        onTap: hasBalance ? () => controller.toggleWalletKind(kind) : null,
         borderRadius: BorderRadius.circular(10.r),
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
           decoration: BoxDecoration(
-            color: AppColor.white,
+            color: hasBalance ? AppColor.white : const Color(0xFFF9FAFB),
             borderRadius: BorderRadius.circular(10.r),
             border: Border.all(
-              color:
-                  isChecked ? const Color(0xFFFF630F) : const Color(0xFFE5E7EB),
-              width: isChecked ? 1.5 : 1,
+              color: isChecked && hasBalance
+                  ? const Color(0xFFFF630F)
+                  : const Color(0xFFE5E7EB),
+              width: isChecked && hasBalance ? 1.5 : 1,
             ),
           ),
           child: Row(
@@ -1051,16 +1070,18 @@ class CheckoutView extends GetView<CheckoutController> {
                 width: 20.r,
                 height: 20.r,
                 decoration: BoxDecoration(
-                  color: isChecked ? const Color(0xFFFF630F) : AppColor.white,
+                  color: isChecked && hasBalance
+                      ? const Color(0xFFFF630F)
+                      : (hasBalance ? AppColor.white : const Color(0xFFE5E7EB)),
                   borderRadius: BorderRadius.circular(4.r),
                   border: Border.all(
-                    color: isChecked
+                    color: isChecked && hasBalance
                         ? const Color(0xFFFF630F)
                         : const Color(0xFFD1D5DB),
                     width: 1.5,
                   ),
                 ),
-                child: isChecked
+                child: isChecked && hasBalance
                     ? const Center(
                         child: Icon(Icons.check, size: 14, color: AppColor.white),
                       )
@@ -1075,23 +1096,33 @@ class CheckoutView extends GetView<CheckoutController> {
                       title,
                       style: GoogleFonts.lato(
                         fontSize: 13.5.sp,
-                        fontWeight:
-                            isChecked ? FontWeight.bold : FontWeight.w600,
-                        color: AppColor.textPrimary,
+                        fontWeight: isChecked && hasBalance
+                            ? FontWeight.bold
+                            : FontWeight.w600,
+                        color: hasBalance
+                            ? AppColor.textPrimary
+                            : AppColor.textSecondary,
                       ),
                     ),
                     SizedBox(height: 2.h),
                     Text(
-                      'Available: ৳${balance.toStringAsFixed(2)}',
+                      hasBalance
+                          ? 'Available: ৳${balance.toStringAsFixed(2)}'
+                          : 'There is no balance in wallet',
                       style: GoogleFonts.lato(
                         fontSize: 11.5.sp,
-                        color: AppColor.textSecondary,
+                        color: hasBalance
+                            ? AppColor.textSecondary
+                            : const Color(0xFFDC2626),
+                        fontWeight: hasBalance
+                            ? FontWeight.normal
+                            : FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
               ),
-              if (isChecked) ...[
+              if (isChecked && hasBalance && willUseAmount > 0) ...[
                 Text(
                   'Will use: ৳${willUseAmount.toStringAsFixed(2)}',
                   style: GoogleFonts.lato(

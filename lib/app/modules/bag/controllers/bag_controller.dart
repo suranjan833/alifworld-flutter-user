@@ -165,6 +165,13 @@ class BagController extends GetxController with SkeletonLoadingMixin {
 
   double get deliveryFee => subtotal > 499 || subtotal == 0 ? 0.0 : 49.0;
   double get tax => 0.0;
+  double get totalDiscount {
+    double total = 0;
+    for (var item in cartItems) {
+      total += item.lineDiscount;
+    }
+    return total;
+  }
   double get totalAmount => subtotal + deliveryFee + tax;
 
   int get totalPoints {

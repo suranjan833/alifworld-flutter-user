@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -10,6 +11,7 @@ import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/models/address_model.dart';
 import '../../../data/widgets/address_form_modal.dart';
+import '../../../data/widgets/wallet_pin_dialog.dart';
 import '../../../routes/app_pages.dart';
 import '../../bag/controllers/bag_controller.dart';
 import '../models/checkout_quote_model.dart';
@@ -220,6 +222,17 @@ class CheckoutController extends GetxController {
   }
 
   void selectPaymentMethod(String method) {
+    if (method == 'Wallet' && combinedWalletBalance <= 0) {
+      Get.snackbar(
+        'Pay from Wallet',
+        'There is no balance in wallet',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: const Color(0xFFD97706),
+        colorText: AppColor.white,
+        duration: const Duration(seconds: 2),
+      );
+      return;
+    }
     selectedPaymentMethod.value = method;
     fetchQuote();
     if (method == 'Wallet') {
@@ -285,6 +298,11 @@ class CheckoutController extends GetxController {
                 (mainWalletCapPercent.value + shoppingWalletCapPercent.value)
                     .clamp(0, 100);
           }
+        }
+        if (combinedWalletBalance <= 0 &&
+            selectedPaymentMethod.value == 'Wallet') {
+          selectedPaymentMethod.value = 'COD';
+          fetchQuote();
         }
       }
     } catch (e) {
@@ -569,10 +587,30 @@ class CheckoutController extends GetxController {
       return;
     }
 
-    _executePlaceOrder();
+    final isWallet = selectedPaymentMethod.value == 'Wallet' &&
+        combinedWalletBalance > 0 &&
+        walletDeductionAmount > 0;
+    if (isWallet) {
+      await _startWalletPinCheckout();
+    } else {
+      // Wallet e balance zero hole wallet pin chaibeii na
+      await _executePlaceOrder();
+    }
   }
 
-  Future<void> _executePlaceOrder() async {
+  Future<void> _startWalletPinCheckout() async {
+    if (Get.context == null) return;
+    await WalletPinDialog.promptPin(
+      Get.context!,
+      title: 'Wallet Payment PIN',
+      subtitle: 'Enter your 6-digit wallet PIN to complete payment',
+      onConfirm: (pin) async {
+        return await _executePlaceOrder(walletPin: pin);
+      },
+    );
+  }
+
+  Future<WalletPinActionResult> _executePlaceOrder({String? walletPin}) async {
     if (selectedAddressId == null || selectedAddressId!.isEmpty) {
       Get.snackbar(
         'Address Required',
@@ -581,14 +619,20 @@ class CheckoutController extends GetxController {
         backgroundColor: AppColor.error,
         colorText: AppColor.white,
       );
-      return;
+      return const WalletPinActionResult.failure(
+        errorCode: 'ADDRESS_REQUIRED',
+        errorMessage: 'Please select a delivery address',
+      );
     }
 
     isProcessingPayment.value = true;
-    final isWallet = selectedPaymentMethod.value == 'Wallet';
+    final isWallet = selectedPaymentMethod.value == 'Wallet' &&
+        combinedWalletBalance > 0 &&
+        walletDeductionAmount > 0;
     final apiPayment = isWallet ? 'wallet' : 'cod';
+    final randomPart = Random().nextInt(999999);
     final idempotencyKey =
-        'ALF_IDEMP_${DateTime.now().millisecondsSinceEpoch}_${selectedAddressId!}';
+        'ALF_IDEMP_${DateTime.now().microsecondsSinceEpoch}_$randomPart';
 
     final payload = <String, dynamic>{
       'addressId': selectedAddressId,
@@ -598,6 +642,8 @@ class CheckoutController extends GetxController {
       if (isWallet) ...{
         'walletKinds': selectedWalletKinds.toList(),
         'remainderMethod': 'cod',
+        if (walletPin != null && walletPin.isNotEmpty)
+          'walletPin': walletPin,
       },
       'returnUrl': resolveImageUrl('/checkout/success'),
     };
@@ -655,8 +701,9 @@ class CheckoutController extends GetxController {
           batchNumber: batchNumber,
           paymentStatus: paymentStatus,
         );
+
+        return const WalletPinActionResult.success();
       } else {
-        // Handle error status per §7 of checkout_flow.txt
         String errorCode = '';
         String errorMsg = 'Failed to place order. Please try again.';
         if (response.data is Map<String, dynamic>) {
@@ -670,6 +717,19 @@ class CheckoutController extends GetxController {
           }
         }
 
+        // 1. PIN-related errors (WALLET_PIN_*)
+        if (errorCode.startsWith('WALLET_PIN_')) {
+          if (walletPin == null) {
+            // Safety net: place called without PIN, prompt now
+            _startWalletPinCheckout();
+          }
+          return WalletPinActionResult.failure(
+            errorCode: errorCode,
+            errorMessage: errorMsg,
+          );
+        }
+
+        // 2. Other non-PIN errors handled on checkout view
         if (response.statusCode == 401 || errorCode == 'UNAUTHENTICATED') {
           Get.snackbar(
             'Login Required',
@@ -707,12 +767,21 @@ class CheckoutController extends GetxController {
             backgroundColor: AppColor.error,
             colorText: AppColor.white,
           );
-        } else if (errorCode == 'INVENTORY_FAILED') {
+        } else if (errorCode == 'INVENTORY_FAILED' ||
+            errorCode == 'VARIANT_NOT_AVAILABLE') {
           Get.snackbar(
             'Out of Stock',
             'Some items are currently unavailable. Please adjust quantity.',
             snackPosition: SnackPosition.TOP,
             backgroundColor: AppColor.error,
+            colorText: AppColor.white,
+          );
+        } else if (errorCode == 'RATE_LIMITED') {
+          Get.snackbar(
+            'Please Wait',
+            'Too many requests. Please try again in a moment.',
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: const Color(0xFFD97706),
             colorText: AppColor.white,
           );
         } else {
@@ -725,6 +794,11 @@ class CheckoutController extends GetxController {
             duration: const Duration(seconds: 4),
           );
         }
+
+        return WalletPinActionResult.failure(
+          errorCode: errorCode,
+          errorMessage: errorMsg,
+        );
       }
     } catch (e) {
       isProcessingPayment.value = false;
@@ -734,6 +808,10 @@ class CheckoutController extends GetxController {
         snackPosition: SnackPosition.TOP,
         backgroundColor: AppColor.error,
         colorText: AppColor.white,
+      );
+      return WalletPinActionResult.failure(
+        errorCode: 'NETWORK_ERROR',
+        errorMessage: 'Unable to reach server. Please check your internet connection.',
       );
     }
   }

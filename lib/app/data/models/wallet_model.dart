@@ -134,7 +134,7 @@ class WalletItemModel {
   List<Color> get gradientColors {
     switch (kind) {
       case 'customer_main':
-        return const [Color(0xFF0F172A), Color(0xFF1E293B)];
+        return const [Color(0xFF4F46E5), Color(0xFF3730A3)];
       case 'customer_shopping':
         return const [Color(0xFF0284C7), Color(0xFF0369A1)];
       case 'customer_advanced_shopping':
@@ -148,13 +148,13 @@ class WalletItemModel {
       case 'customer_star_bonus':
         return const [Color(0xFFCA8A04), Color(0xFFA16207)];
       case 'customer_advanced_return':
-        return const [Color(0xFF475569), Color(0xFF334155)];
+        return const [Color(0xFF0284C7), Color(0xFF075985)];
       case 'customer_good_luck':
         return const [Color(0xFFDB2777), Color(0xFFBE185D)];
       case 'customer_charity':
         return const [Color(0xFF0D9488), Color(0xFF0F766E)];
       default:
-        return const [Color(0xFF1E293B), Color(0xFF334155)];
+        return const [Color(0xFF4F46E5), Color(0xFF3730A3)];
     }
   }
 

@@ -230,25 +230,32 @@ class WalletView extends GetView<WalletController> {
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.all(20.r),
+        padding: EdgeInsets.all(18.r),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+            colors: [Color(0xFFFFFFFF), Color(0xFFFAFBFF), Color(0xFFEEF2FF)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(20.r),
+          borderRadius: BorderRadius.circular(22.r),
+          border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
           boxShadow: [
             BoxShadow(
-              color: AppColor.black.withValues(alpha: 0.12),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
+              color: const Color(0xFF6366F1).withValues(alpha: 0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 1. Header: Total Balance (i) & History Capsule
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -258,17 +265,17 @@ class WalletView extends GetView<WalletController> {
                       'Total Balance',
                       style: GoogleFonts.lato(
                         fontSize: 14.sp,
-                        color: const Color(0xFFCBD5E1),
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF0F172A),
                       ),
                     ),
-                    SizedBox(width: 4.w),
+                    SizedBox(width: 5.w),
                     GestureDetector(
                       onTap: () => _showTotalCalculationSheet(context),
                       child: Icon(
-                        Iconsax.info_circle,
+                        Icons.info_outline_rounded,
                         size: 16.r,
-                        color: AppColor.primary,
+                        color: const Color(0xFF64748B),
                       ),
                     ),
                   ],
@@ -278,28 +285,42 @@ class WalletView extends GetView<WalletController> {
                   child: Container(
                     padding: EdgeInsets.symmetric(
                       horizontal: 10.w,
-                      vertical: 4.h,
+                      vertical: 5.h,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColor.white.withValues(alpha: 0.12),
+                      color: AppColor.white,
                       borderRadius: BorderRadius.circular(20.r),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        Icon(
+                          Icons.access_time_rounded,
+                          size: 13.r,
+                          color: const Color(0xFF334155),
+                        ),
+                        SizedBox(width: 4.w),
                         Text(
                           'History',
                           style: GoogleFonts.lato(
-                            fontSize: 12.sp,
-                            color: AppColor.white,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 11.5.sp,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF1E293B),
                           ),
                         ),
-                        SizedBox(width: 4.w),
+                        SizedBox(width: 3.w),
                         Icon(
                           Icons.chevron_right_rounded,
-                          size: 16.r,
-                          color: AppColor.white,
+                          size: 14.r,
+                          color: const Color(0xFF64748B),
                         ),
                       ],
                     ),
@@ -307,133 +328,254 @@ class WalletView extends GetView<WalletController> {
                 ),
               ],
             ),
-            SizedBox(height: 12.h),
-            Obx(
-              () => Text(
-                '${controller.currencySymbol.value} ${controller.totalBalance.value.toStringAsFixed(2)}',
-                style: GoogleFonts.lato(
-                  fontSize: 32.sp,
-                  fontWeight: FontWeight.w800,
-                  color: AppColor.white,
-                  letterSpacing: -0.5,
+
+            SizedBox(height: 8.h),
+
+            // 2. Large Amount & 3D Wallet Illustration Row
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Obx(
+                    () => Text(
+                      '${controller.currencySymbol.value} ${controller.totalBalance.value.toStringAsFixed(2)}',
+                      style: GoogleFonts.lato(
+                        fontSize: 32.sp,
+                        fontWeight: FontWeight.w900,
+                        color: const Color(0xFF0F172A),
+                        letterSpacing: -0.6,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+                const _Wallet3DIllustration(),
+              ],
             ),
+
             SizedBox(height: 12.h),
+
+            // 3. Sub-balance & Checkout Limit Info Pill
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
               decoration: BoxDecoration(
-                color: AppColor.white.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(10.r),
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
                     children: [
-                      Icon(Iconsax.wallet_2, size: 14.r, color: AppColor.primary),
+                      Icon(
+                        Iconsax.wallet_2,
+                        size: 15.r,
+                        color: const Color(0xFF475569),
+                      ),
                       SizedBox(width: 6.w),
                       Obx(
                         () => Text(
                           'Main: ${controller.currencySymbol.value}${controller.mainBalance.value.toStringAsFixed(2)}',
                           style: GoogleFonts.lato(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFFE2E8F0),
+                            fontSize: 12.5.sp,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF0F172A),
                           ),
                         ),
                       ),
                     ],
                   ),
-                  Obx(
-                    () => Text(
-                      'Max ${controller.walletMaxPercent.value}% on checkout',
-                      style: GoogleFonts.lato(
-                        fontSize: 11.5.sp,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF94A3B8),
-                      ),
+                  Container(
+                    width: 1.w,
+                    height: 14.h,
+                    color: const Color(0xFFCBD5E1),
+                  ),
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 8.w,
+                      vertical: 3.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF7ED),
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Iconsax.shopping_cart,
+                          size: 13.r,
+                          color: const Color(0xFFEA580C),
+                        ),
+                        SizedBox(width: 4.w),
+                        Obx(
+                          () => Text(
+                            'Max ${controller.walletMaxPercent.value}% on checkout',
+                            style: GoogleFonts.lato(
+                              fontSize: 11.5.sp,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFFEA580C),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
+
             SizedBox(height: 16.h),
+
+            // 4. Action Buttons (Add Money, Redeem, Withdraw)
             Row(
               children: [
                 Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => _showAddMoneyOptionsSheet(context),
-                    icon: Icon(Iconsax.add_circle, size: 16.r, color: AppColor.white),
-                    label: Text(
-                      'Add Money',
-                      style: GoogleFonts.lato(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.bold,
-                        color: AppColor.white,
-                      ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFF5200)
+                              .withValues(alpha: 0.35),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColor.primary,
-                      foregroundColor: AppColor.white,
-                      elevation: 0,
-                      padding: EdgeInsets.symmetric(vertical: 10.h),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.r),
+                    child: ElevatedButton(
+                      onPressed: () => _showAddMoneyOptionsSheet(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF5200),
+                        foregroundColor: AppColor.white,
+                        elevation: 0,
+                        padding: EdgeInsets.symmetric(
+                          vertical: 10.h,
+                          horizontal: 4.w,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
                       ),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      WalletRedeemSheet.show(
-                        context,
-                        wallets: controller.wallets,
-                        onRedeemSuccess: () => controller.refreshAll(),
-                      );
-                    },
-                    icon: Icon(Iconsax.repeat, size: 16.r, color: AppColor.white),
-                    label: Text(
-                      'Redeem',
-                      style: GoogleFonts.lato(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.bold,
-                        color: AppColor.white,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2563EB),
-                      foregroundColor: AppColor.white,
-                      elevation: 0,
-                      padding: EdgeInsets.symmetric(vertical: 10.h),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.r),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.add_circle_outline_rounded,
+                            size: 15.r,
+                            color: AppColor.white,
+                          ),
+                          SizedBox(width: 4.w),
+                          Text(
+                            'Add Money',
+                            style: GoogleFonts.lato(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w800,
+                              color: AppColor.white,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
                 SizedBox(width: 8.w),
                 Expanded(
-                  child: OutlinedButton.icon(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF2563EB)
+                              .withValues(alpha: 0.30),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        WalletRedeemSheet.show(
+                          context,
+                          wallets: controller.wallets,
+                          onRedeemSuccess: () => controller.refreshAll(),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2563EB),
+                        foregroundColor: AppColor.white,
+                        elevation: 0,
+                        padding: EdgeInsets.symmetric(
+                          vertical: 10.h,
+                          horizontal: 4.w,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.swap_horiz_rounded,
+                            size: 17.r,
+                            color: AppColor.white,
+                          ),
+                          SizedBox(width: 4.w),
+                          Text(
+                            'Redeem',
+                            style: GoogleFonts.lato(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w800,
+                              color: AppColor.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: OutlinedButton(
                     onPressed: () => _showWithdrawDisabledNotice(),
-                    icon: Icon(Iconsax.export_1, size: 16.r, color: const Color(0xFF94A3B8)),
-                    label: Text(
-                      'Withdraw',
-                      style: GoogleFonts.lato(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF94A3B8),
-                      ),
-                    ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF94A3B8),
-                      side: const BorderSide(color: Color(0xFF475569)),
-                      padding: EdgeInsets.symmetric(vertical: 10.h),
+                      backgroundColor: AppColor.white,
+                      foregroundColor: const Color(0xFF1E293B),
+                      side: const BorderSide(
+                        color: Color(0xFFCBD5E1),
+                        width: 1.2,
+                      ),
+                      elevation: 0,
+                      padding: EdgeInsets.symmetric(
+                        vertical: 10.h,
+                        horizontal: 4.w,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.r),
                       ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.file_upload_outlined,
+                          size: 16.r,
+                          color: const Color(0xFF1E293B),
+                        ),
+                        SizedBox(width: 4.w),
+                        Text(
+                          'Withdraw',
+                          style: GoogleFonts.lato(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF1E293B),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -586,46 +728,61 @@ class WalletView extends GetView<WalletController> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(8.r),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFFEF3C7),
-                          shape: BoxShape.circle,
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(8.r),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFFEF3C7),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.hourglass_empty_rounded,
+                            size: 18.r,
+                            color: const Color(0xFFD97706),
+                          ),
                         ),
-                        child: Icon(Icons.hourglass_empty_rounded,
-                            size: 18.r, color: Color(0xFFD97706)),
-                      ),
-                      SizedBox(width: 10.w),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Pending Points',
-                            style: GoogleFonts.lato(
-                              fontSize: 15.5.sp,
-                              fontWeight: FontWeight.bold,
-                              color: AppColor.textPrimary,
-                            ),
+                        SizedBox(width: 10.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Pending Points',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.lato(
+                                  fontSize: 15.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColor.textPrimary,
+                                ),
+                              ),
+                              Text(
+                                orders.isNotEmpty
+                                    ? '${pp!.totalPoints} points pending posting'
+                                    : 'Posts after return window closes',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.lato(
+                                  fontSize: 11.5.sp,
+                                  color: AppColor.textSecondary,
+                                ),
+                              ),
+                            ],
                           ),
-                          Text(
-                            orders.isNotEmpty
-                                ? '${pp!.totalPoints} points pending posting'
-                                : 'Posts after return window closes',
-                            style: GoogleFonts.lato(
-                              fontSize: 11.5.sp,
-                              color: AppColor.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ),
+                  SizedBox(width: 6.w),
                   TextButton.icon(
                     onPressed: () => Get.toNamed(Routes.POINTS_HELP),
-                    icon: Icon(Icons.info_outline_rounded,
-                        size: 16.r, color: AppColor.primaryDark),
+                    icon: Icon(
+                      Icons.info_outline_rounded,
+                      size: 16.r,
+                      color: AppColor.primaryDark,
+                    ),
                     label: Text(
                       'Points Info',
                       style: GoogleFonts.lato(
@@ -635,7 +792,10 @@ class WalletView extends GetView<WalletController> {
                       ),
                     ),
                     style: TextButton.styleFrom(
-                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 6.w,
+                        vertical: 4.h,
+                      ),
                     ),
                   ),
                 ],
@@ -644,58 +804,62 @@ class WalletView extends GetView<WalletController> {
                 SizedBox(height: 12.h),
                 const Divider(color: Color(0xFFF1F5F9), height: 1),
                 SizedBox(height: 10.h),
-                ...orders.map((o) => Container(
-                      margin: EdgeInsets.only(bottom: 8.h),
-                      padding: EdgeInsets.all(12.r),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFFBEB),
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(color: const Color(0xFFFEF3C7)),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  o.orderNumber,
-                                  style: GoogleFonts.lato(
-                                    fontSize: 13.5.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColor.textPrimary,
-                                  ),
+                ...orders.map(
+                  (o) => Container(
+                    margin: EdgeInsets.only(bottom: 8.h),
+                    padding: EdgeInsets.all(12.r),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFFBEB),
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(color: const Color(0xFFFEF3C7)),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                o.orderNumber,
+                                style: GoogleFonts.lato(
+                                  fontSize: 13.5.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColor.textPrimary,
                                 ),
-                                SizedBox(height: 2.h),
-                                Text(
-                                  'Est. cashback: ৳${o.estimatedCashback.toStringAsFixed(2)} · Posts: ${o.formattedPostsDate}',
-                                  style: GoogleFonts.lato(
-                                    fontSize: 11.5.sp,
-                                    color: const Color(0xFF92400E),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 8.w, vertical: 4.h),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFDE68A),
-                              borderRadius: BorderRadius.circular(6.r),
-                            ),
-                            child: Text(
-                              '${o.points} pts',
-                              style: GoogleFonts.lato(
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w800,
-                                color: const Color(0xFF78350F),
                               ),
+                              SizedBox(height: 2.h),
+                              Text(
+                                'Est. cashback: ৳${o.estimatedCashback.toStringAsFixed(2)} · Posts: ${o.formattedPostsDate}',
+                                style: GoogleFonts.lato(
+                                  fontSize: 11.5.sp,
+                                  color: const Color(0xFF92400E),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 4.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFDE68A),
+                            borderRadius: BorderRadius.circular(6.r),
+                          ),
+                          child: Text(
+                            '${o.points} pts',
+                            style: GoogleFonts.lato(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF78350F),
                             ),
                           ),
-                        ],
-                      ),
-                    )),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ],
           ),
@@ -954,7 +1118,9 @@ class WalletView extends GetView<WalletController> {
   }
 
   void _showTotalCalculationSheet(BuildContext context) {
-    final charity = controller.wallets.firstWhereOrNull((w) => w.kind == 'customer_charity');
+    final charity = controller.wallets.firstWhereOrNull(
+      (w) => w.kind == 'customer_charity',
+    );
     final contributing = controller.wallets
         .where((w) => w.kind != 'customer_charity' && w.balanceMinor > 0)
         .toList();
@@ -994,7 +1160,11 @@ class WalletView extends GetView<WalletController> {
                       color: AppColor.primary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Iconsax.calculator, color: AppColor.primary, size: 22.r),
+                    child: Icon(
+                      Iconsax.calculator,
+                      color: AppColor.primary,
+                      size: 22.r,
+                    ),
                   ),
                   SizedBox(width: 12.w),
                   Expanded(
@@ -1035,32 +1205,34 @@ class WalletView extends GetView<WalletController> {
                   ),
                 )
               else
-                ...contributing.map((w) => Padding(
-                      padding: EdgeInsets.symmetric(vertical: 6.h),
-                      child: Row(
-                        children: [
-                          Icon(w.icon, size: 18.r, color: AppColor.primary),
-                          SizedBox(width: 10.w),
-                          Expanded(
-                            child: Text(
-                              w.title,
-                              style: GoogleFonts.lato(
-                                fontSize: 13.5.sp,
-                                color: AppColor.textPrimary,
-                              ),
-                            ),
-                          ),
-                          Text(
-                            '৳${w.balance.toStringAsFixed(2)}',
+                ...contributing.map(
+                  (w) => Padding(
+                    padding: EdgeInsets.symmetric(vertical: 6.h),
+                    child: Row(
+                      children: [
+                        Icon(w.icon, size: 18.r, color: AppColor.primary),
+                        SizedBox(width: 10.w),
+                        Expanded(
+                          child: Text(
+                            w.title,
                             style: GoogleFonts.lato(
                               fontSize: 13.5.sp,
-                              fontWeight: FontWeight.bold,
                               color: AppColor.textPrimary,
                             ),
                           ),
-                        ],
-                      ),
-                    )),
+                        ),
+                        Text(
+                          '৳${w.balance.toStringAsFixed(2)}',
+                          style: GoogleFonts.lato(
+                            fontSize: 13.5.sp,
+                            fontWeight: FontWeight.bold,
+                            color: AppColor.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
 
               const Divider(height: 24, color: AppColor.border),
 
@@ -1099,7 +1271,11 @@ class WalletView extends GetView<WalletController> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Iconsax.heart, color: const Color(0xFF0D9488), size: 20.r),
+                    Icon(
+                      Iconsax.heart,
+                      color: const Color(0xFF0D9488),
+                      size: 20.r,
+                    ),
                     SizedBox(width: 10.w),
                     Expanded(
                       child: Column(
@@ -1117,7 +1293,10 @@ class WalletView extends GetView<WalletController> {
                               ),
                               SizedBox(width: 6.w),
                               Container(
-                                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.h),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 6.w,
+                                  vertical: 1.h,
+                                ),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFE2E8F0),
                                   borderRadius: BorderRadius.circular(4.r),
@@ -1242,7 +1421,11 @@ class WalletView extends GetView<WalletController> {
                         color: Color(0xFF0F172A),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Iconsax.shop, color: AppColor.white, size: 22),
+                      child: const Icon(
+                        Iconsax.shop,
+                        color: AppColor.white,
+                        size: 22,
+                      ),
                     ),
                     SizedBox(width: 12.w),
                     Expanded(
@@ -1261,7 +1444,10 @@ class WalletView extends GetView<WalletController> {
                               ),
                               SizedBox(width: 6.w),
                               Container(
-                                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.h),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 6.w,
+                                  vertical: 1.h,
+                                ),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFFEF3C7),
                                   borderRadius: BorderRadius.circular(4.r),
@@ -1288,7 +1474,11 @@ class WalletView extends GetView<WalletController> {
                         ],
                       ),
                     ),
-                    Icon(Icons.chevron_right_rounded, color: AppColor.textSecondary, size: 20.r),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColor.textSecondary,
+                      size: 20.r,
+                    ),
                   ],
                 ),
               ),
@@ -1319,7 +1509,11 @@ class WalletView extends GetView<WalletController> {
                         color: AppColor.primary.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Iconsax.trend_up, color: AppColor.primary, size: 22),
+                      child: const Icon(
+                        Iconsax.trend_up,
+                        color: AppColor.primary,
+                        size: 22,
+                      ),
                     ),
                     SizedBox(width: 12.w),
                     Expanded(
@@ -1345,7 +1539,11 @@ class WalletView extends GetView<WalletController> {
                         ],
                       ),
                     ),
-                    Icon(Icons.chevron_right_rounded, color: AppColor.textSecondary, size: 20.r),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColor.textSecondary,
+                      size: 20.r,
+                    ),
                   ],
                 ),
               ),
@@ -1393,7 +1591,11 @@ class WalletView extends GetView<WalletController> {
                     color: Color(0xFF0F172A),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Iconsax.shop, color: AppColor.white, size: 22),
+                  child: const Icon(
+                    Iconsax.shop,
+                    color: AppColor.white,
+                    size: 22,
+                  ),
                 ),
                 SizedBox(width: 12.w),
                 Expanded(
@@ -1451,7 +1653,11 @@ class WalletView extends GetView<WalletController> {
               ),
               child: Row(
                 children: [
-                  Icon(Iconsax.info_circle, color: const Color(0xFFD97706), size: 18.r),
+                  Icon(
+                    Iconsax.info_circle,
+                    color: const Color(0xFFD97706),
+                    size: 18.r,
+                  ),
                   SizedBox(width: 8.w),
                   Expanded(
                     child: Text(
@@ -1473,11 +1679,16 @@ class WalletView extends GetView<WalletController> {
                 backgroundColor: const Color(0xFF0F172A),
                 foregroundColor: AppColor.white,
                 padding: EdgeInsets.symmetric(vertical: 12.h),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
               ),
               child: Text(
                 'Got It',
-                style: GoogleFonts.lato(fontSize: 14.sp, fontWeight: FontWeight.bold),
+                style: GoogleFonts.lato(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             SizedBox(height: 10.h),
@@ -1609,13 +1820,21 @@ class WalletView extends GetView<WalletController> {
             SizedBox(height: 8.h),
             Text(
               'Add advance shopping funds for guaranteed discounts and fast checkout.',
-              style: GoogleFonts.lato(fontSize: 12.sp, color: AppColor.textSecondary),
+              style: GoogleFonts.lato(
+                fontSize: 12.sp,
+                color: AppColor.textSecondary,
+              ),
             ),
             SizedBox(height: 16.h),
             TextField(
               controller: amountController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              style: GoogleFonts.lato(fontSize: 22.sp, fontWeight: FontWeight.bold),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              style: GoogleFonts.lato(
+                fontSize: 22.sp,
+                fontWeight: FontWeight.bold,
+              ),
               decoration: InputDecoration(
                 prefixText: '${controller.currencySymbol.value} ',
                 prefixStyle: GoogleFonts.lato(
@@ -1636,7 +1855,10 @@ class WalletView extends GetView<WalletController> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14.r),
-                  borderSide: const BorderSide(color: AppColor.primary, width: 1.5),
+                  borderSide: const BorderSide(
+                    color: AppColor.primary,
+                    width: 1.5,
+                  ),
                 ),
               ),
             ),
@@ -1645,7 +1867,9 @@ class WalletView extends GetView<WalletController> {
               spacing: 8.w,
               children: presets.map((p) {
                 return ActionChip(
-                  label: Text('+${controller.currencySymbol.value}${p.toInt()}'),
+                  label: Text(
+                    '+${controller.currencySymbol.value}${p.toInt()}',
+                  ),
                   backgroundColor: const Color(0xFFF1F5F9),
                   labelStyle: GoogleFonts.lato(
                     fontSize: 12.sp,
@@ -1667,21 +1891,30 @@ class WalletView extends GetView<WalletController> {
                   onPressed: controller.isSubmittingAction.value
                       ? null
                       : () async {
-                          final val = double.tryParse(amountController.text.trim()) ?? 0.0;
-                          final ok = await controller.depositAdvanceShopping(val);
+                          final val =
+                              double.tryParse(amountController.text.trim()) ??
+                              0.0;
+                          final ok = await controller.depositAdvanceShopping(
+                            val,
+                          );
                           if (ok && ctx.mounted) {
                             Navigator.of(ctx).pop();
                           }
                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColor.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14.r),
+                    ),
                   ),
                   child: controller.isSubmittingAction.value
                       ? SizedBox(
                           width: 20.r,
                           height: 20.r,
-                          child: const CircularProgressIndicator(color: AppColor.white, strokeWidth: 2),
+                          child: const CircularProgressIndicator(
+                            color: AppColor.white,
+                            strokeWidth: 2,
+                          ),
                         )
                       : Text(
                           'Confirm Deposit',
@@ -1702,7 +1935,9 @@ class WalletView extends GetView<WalletController> {
 
   void _showWithdrawSheet(BuildContext context) {
     final amountController = TextEditingController();
-    final advWallet = controller.wallets.firstWhereOrNull((w) => w.kind == 'customer_advanced_shopping');
+    final advWallet = controller.wallets.firstWhereOrNull(
+      (w) => w.kind == 'customer_advanced_shopping',
+    );
     final availableBal = advWallet?.balance ?? 0.0;
 
     showModalBottomSheet(
@@ -1768,7 +2003,10 @@ class WalletView extends GetView<WalletController> {
               children: [
                 Text(
                   'Available to withdraw: ',
-                  style: GoogleFonts.lato(fontSize: 12.sp, color: AppColor.textSecondary),
+                  style: GoogleFonts.lato(
+                    fontSize: 12.sp,
+                    color: AppColor.textSecondary,
+                  ),
                 ),
                 Text(
                   '${controller.currencySymbol.value} ${availableBal.toStringAsFixed(2)}',
@@ -1783,8 +2021,13 @@ class WalletView extends GetView<WalletController> {
             SizedBox(height: 16.h),
             TextField(
               controller: amountController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              style: GoogleFonts.lato(fontSize: 22.sp, fontWeight: FontWeight.bold),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              style: GoogleFonts.lato(
+                fontSize: 22.sp,
+                fontWeight: FontWeight.bold,
+              ),
               decoration: InputDecoration(
                 prefixText: '${controller.currencySymbol.value} ',
                 prefixStyle: GoogleFonts.lato(
@@ -1805,7 +2048,10 @@ class WalletView extends GetView<WalletController> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14.r),
-                  borderSide: const BorderSide(color: AppColor.primary, width: 1.5),
+                  borderSide: const BorderSide(
+                    color: AppColor.primary,
+                    width: 1.5,
+                  ),
                 ),
               ),
             ),
@@ -1836,21 +2082,30 @@ class WalletView extends GetView<WalletController> {
                   onPressed: controller.isSubmittingAction.value
                       ? null
                       : () async {
-                          final val = double.tryParse(amountController.text.trim()) ?? 0.0;
-                          final ok = await controller.withdrawAdvanceShopping(val);
+                          final val =
+                              double.tryParse(amountController.text.trim()) ??
+                              0.0;
+                          final ok = await controller.withdrawAdvanceShopping(
+                            val,
+                          );
                           if (ok && ctx.mounted) {
                             Navigator.of(ctx).pop();
                           }
                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF0F172A),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14.r),
+                    ),
                   ),
                   child: controller.isSubmittingAction.value
                       ? SizedBox(
                           width: 20.r,
                           height: 20.r,
-                          child: const CircularProgressIndicator(color: AppColor.white, strokeWidth: 2),
+                          child: const CircularProgressIndicator(
+                            color: AppColor.white,
+                            strokeWidth: 2,
+                          ),
                         )
                       : Text(
                           'Confirm Withdrawal',
@@ -1950,7 +2205,10 @@ class WalletView extends GetView<WalletController> {
                 children: [
                   Text(
                     'Current Available Balance',
-                    style: GoogleFonts.lato(fontSize: 12.sp, color: AppColor.textSecondary),
+                    style: GoogleFonts.lato(
+                      fontSize: 12.sp,
+                      color: AppColor.textSecondary,
+                    ),
                   ),
                   SizedBox(height: 4.h),
                   Text(
@@ -1992,7 +2250,11 @@ class WalletView extends GetView<WalletController> {
                         Navigator.of(ctx).pop();
                         _showDepositSheet(context);
                       },
-                      icon: Icon(Iconsax.add_circle, size: 16.r, color: AppColor.white),
+                      icon: Icon(
+                        Iconsax.add_circle,
+                        size: 16.r,
+                        color: AppColor.white,
+                      ),
                       label: Text(
                         'Deposit',
                         style: GoogleFonts.lato(
@@ -2004,7 +2266,9 @@ class WalletView extends GetView<WalletController> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColor.primary,
                         padding: EdgeInsets.symmetric(vertical: 12.h),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
                       ),
                     ),
                   ),
@@ -2015,7 +2279,11 @@ class WalletView extends GetView<WalletController> {
                         Navigator.of(ctx).pop();
                         _showWithdrawSheet(context);
                       },
-                      icon: Icon(Iconsax.export_1, size: 16.r, color: AppColor.textPrimary),
+                      icon: Icon(
+                        Iconsax.export_1,
+                        size: 16.r,
+                        color: AppColor.textPrimary,
+                      ),
                       label: Text(
                         'Withdraw',
                         style: GoogleFonts.lato(
@@ -2027,7 +2295,9 @@ class WalletView extends GetView<WalletController> {
                       style: OutlinedButton.styleFrom(
                         padding: EdgeInsets.symmetric(vertical: 12.h),
                         side: BorderSide(color: AppColor.grey.shade300),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
                       ),
                     ),
                   ),
@@ -2077,7 +2347,10 @@ class WalletView extends GetView<WalletController> {
                   ),
                   child: Text(
                     'No transaction history for this wallet',
-                    style: GoogleFonts.lato(fontSize: 12.sp, color: AppColor.textHint),
+                    style: GoogleFonts.lato(
+                      fontSize: 12.sp,
+                      color: AppColor.textHint,
+                    ),
                   ),
                 );
               }
@@ -2085,7 +2358,10 @@ class WalletView extends GetView<WalletController> {
                 children: controller.activeSingleTransactions.take(3).map((tx) {
                   return Container(
                     margin: EdgeInsets.only(bottom: 6.h),
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 8.h,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(10.r),
@@ -2107,11 +2383,15 @@ class WalletView extends GetView<WalletController> {
                         ),
                         SizedBox(width: 8.w),
                         Text(
-                          tx.formattedAmount(symbol: controller.currencySymbol.value),
+                          tx.formattedAmount(
+                            symbol: controller.currencySymbol.value,
+                          ),
                           style: GoogleFonts.lato(
                             fontSize: 12.5.sp,
                             fontWeight: FontWeight.bold,
-                            color: tx.isCredit ? const Color(0xFF16A34A) : AppColor.textPrimary,
+                            color: tx.isCredit
+                                ? const Color(0xFF16A34A)
+                                : AppColor.textPrimary,
                           ),
                         ),
                       ],
@@ -2132,7 +2412,10 @@ class WalletView extends GetView<WalletController> {
                 icon: const Icon(Iconsax.filter, size: 16),
                 label: Text(
                   'Filter Transactions by this Wallet',
-                  style: GoogleFonts.lato(fontSize: 13.5.sp, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.lato(
+                    fontSize: 13.5.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -2143,7 +2426,9 @@ class WalletView extends GetView<WalletController> {
   }
 
   Widget _buildAdvanceShoppingBanner(BuildContext context) {
-    final advWallet = controller.wallets.firstWhereOrNull((w) => w.kind == 'customer_advanced_shopping');
+    final advWallet = controller.wallets.firstWhereOrNull(
+      (w) => w.kind == 'customer_advanced_shopping',
+    );
     final bal = advWallet?.balance ?? 0.0;
 
     return Padding(
@@ -2163,7 +2448,11 @@ class WalletView extends GetView<WalletController> {
                 color: Color(0xFF3B82F6),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Iconsax.discount_shape, color: AppColor.white, size: 20.r),
+              child: Icon(
+                Iconsax.discount_shape,
+                color: AppColor.white,
+                size: 20.r,
+              ),
             ),
             SizedBox(width: 14.w),
             Expanded(
@@ -2197,11 +2486,16 @@ class WalletView extends GetView<WalletController> {
                 foregroundColor: AppColor.white,
                 elevation: 0,
                 padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
               ),
               child: Text(
                 'Top Up',
-                style: GoogleFonts.lato(fontSize: 12.sp, fontWeight: FontWeight.bold),
+                style: GoogleFonts.lato(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
@@ -2375,6 +2669,194 @@ class WalletView extends GetView<WalletController> {
             }),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// 3D stylized purple wallet illustration with gold ৳ coin and sparkles
+/// Matching the exact visual aesthetic from the reference design.
+class _Wallet3DIllustration extends StatelessWidget {
+  const _Wallet3DIllustration();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 82.w,
+      height: 60.h,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          // Left sparkles
+          Positioned(
+            left: 2.w,
+            top: 14.h,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Transform.rotate(
+                  angle: -0.4,
+                  child: Container(
+                    width: 7.w,
+                    height: 2.5.h,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF818CF8),
+                      borderRadius: BorderRadius.circular(2.r),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 5.h),
+                Transform.rotate(
+                  angle: -0.15,
+                  child: Container(
+                    width: 9.w,
+                    height: 2.5.h,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF818CF8),
+                      borderRadius: BorderRadius.circular(2.r),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Golden Coin peeking out
+          Positioned(
+            right: 14.w,
+            top: 2.h,
+            child: Container(
+              width: 28.r,
+              height: 28.r,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFFFE066),
+                    Color(0xFFFBBF24),
+                    Color(0xFFD97706),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFD97706).withValues(alpha: 0.35),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+                border: Border.all(color: const Color(0xFFFFFBEB), width: 1.2),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                '৳',
+                style: GoogleFonts.lato(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  height: 1.0,
+                ),
+              ),
+            ),
+          ),
+
+          // 3D Lilac / Purple Wallet Body
+          Positioned(
+            right: 2.w,
+            bottom: 4.h,
+            child: Transform.rotate(
+              angle: -0.08,
+              child: Container(
+                width: 62.w,
+                height: 42.h,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12.r),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF9888FF),
+                      Color(0xFF7A68EE),
+                      Color(0xFF624FE8),
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.35),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                    BoxShadow(
+                      color: Colors.white.withValues(alpha: 0.25),
+                      blurRadius: 2,
+                      offset: const Offset(0, -1),
+                    ),
+                  ],
+                ),
+                child: Stack(
+                  children: [
+                    // Wallet back layer edge
+                    Positioned(
+                      top: 4.h,
+                      left: 4.w,
+                      right: 4.w,
+                      child: Container(
+                        height: 6.h,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF513DDE).withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(4.r),
+                        ),
+                      ),
+                    ),
+                    // Front flap with gold snap button
+                    Positioned(
+                      right: 0,
+                      top: 10.h,
+                      bottom: 10.h,
+                      child: Container(
+                        width: 24.w,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF8B7AF4),
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(8.r),
+                            bottomLeft: Radius.circular(8.r),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.15),
+                              blurRadius: 3,
+                              offset: const Offset(-1, 1),
+                            ),
+                          ],
+                        ),
+                        alignment: Alignment.centerLeft,
+                        padding: EdgeInsets.only(left: 4.w),
+                        child: Container(
+                          width: 8.r,
+                          height: 8.r,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: const Color(0xFFFDE047),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFCA8A04)
+                                    .withValues(alpha: 0.5),
+                                blurRadius: 2,
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
