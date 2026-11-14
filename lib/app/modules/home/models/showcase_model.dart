@@ -56,12 +56,7 @@ class BrandModel {
   bool get isSvg => fullLogoUrl.toLowerCase().contains('.svg');
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'slug': slug,
-      'logoUrl': logoUrl,
-    };
+    return {'id': id, 'name': name, 'slug': slug, 'logoUrl': logoUrl};
   }
 }
 
@@ -112,6 +107,8 @@ class ShowcaseMiniBannerModel {
 
 class ShowcaseProductModel {
   final String id;
+  final String? variantId;
+  final String? variantLabel;
   final String name;
   final String slug;
   final String? brandName;
@@ -132,6 +129,8 @@ class ShowcaseProductModel {
 
   ShowcaseProductModel({
     required this.id,
+    this.variantId,
+    this.variantLabel,
     required this.name,
     required this.slug,
     this.brandName,
@@ -154,6 +153,128 @@ class ShowcaseProductModel {
   String get displayImage {
     if (images.isEmpty) return '';
     return resolveImageUrl(images.first);
+  }
+
+  factory ShowcaseProductModel.fromVariantJson(
+    Map<String, dynamic> productJson,
+    Map<String, dynamic> variantJson,
+  ) {
+    double parsedPrice = 0.0;
+    double? parsedOriginalPrice;
+
+    final rawPriceMinor =
+        variantJson['priceMinor'] ?? productJson['priceMinor'];
+    final rawComparePriceMinor =
+        variantJson['compareAtPriceMinor'] ??
+        productJson['compareAtPriceMinor'];
+
+    if (rawPriceMinor is num) {
+      parsedPrice = rawPriceMinor / 100.0;
+    } else if (variantJson['price'] is num) {
+      parsedPrice = (variantJson['price'] as num).toDouble();
+    } else if (productJson['price'] is num) {
+      parsedPrice = (productJson['price'] as num).toDouble();
+    }
+
+    if (rawComparePriceMinor is num) {
+      parsedOriginalPrice = rawComparePriceMinor / 100.0;
+    } else if (variantJson['compareAtPrice'] is num) {
+      parsedOriginalPrice = (variantJson['compareAtPrice'] as num).toDouble();
+    } else if (productJson['compareAtPrice'] is num) {
+      parsedOriginalPrice = (productJson['compareAtPrice'] as num).toDouble();
+    }
+
+    String calcDiscount = '';
+    if (parsedOriginalPrice != null &&
+        parsedOriginalPrice > parsedPrice &&
+        parsedPrice > 0) {
+      final pct =
+          (((parsedOriginalPrice - parsedPrice) / parsedOriginalPrice) * 100)
+              .round();
+      if (pct > 0) {
+        calcDiscount = '$pct% OFF';
+      }
+    }
+
+    List<String> parsedImages = [];
+    if (variantJson['images'] is List) {
+      for (var img in variantJson['images'] as List) {
+        if (img != null && img.toString().isNotEmpty) {
+          parsedImages.add(img.toString());
+        }
+      }
+    }
+    if (parsedImages.isEmpty && variantJson['imageUrl'] != null) {
+      parsedImages.add(variantJson['imageUrl'].toString());
+    }
+    if (parsedImages.isEmpty && productJson['images'] is List) {
+      for (var img in productJson['images'] as List) {
+        if (img != null && img.toString().isNotEmpty) {
+          parsedImages.add(img.toString());
+        }
+      }
+    }
+    if (parsedImages.isEmpty && productJson['image'] != null) {
+      parsedImages.add(productJson['image'].toString());
+    }
+
+    String? shopName;
+    Map<String, dynamic>? sellerObj;
+    if (productJson['seller'] is Map<String, dynamic>) {
+      sellerObj = productJson['seller'] as Map<String, dynamic>;
+      shopName = sellerObj['shopName']?.toString();
+    }
+
+    final vLabel = variantJson['label']?.toString() ?? '';
+    final pName =
+        productJson['name']?.toString() ??
+        productJson['title']?.toString() ??
+        'Product';
+
+    final int? points =
+        (variantJson['productPoints'] as num?)?.toInt() ??
+        (productJson['productPoints'] as num?)?.toInt();
+    final int? stock =
+        (variantJson['stockQty'] as num?)?.toInt() ??
+        (productJson['stockQty'] as num?)?.toInt();
+
+    List<Map<String, dynamic>> parsedVariants = [];
+    if (productJson['variants'] is List) {
+      for (var v in productJson['variants'] as List) {
+        if (v is Map) {
+          parsedVariants.add(Map<String, dynamic>.from(v));
+        }
+      }
+    }
+
+    return ShowcaseProductModel(
+      id: productJson['id']?.toString() ?? '',
+      variantId: variantJson['id']?.toString(),
+      variantLabel: vLabel.isNotEmpty ? vLabel : null,
+      name: pName,
+      slug: productJson['slug']?.toString() ?? '',
+      brandName:
+          productJson['brandName']?.toString() ??
+          productJson['brand']?.toString(),
+      categoryName: productJson['categoryName']?.toString(),
+      price: parsedPrice > 0 ? parsedPrice : 0.0,
+      originalPrice: parsedOriginalPrice,
+      discount: calcDiscount,
+      images: parsedImages,
+      sellerShopName: shopName,
+      seller: sellerObj,
+      variants: parsedVariants,
+      rating:
+          (productJson['ratingAvg'] as num?)?.toDouble() ??
+          (productJson['rating'] as num?)?.toDouble(),
+      reviews:
+          (productJson['ratingCount'] as num?)?.toInt() ??
+          (productJson['reviews'] as num?)?.toInt(),
+      stockQty: stock,
+      productPoints: points,
+      description: productJson['description']?.toString(),
+      isFavorite: productJson['isFavorite'] == true,
+    );
   }
 
   factory ShowcaseProductModel.fromJson(Map<String, dynamic> json) {
@@ -198,8 +319,12 @@ class ShowcaseProductModel {
 
     // Calculate discount text if compareAtPrice is greater
     String calcDiscount = '';
-    if (parsedOriginalPrice != null && parsedOriginalPrice > parsedPrice && parsedPrice > 0) {
-      final pct = (((parsedOriginalPrice - parsedPrice) / parsedOriginalPrice) * 100).round();
+    if (parsedOriginalPrice != null &&
+        parsedOriginalPrice > parsedPrice &&
+        parsedPrice > 0) {
+      final pct =
+          (((parsedOriginalPrice - parsedPrice) / parsedOriginalPrice) * 100)
+              .round();
       if (pct > 0) {
         calcDiscount = '$pct% OFF';
       }
@@ -268,7 +393,9 @@ class ShowcaseProductModel {
       categoryName: json['categoryName']?.toString(),
       price: parsedPrice > 0 ? parsedPrice : 0.0,
       originalPrice: parsedOriginalPrice,
-      discount: calcDiscount.isNotEmpty ? calcDiscount : (json['discount']?.toString() ?? ''),
+      discount: calcDiscount.isNotEmpty
+          ? calcDiscount
+          : (json['discount']?.toString() ?? ''),
       images: parsedImages,
       sellerShopName: shopName,
       seller: sellerObj,
@@ -283,8 +410,8 @@ class ShowcaseProductModel {
   }
 
   Map<String, dynamic> toDetailsMap() {
-    String? defaultVariantId;
-    if (variants.isNotEmpty) {
+    String? defaultVariantId = variantId;
+    if (defaultVariantId == null && variants.isNotEmpty) {
       final fv = variants.first;
       if (fv['id'] != null) {
         defaultVariantId = fv['id']?.toString();
@@ -294,6 +421,7 @@ class ShowcaseProductModel {
       'id': id,
       'productId': id,
       'variantId': defaultVariantId,
+      'variantLabel': variantLabel,
       'title': name,
       'name': name,
       'slug': slug,
@@ -309,7 +437,11 @@ class ShowcaseProductModel {
       'image': displayImage,
       'images': images,
       'variants': variants,
-      'seller': seller ?? (sellerShopName != null ? {'name': sellerShopName, 'shopName': sellerShopName} : null),
+      'seller':
+          seller ??
+          (sellerShopName != null
+              ? {'name': sellerShopName, 'shopName': sellerShopName}
+              : null),
       'rating': rating ?? 4.8,
       'reviews': reviews ?? 24,
       'stockQty': stockQty,
@@ -322,6 +454,8 @@ class ShowcaseProductModel {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      if (variantId != null) 'variantId': variantId,
+      if (variantLabel != null) 'variantLabel': variantLabel,
       'name': name,
       'slug': slug,
       'brandName': brandName,
@@ -370,10 +504,23 @@ class ShowcaseRailModel {
 
     List<ShowcaseProductModel> prodList = [];
     if (json['products'] is List) {
-      prodList = (json['products'] as List)
-          .whereType<Map<String, dynamic>>()
-          .map((e) => ShowcaseProductModel.fromJson(e))
-          .toList();
+      for (var p in json['products'] as List) {
+        if (p is Map) {
+          final pMap = Map<String, dynamic>.from(p);
+          final vList = pMap['variants'];
+          if (vList is List && vList.isNotEmpty) {
+            // Expand each variant into its own card (matches website expandProductCards)
+            for (var v in vList) {
+              if (v is Map) {
+                final vMap = Map<String, dynamic>.from(v);
+                prodList.add(ShowcaseProductModel.fromVariantJson(pMap, vMap));
+              }
+            }
+          } else {
+            prodList.add(ShowcaseProductModel.fromJson(pMap));
+          }
+        }
+      }
     }
 
     return ShowcaseRailModel(
