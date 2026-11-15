@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer';
 
+import 'package:flutter/widgets.dart';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -119,9 +120,18 @@ class DeepLinkService extends GetxService {
       } catch (_) {}
     }
 
-    // If not on Splash or Sign Up page, navigate to Sign Up
-    if (Get.currentRoute != Routes.SPLASH && Get.currentRoute != Routes.SIGNUP) {
-      Get.toNamed(Routes.SIGNUP, arguments: {'referralCode': code});
+    // If not already on Splash, Sign Up, or Register, navigate to Sign Up safely
+    final current = Get.currentRoute.toLowerCase();
+    final isAlreadyOnAuth = current.contains('signup') ||
+        current.contains('register') ||
+        current.contains('splash');
+
+    if (!isAlreadyOnAuth) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (Get.context != null) {
+          Get.toNamed(Routes.SIGNUP, arguments: {'referralCode': code});
+        }
+      });
     }
   }
 

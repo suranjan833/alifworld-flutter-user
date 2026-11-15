@@ -6,6 +6,9 @@ import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/models/country_model.dart';
 import '../../../routes/app_pages.dart';
+import '../../account/controllers/account_controller.dart';
+import '../../home/controllers/home_controller.dart';
+import '../../main_navigation/controllers/main_navigation_controller.dart';
 
 class LoginController extends GetxController {
   final formKey = GlobalKey<FormState>();
@@ -387,8 +390,33 @@ class LoginController extends GetxController {
       getBox.write(IS_USER_LOGGED_IN, true);
     }
 
-    showSnack('Success', 'Logged in successfully!', bg: AppColor.black87);
+    // 1. Close any open snackbar or dialog to avoid stuck touch-blocking overlays
+    try {
+      if (Get.isSnackbarOpen) {
+        Get.closeCurrentSnackbar();
+      }
+      if (Get.isDialogOpen == true) {
+        Get.back();
+      }
+    } catch (_) {}
+
+    // 2. Reset navigation index to 0 (Home)
+    if (Get.isRegistered<MainNavigationController>()) {
+      Get.find<MainNavigationController>().currentIndex.value = 0;
+    }
+
+    // 3. Clear stale controller instances so fresh state is initialized
+    Get.delete<AccountController>(force: true);
+    Get.delete<MainNavigationController>(force: true);
+    Get.delete<HomeController>(force: true);
+
+    // 4. Navigate to MAIN_NAVIGATION cleanly
     Get.offAllNamed(Routes.MAIN_NAVIGATION);
+
+    // 5. Show success message AFTER navigation so it does not block the UI
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      showSnack('Success', 'Logged in successfully!', bg: AppColor.black87);
+    });
   }
 
   void goToSignup() {

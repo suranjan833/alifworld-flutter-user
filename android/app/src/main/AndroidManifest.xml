@@ -38,6 +38,17 @@
                     android:pathPrefix="/register" />
                 <data
                     android:scheme="https"
+                    android:host="www.alifworld.com.bd"
+                    android:pathPrefix="/register" />
+            </intent-filter>
+
+            <!-- Dev App Links: https://dev.alifworld.com.bd/register?ref=CODE -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
                     android:host="dev.alifworld.com.bd"
                     android:pathPrefix="/register" />
             </intent-filter>

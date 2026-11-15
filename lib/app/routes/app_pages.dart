@@ -106,6 +106,12 @@ class AppPages {
       transition: Transition.rightToLeft,
     ),
     GetPage(
+      name: _Paths.REGISTER,
+      page: () => const SignupView(),
+      binding: SignupBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
       name: _Paths.MAIN_NAVIGATION,
       page: () => const MainNavigationView(),
       binding: MainNavigationBinding(),

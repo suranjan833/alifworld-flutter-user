@@ -168,24 +168,26 @@ class MainNavigationView extends GetView<MainNavigationController> {
       }
 
       return Expanded(
-        child: InkWell(
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
           onTap: () => controller.changeTab(index),
-          splashColor: AppColor.transparent,
-          highlightColor: AppColor.transparent,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              iconWidget,
-              SizedBox(height: 4.h),
-              Text(
-                label,
-                style: GoogleFonts.lato(
-                  fontSize: 12.sp,
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                  color: isSelected ? activeColor : inactiveColor,
+          child: Container(
+            color: Colors.transparent,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                iconWidget,
+                SizedBox(height: 4.h),
+                Text(
+                  label,
+                  style: GoogleFonts.lato(
+                    fontSize: 12.sp,
+                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                    color: isSelected ? activeColor : inactiveColor,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );

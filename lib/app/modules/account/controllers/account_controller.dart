@@ -16,6 +16,8 @@ import '../../../data/widgets/wallet_pin_dialog.dart';
 import '../../../routes/app_pages.dart';
 import '../../leaderboards/models/leaderboard_model.dart';
 import '../../my_profile/controllers/my_profile_controller.dart';
+import '../../home/controllers/home_controller.dart';
+import '../../main_navigation/controllers/main_navigation_controller.dart';
 
 class AccountMenuItem {
   final String title;
@@ -48,7 +50,8 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
   final currentLangCode = 'en'.obs;
   final totalBalance = 0.0.obs;
   final myProgress = Rxn<MyProgressResponseModel>();
-  final selectedClubPeriod = 'daily'.obs; // 'daily', 'weekly', 'monthly', 'yearly'
+  final selectedClubPeriod =
+      'daily'.obs; // 'daily', 'weekly', 'monthly', 'yearly'
   final isLoggedIn = false.obs;
 
   void changeClubPeriod(String period) {
@@ -67,7 +70,8 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
     final token = getBox.read(USER_TOKEN);
     final sessionCookie = getBox.read('SESSION_COOKIE');
     final isLoggedInVal = getBox.read(IS_USER_LOGGED_IN);
-    final hasToken = (token != null && token.toString().trim().isNotEmpty) ||
+    final hasToken =
+        (token != null && token.toString().trim().isNotEmpty) ||
         (sessionCookie != null && sessionCookie.toString().trim().isNotEmpty);
     return hasToken && (isLoggedInVal == true || isLoggedInVal == 'true');
   }
@@ -155,20 +159,28 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
             try {
               final dt = DateTime.parse(userModel.createdAt!);
               const months = [
-                'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+                'Jan',
+                'Feb',
+                'Mar',
+                'Apr',
+                'May',
+                'Jun',
+                'Jul',
+                'Aug',
+                'Sep',
+                'Oct',
+                'Nov',
+                'Dec',
               ];
-              memberSince.value = 'Member since ${months[dt.month - 1]}-${dt.year}';
+              memberSince.value =
+                  'Member since ${months[dt.month - 1]}-${dt.year}';
             } catch (_) {}
           }
         }
       }
 
       // Concurrently fetch wallets total and club achievements
-      await Future.wait([
-        fetchTotalBalance(),
-        fetchMyProgress(),
-      ]);
+      await Future.wait([fetchTotalBalance(), fetchMyProgress()]);
     } catch (e) {
       debugPrint('Error fetching user profile: $e');
     } finally {
@@ -769,11 +781,10 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
                             final data = response.data as Map;
                             if (data['error'] is Map) {
                               final code = data['error']['code']?.toString();
-                              final rawMsg =
-                                  data['error']['message']?.toString();
+                              final rawMsg = data['error']['message']
+                                  ?.toString();
                               if (code == 'EMAIL_TAKEN') {
-                                msg =
-                                    'This email address is already in use by another account.';
+                                msg = 'This email address is already in use by another account.';
                               } else if (code == 'UNAUTHENTICATED') {
                                 msg = 'Your session has expired. Please log in again.';
                               } else if (rawMsg != null && rawMsg.isNotEmpty) {
@@ -926,7 +937,33 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
                         memberSince.value = '';
                         totalBalance.value = 0.0;
                         myProgress.value = null;
-                        Get.back();
+
+                        // 1. Close dialog cleanly
+                        if (Get.isDialogOpen == true) {
+                          Get.back();
+                        }
+
+                        // 2. Close any open snackbar
+                        try {
+                          if (Get.isSnackbarOpen) {
+                            Get.closeCurrentSnackbar();
+                          }
+                        } catch (_) {}
+
+                        // 3. Reset MainNavigationController currentIndex to 0
+                        if (Get.isRegistered<MainNavigationController>()) {
+                          Get.find<MainNavigationController>()
+                                  .currentIndex
+                                  .value =
+                              0;
+                        }
+
+                        // 4. Delete stale controller instances
+                        Get.delete<MainNavigationController>(force: true);
+                        Get.delete<HomeController>(force: true);
+                        Get.delete<AccountController>(force: true);
+
+                        // 5. Navigate to Login cleanly
                         Get.offAllNamed(Routes.LOGIN);
                       },
                       style: ElevatedButton.styleFrom(
