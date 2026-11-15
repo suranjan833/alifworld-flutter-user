@@ -15,23 +15,44 @@ class AccountView extends GetView<AccountController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColor.white,
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: AppColor.white,
+        backgroundColor: const Color(0xFFF8FAFC),
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        titleSpacing: 20.w,
+        titleSpacing: 16.w,
         title: Obx(
-          () => Text(
-            controller.currentLangCode.value == 'bn'
-                ? 'আমার অ্যাকাউন্ট'
-                : 'My account',
-            style: GoogleFonts.lato(
-              fontSize: 20.sp,
-              fontWeight: FontWeight.bold,
-              color: AppColor.textPrimary,
-            ),
+          () => Row(
+            children: [
+              Container(
+                width: 36.r,
+                height: 36.r,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.person_outline_rounded,
+                    color: const Color(0xFF0F172A),
+                    size: 20.r,
+                  ),
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Text(
+                controller.currentLangCode.value == 'bn'
+                    ? 'আমার অ্যাকাউন্ট'
+                    : 'My Account',
+                style: GoogleFonts.lato(
+                  fontSize: 22.sp,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF0F172A),
+                  letterSpacing: -0.3,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -39,211 +60,310 @@ class AccountView extends GetView<AccountController> {
         () => controller.isLoading.value
             ? const SkeletonProfile()
             : Container(
-                color: const Color(0xFFF4F5F7),
+                color: const Color(0xFFF8FAFC),
                 child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: EdgeInsets.only(bottom: 30.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. User Profile Card Header
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-                child: Material(
-                  color: AppColor.transparent,
-                  child: InkWell(
-                    onTap: () => controller.isLoggedIn.value
-                        ? controller.openMyProfile()
-                        : Get.toNamed(Routes.LOGIN),
-                    borderRadius: BorderRadius.circular(16.r),
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 8.w,
-                        vertical: 6.h,
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.only(bottom: 30.h),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 1. User Profile Card Header
+                      _buildUserCard(context),
+
+                      // 1.1 Total Balance Banner (ONLY when logged in)
+                      _buildTotalBalanceBanner(context),
+
+                      // 1.2 Quick Feature Cards (Leaderboard, Lottery, Wallets - ONLY when logged in)
+                      Obx(
+                        () => controller.isLoggedIn.value
+                            ? _buildAccountQuickCards(context)
+                            : const SizedBox.shrink(),
                       ),
-                      child: Obx(() {
-                        final isLoggedIn = controller.isLoggedIn.value;
-                        final name = controller.userName.value.trim();
-                        final phone = controller.userPhone.value.trim();
-                        final email = controller.userEmail.value.trim();
-                        final member = controller.memberSince.value.trim();
 
-                        final displayName = isLoggedIn
-                            ? (name.isNotEmpty ? name : 'My Account')
-                            : 'Welcome Guest';
+                      // 1.3 Achievements Section (Club progress only - ONLY when logged in)
+                      Obx(
+                        () => controller.isLoggedIn.value
+                            ? _buildAchievementsSection(context)
+                            : const SizedBox.shrink(),
+                      ),
 
-                        String subtitle = 'Sign in to access orders, wallet & rewards';
-                        if (isLoggedIn) {
-                          if (phone.isNotEmpty) {
-                            subtitle = phone.startsWith('+') ? phone : '+$phone';
-                          } else if (email.isNotEmpty) {
-                            subtitle = email;
-                          } else if (member.isNotEmpty) {
-                            subtitle = member;
-                          } else {
-                            subtitle = 'View & edit profile';
-                          }
-                        }
+                      // 2. Sections (Manage, Settings, Others)
+                      Obx(
+                        () => Column(
+                          children: controller.sections
+                              .map(
+                                (section) =>
+                                    _buildSectionGroup(context, section),
+                              )
+                              .toList(),
+                        ),
+                      ),
 
-                        return Row(
-                          children: [
-                            Container(
-                              width: 54.r,
-                              height: 54.r,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF0F172A),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Center(
-                                child: Icon(
-                                  isLoggedIn ? Icons.person : Icons.person_outline,
-                                  color: AppColor.white,
-                                  size: 30.r,
+                      // 3. Logout / Log In Button Card
+                      Padding(
+                        padding: EdgeInsets.only(
+                          left: 16.w,
+                          right: 16.w,
+                          top: 20.h,
+                        ),
+                        child: Obx(() {
+                          final isLoggedIn = controller.isLoggedIn.value;
+                          final isBn = controller.currentLangCode.value == 'bn';
+
+                          return Material(
+                            color: AppColor.white,
+                            borderRadius: BorderRadius.circular(16.r),
+                            child: InkWell(
+                              onTap: () => isLoggedIn
+                                  ? controller.logout()
+                                  : Get.toNamed(Routes.LOGIN),
+                              borderRadius: BorderRadius.circular(16.r),
+                              child: Container(
+                                width: double.infinity,
+                                padding: EdgeInsets.symmetric(vertical: 14.h),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16.r),
+                                  border: Border.all(
+                                    color: isLoggedIn
+                                        ? AppColor.error.withValues(alpha: 0.15)
+                                        : AppColor.primary.withValues(
+                                            alpha: 0.2,
+                                          ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                            SizedBox(width: 14.w),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    displayName,
-                                    style: GoogleFonts.lato(
-                                      fontSize: 20.sp,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColor.textPrimary,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      isLoggedIn
+                                          ? Iconsax.logout
+                                          : Iconsax.login,
+                                      size: 20.r,
+                                      color: isLoggedIn
+                                          ? AppColor.error
+                                          : AppColor.primary,
                                     ),
-                                  ),
-                                  SizedBox(height: 2.h),
-                                  Text(
-                                    subtitle,
-                                    style: GoogleFonts.lato(
-                                      fontSize: 13.sp,
-                                      fontWeight: FontWeight.w400,
-                                      color: AppColor.textSecondary,
-                                    ),
-                                  ),
-                                  if (isLoggedIn && member.isNotEmpty && (phone.isNotEmpty || email.isNotEmpty)) ...[
-                                    SizedBox(height: 2.h),
+                                    SizedBox(width: 8.w),
                                     Text(
-                                      member,
+                                      isLoggedIn
+                                          ? (isBn ? 'লগআউট' : 'Logout')
+                                          : (isBn
+                                                ? 'লগ ইন / সাইন আপ'
+                                                : 'Log In / Register'),
                                       style: GoogleFonts.lato(
-                                        fontSize: 11.5.sp,
-                                        color: AppColor.textHint,
+                                        fontSize: 15.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: isLoggedIn
+                                            ? AppColor.error
+                                            : AppColor.primary,
                                       ),
                                     ),
                                   ],
-                                ],
+                                ),
                               ),
                             ),
-                            if (!isLoggedIn)
-                              Container(
-                                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                                decoration: BoxDecoration(
-                                  color: AppColor.primary,
-                                  borderRadius: BorderRadius.circular(8.r),
-                                ),
-                                child: Text(
-                                  'Sign In',
-                                  style: GoogleFonts.lato(
-                                    fontSize: 12.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColor.white,
-                                  ),
-                                ),
-                              )
-                            else
-                              Icon(
-                                Icons.chevron_right_rounded,
-                                size: 24.r,
-                                color: const Color(0xFFA0A7B5),
-                              ),
-                          ],
-                        );
-                      }),
-                    ),
+                          );
+                        }),
+                      ),
+                    ],
                   ),
                 ),
               ),
+      ),
+    );
+  }
 
-              // 1.1 Total Balance Banner (ONLY when logged in)
-              _buildTotalBalanceBanner(context),
+  Widget _buildUserCard(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      child: Obx(() {
+        final isLoggedIn = controller.isLoggedIn.value;
+        final isBn = controller.currentLangCode.value == 'bn';
+        final name = controller.userName.value.trim();
+        final phone = controller.userPhone.value.trim();
+        final email = controller.userEmail.value.trim();
+        final member = controller.memberSince.value.trim();
 
-              // 1.2 Quick Feature Cards (Leaderboard, Lottery, Wallets - ONLY when logged in)
-              Obx(() => controller.isLoggedIn.value
-                  ? _buildAccountQuickCards(context)
-                  : const SizedBox.shrink()),
+        final displayName = isLoggedIn
+            ? (name.isNotEmpty
+                  ? name
+                  : (isBn ? 'আমার অ্যাকাউন্ট' : 'My Account'))
+            : (isBn ? 'স্বাগতম, অতিথি 👋' : 'Welcome, Guest ');
 
-              // 1.3 Achievements Section (Club progress only - ONLY when logged in)
-              _buildAchievementsSection(context),
+        String subtitle = isBn
+            ? 'অর্ডার, ওয়ালেট ও রিওয়ার্ড পেতে সাইন ইন করুন'
+            : 'Sign in to access orders, wallet & rewards';
+        if (isLoggedIn) {
+          if (phone.isNotEmpty) {
+            subtitle = phone.startsWith('+') ? phone : '+$phone';
+          } else if (email.isNotEmpty) {
+            subtitle = email;
+          } else if (member.isNotEmpty) {
+            subtitle = member;
+          } else {
+            subtitle = isBn
+                ? 'প্রোফাইল দেখুন ও পরিবর্তন করুন'
+                : 'View & edit profile';
+          }
+        }
 
-              // 2. Sections (Manage, Settings, Others)
-              Obx(
-                () => Column(
-                  children: controller.sections
-                      .map((section) => _buildSectionGroup(context, section))
-                      .toList(),
-                ),
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20.r),
+            border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                blurRadius: 14,
+                offset: const Offset(0, 4),
               ),
+            ],
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+            child: InkWell(
+              onTap: () => isLoggedIn
+                  ? controller.openMyProfile()
+                  : Get.toNamed(Routes.LOGIN),
+              borderRadius: BorderRadius.circular(16.r),
+              child: Row(
+                children: [
+                  // Black & White Avatar
+                  Container(
+                    width: 54.r,
+                    height: 54.r,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF0F172A),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF0F172A)
+                              .withValues(alpha: 0.15),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Icon(
+                        isLoggedIn
+                            ? Icons.person_rounded
+                            : Icons.person_outline_rounded,
+                        color: Colors.white,
+                        size: 28.r,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
 
-              // 3. Logout / Log In Button Card
-              Padding(
-                padding: EdgeInsets.only(left: 16.w, right: 16.w, top: 20.h),
-                child: Obx(() {
-                  final isLoggedIn = controller.isLoggedIn.value;
-                  final isBn = controller.currentLangCode.value == 'bn';
-
-                  return Material(
-                    color: AppColor.white,
-                    borderRadius: BorderRadius.circular(16.r),
-                    child: InkWell(
-                      onTap: () => isLoggedIn
-                          ? controller.logout()
-                          : Get.toNamed(Routes.LOGIN),
-                      borderRadius: BorderRadius.circular(16.r),
-                      child: Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.symmetric(vertical: 14.h),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16.r),
-                          border: Border.all(
-                            color: isLoggedIn
-                                ? AppColor.error.withValues(alpha: 0.15)
-                                : AppColor.primary.withValues(alpha: 0.2),
+                  // Name and Subtitle
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            displayName,
+                            maxLines: 1,
+                            style: GoogleFonts.lato(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF0F172A),
+                              letterSpacing: -0.2,
+                            ),
                           ),
                         ),
+                        SizedBox(height: 3.h),
+                        Text(
+                          subtitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.lato(
+                            fontSize: 11.5.sp,
+                            fontWeight: FontWeight.w400,
+                            color: const Color(0xFF64748B),
+                            height: 1.25,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 8.w),
+
+                  // Right Action: Vibrant Orange Pill Button
+                  if (!isLoggedIn)
+                    GestureDetector(
+                      onTap: () => Get.toNamed(Routes.LOGIN),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 14.w,
+                          vertical: 8.5.h,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color(0xFFFF7A1A),
+                              Color(0xFFFF4800),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(24.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFF5722)
+                                  .withValues(alpha: 0.35),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              isLoggedIn ? Iconsax.logout : Iconsax.login,
-                              size: 20.r,
-                              color: isLoggedIn ? AppColor.error : AppColor.primary,
+                              Icons.login_rounded,
+                              color: Colors.white,
+                              size: 16.r,
                             ),
-                            SizedBox(width: 8.w),
+                            SizedBox(width: 6.w),
                             Text(
-                              isLoggedIn
-                                  ? (isBn ? 'লগআউট' : 'Logout')
-                                  : (isBn ? 'লগ ইন / সাইন আপ' : 'Log In / Register'),
+                              isBn ? 'সাইন ইন' : 'Sign In',
                               style: GoogleFonts.lato(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.bold,
-                                color: isLoggedIn ? AppColor.error : AppColor.primary,
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
                               ),
                             ),
                           ],
                         ),
                       ),
+                    )
+                  else
+                    Container(
+                      width: 32.r,
+                      height: 32.r,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF1F5F9),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Icon(
+                          Icons.chevron_right_rounded,
+                          size: 20.r,
+                          color: const Color(0xFF0F172A),
+                        ),
+                      ),
                     ),
-                  );
-                }),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
-        ),
+        );
+      }),
     );
   }
 
@@ -398,7 +518,11 @@ class AccountView extends GetView<AccountController> {
                     borderRadius: BorderRadius.circular(12.r),
                     border: Border.all(color: const Color(0xFFFFEDD5)),
                   ),
-                  child: Icon(Iconsax.wallet_2, color: AppColor.primary, size: 22.r),
+                  child: Icon(
+                    Iconsax.wallet_2,
+                    color: AppColor.primary,
+                    size: 22.r,
+                  ),
                 ),
                 SizedBox(width: 14.w),
                 Expanded(
@@ -427,7 +551,10 @@ class AccountView extends GetView<AccountController> {
                   ),
                 ),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 5.h,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFF7ED),
                     borderRadius: BorderRadius.circular(20.r),
@@ -464,9 +591,13 @@ class AccountView extends GetView<AccountController> {
   Widget _buildAchievementsSection(BuildContext context) {
     return Obx(() {
       final isLoggedIn = controller.isLoggedIn.value;
+      if (!isLoggedIn) {
+        return const SizedBox.shrink();
+      }
       final myProg = controller.myProgress.value;
       final activePeriod = controller.selectedClubPeriod.value;
-      final periodProg = myProg?.getPeriod(activePeriod) ??
+      final periodProg =
+          myProg?.getPeriod(activePeriod) ??
           (myProg?.periods.isNotEmpty == true ? myProg!.periods.first : null);
 
       final club = periodProg?.club;
@@ -539,11 +670,16 @@ class AccountView extends GetView<AccountController> {
                     if (isLoggedIn) {
                       Get.toNamed(Routes.LEADERBOARDS);
                     } else {
-                      controller.requireLogin(() => Get.toNamed(Routes.LEADERBOARDS));
+                      controller.requireLogin(
+                        () => Get.toNamed(Routes.LEADERBOARDS),
+                      );
                     }
                   },
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.w,
+                      vertical: 5.h,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFFF7ED),
                       borderRadius: BorderRadius.circular(20.r),
@@ -582,14 +718,18 @@ class AccountView extends GetView<AccountController> {
                   child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 2.w),
                     child: GestureDetector(
-                      onTap: () => controller.changeClubPeriod(p['key'] as String),
+                      onTap: () =>
+                          controller.changeClubPeriod(p['key'] as String),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         padding: EdgeInsets.symmetric(vertical: 6.h),
                         decoration: BoxDecoration(
                           gradient: isSelected
                               ? const LinearGradient(
-                                  colors: [Color(0xFFFF7A18), Color(0xFFFF5200)],
+                                  colors: [
+                                    Color(0xFFFF7A18),
+                                    Color(0xFFFF5200),
+                                  ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 )
@@ -598,11 +738,15 @@ class AccountView extends GetView<AccountController> {
                           borderRadius: BorderRadius.circular(20.r),
                           border: isSelected
                               ? null
-                              : Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
+                              : Border.all(
+                                  color: const Color(0xFFE2E8F0),
+                                  width: 1.0,
+                                ),
                           boxShadow: isSelected
                               ? [
                                   BoxShadow(
-                                    color: const Color(0xFFFF5200).withValues(alpha: 0.35),
+                                    color: const Color(0xFFFF5200)
+                                        .withValues(alpha: 0.35),
                                     blurRadius: 8,
                                     offset: const Offset(0, 2),
                                   ),
@@ -613,17 +757,25 @@ class AccountView extends GetView<AccountController> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              isSelected ? Icons.check_rounded : (p['icon'] as IconData),
+                              isSelected
+                                  ? Icons.check_rounded
+                                  : (p['icon'] as IconData),
                               size: 13.r,
-                              color: isSelected ? AppColor.white : const Color(0xFF64748B),
+                              color: isSelected
+                                  ? AppColor.white
+                                  : const Color(0xFF64748B),
                             ),
                             SizedBox(width: 3.w),
                             Text(
                               p['label'] as String,
                               style: GoogleFonts.lato(
                                 fontSize: 11.sp,
-                                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                                color: isSelected ? AppColor.white : const Color(0xFF475569),
+                                fontWeight: isSelected
+                                    ? FontWeight.w800
+                                    : FontWeight.w600,
+                                color: isSelected
+                                    ? AppColor.white
+                                    : const Color(0xFF475569),
                               ),
                             ),
                           ],
@@ -725,13 +877,17 @@ class AccountView extends GetView<AccountController> {
                                     ),
                                     decoration: BoxDecoration(
                                       gradient: const LinearGradient(
-                                        colors: [Color(0xFF451A03), Color(0xFF78350F)],
+                                        colors: [
+                                          Color(0xFF451A03),
+                                          Color(0xFF78350F),
+                                        ],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       ),
                                       borderRadius: BorderRadius.circular(6.r),
                                       border: Border.all(
-                                        color: const Color(0xFFFB923C).withValues(alpha: 0.35),
+                                        color: const Color(0xFFFB923C)
+                                            .withValues(alpha: 0.35),
                                         width: 0.8,
                                       ),
                                     ),
@@ -803,7 +959,10 @@ class AccountView extends GetView<AccountController> {
                           LayoutBuilder(
                             builder: (ctx, constraints) {
                               final maxW = constraints.maxWidth;
-                              final fillW = (maxW * progressVal).clamp(0.0, maxW);
+                              final fillW = (maxW * progressVal).clamp(
+                                0.0,
+                                maxW,
+                              );
                               return Container(
                                 width: maxW,
                                 height: 6.h,
@@ -830,7 +989,8 @@ class AccountView extends GetView<AccountController> {
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xFFFF5200).withValues(alpha: 0.4),
+                                        color: const Color(0xFFFF5200)
+                                            .withValues(alpha: 0.4),
                                         blurRadius: 6,
                                         offset: const Offset(0, 1),
                                       ),
@@ -949,10 +1109,7 @@ class AccountView extends GetView<AccountController> {
           children: [
             Container(
               padding: EdgeInsets.all(8.r),
-              decoration: BoxDecoration(
-                color: bgColor,
-                shape: BoxShape.circle,
-              ),
+              decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
               child: Icon(icon, color: iconColor, size: 18.r),
             ),
             SizedBox(height: 10.h),
@@ -1042,10 +1199,7 @@ class _GlowingPointsBadgeState extends State<_GlowingPointsBadge>
                   ],
                   stops: [0.0, 0.35, 0.7, 1.0],
                 ),
-                border: Border.all(
-                  color: const Color(0xFFA85E00),
-                  width: 1.4,
-                ),
+                border: Border.all(color: const Color(0xFFA85E00), width: 1.4),
                 boxShadow: [
                   BoxShadow(
                     color: const Color(0xFFF59E0B).withValues(alpha: 0.45),

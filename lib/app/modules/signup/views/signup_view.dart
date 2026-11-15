@@ -15,9 +15,15 @@ class SignupView extends GetView<SignupController> {
 
   void _handleBack(BuildContext context) {
     final prev = Get.previousRoute;
-    final hasRealPrevious =
-        prev.isNotEmpty && prev != Routes.SPLASH && prev != Routes.SIGNUP;
-    if (hasRealPrevious && Navigator.of(context).canPop()) {
+    final isFromInternalScreen = prev.isNotEmpty &&
+        prev != Routes.SPLASH &&
+        prev != Routes.SIGNUP &&
+        prev != Routes.REGISTER &&
+        prev != '/register' &&
+        prev != '/signup' &&
+        prev != '/notfound' &&
+        prev != '/';
+    if (isFromInternalScreen && Navigator.of(context).canPop()) {
       Get.back();
     } else {
       Get.offAllNamed(Routes.MAIN_NAVIGATION);

@@ -11,6 +11,7 @@ abstract class Routes {
   static const ONBOARDING = _Paths.ONBOARDING;
   static const LOGIN = _Paths.LOGIN;
   static const SIGNUP = _Paths.SIGNUP;
+  static const REGISTER = _Paths.REGISTER;
   static const MAIN_NAVIGATION = _Paths.MAIN_NAVIGATION;
   static const HOME = _Paths.HOME;
   static const CATEGORIES = _Paths.CATEGORIES;
@@ -52,6 +53,7 @@ abstract class _Paths {
   static const ONBOARDING = '/onboarding';
   static const LOGIN = '/login';
   static const SIGNUP = '/signup';
+  static const REGISTER = '/register';
   static const MAIN_NAVIGATION = '/main-navigation';
   static const HOME = '/home';
   static const CATEGORIES = '/categories';

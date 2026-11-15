@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -14,6 +15,8 @@ import 'app/data/services/deep_link_service.dart';
 import 'app/data/services/recently_viewed_service.dart';
 import 'app/data/services/rewards_service.dart';
 import 'app/data/services/wallet_pin_service.dart';
+import 'app/modules/splash/bindings/splash_binding.dart';
+import 'app/modules/splash/views/splash_view.dart';
 import 'app/routes/app_pages.dart';
 
 void main() async {
@@ -54,6 +57,17 @@ void main() async {
   Get.put(DeepLinkService(), permanent: true);
   Get.put(AppUpdateService(), permanent: true);
   DeepLinkService.to.init();
+
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
+      systemNavigationBarColor: Colors.white,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
+  );
+
   runApp(
     ScreenUtilInit(
       designSize: const Size(375, 812),
@@ -70,12 +84,27 @@ void main() async {
             useMaterial3: true,
             scaffoldBackgroundColor: AppColor.background,
             textTheme: GoogleFonts.latoTextTheme(),
+            appBarTheme: const AppBarTheme(
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              surfaceTintColor: Colors.transparent,
+              systemOverlayStyle: SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: Brightness.dark,
+                statusBarBrightness: Brightness.light,
+              ),
+            ),
             colorScheme: ColorScheme.fromSeed(
               seedColor: AppColor.primary,
               primary: AppColor.primary,
             ),
           ),
           initialRoute: AppPages.INITIAL,
+          unknownRoute: GetPage(
+            name: '/notfound',
+            page: () => const SplashView(),
+            binding: SplashBinding(),
+          ),
           getPages: AppPages.routes,
         );
       },

@@ -225,12 +225,10 @@ class HomeView extends GetView<HomeController> {
   Widget _buildSingleRail(ShowcaseRailModel rail) {
     if (rail.products.isEmpty) return const SizedBox.shrink();
 
-    final categoryName = rail.categoryName.trim();
-    final railTitle = categoryName.isNotEmpty
-        ? (categoryName.toLowerCase().startsWith('handpicked')
-            ? categoryName
-            : 'Handpicked From $categoryName')
-        : 'Handpicked Products';
+    final categoryName = rail.categoryName
+        .replaceAll(RegExp(r'^Handpicked\s+(From\s+)?', caseSensitive: false), '')
+        .trim();
+    final railTitle = categoryName.isNotEmpty ? categoryName : 'Featured';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

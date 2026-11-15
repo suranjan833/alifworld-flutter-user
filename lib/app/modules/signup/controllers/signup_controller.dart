@@ -59,13 +59,26 @@ class SignupController extends GetxController {
   }
 
   void _handleIncomingArguments() {
+    // 1. If user is already logged in, redirect to main navigation
+    final token = getBox.read(USER_TOKEN);
+    final hasToken = token != null && token.toString().trim().isNotEmpty;
+    final loggedInVal = getBox.read(IS_USER_LOGGED_IN);
+    final isLoggedIn =
+        (loggedInVal == true || loggedInVal == 'true' || hasToken);
+    if (isLoggedIn) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Get.offAllNamed(Routes.MAIN_NAVIGATION);
+      });
+      return;
+    }
+
     final args = Get.arguments;
+    String? refCode;
     if (args is Map<String, dynamic>) {
       final phone = args['phone']?.toString() ?? '';
       final token = args['regToken']?.toString() ?? '';
       final country = args['country'];
-      final refCode =
-          args['referralCode']?.toString() ?? args['ref']?.toString();
+      refCode = args['referralCode']?.toString() ?? args['ref']?.toString();
 
       if (country is CountryModel) {
         selectedCountry.value = country;
@@ -84,13 +97,22 @@ class SignupController extends GetxController {
         isPhoneVerified.value = true;
         isPhoneOtpSent.value = true;
       }
+    }
 
-      if (refCode != null && refCode.trim().isNotEmpty) {
-        referralCodeController.text = refCode.trim().toUpperCase();
+    // 2. Also check URL query parameters (e.g. /register?ref=CODE)
+    if (refCode == null || refCode.trim().isEmpty) {
+      final paramRef = Get.parameters['ref'] ?? Get.parameters['referralCode'];
+      if (paramRef != null && paramRef.trim().isNotEmpty) {
+        refCode = paramRef;
       }
     }
 
-    // Prefill pending referral code from storage if field is still empty
+    if (refCode != null && refCode.trim().isNotEmpty) {
+      referralCodeController.text = refCode.trim().toUpperCase();
+      getBox.write(PENDING_REFERRAL_CODE, refCode.trim().toUpperCase());
+    }
+
+    // 3. Prefill pending referral code from storage if field is still empty
     if (referralCodeController.text.trim().isEmpty) {
       final pendingCode = getBox.read(PENDING_REFERRAL_CODE)?.toString();
       if (pendingCode != null && pendingCode.trim().isNotEmpty) {
