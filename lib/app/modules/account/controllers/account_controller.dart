@@ -16,7 +16,6 @@ import '../../../data/widgets/wallet_pin_dialog.dart';
 import '../../../routes/app_pages.dart';
 import '../../leaderboards/models/leaderboard_model.dart';
 import '../../my_profile/controllers/my_profile_controller.dart';
-import '../../home/controllers/home_controller.dart';
 import '../../main_navigation/controllers/main_navigation_controller.dart';
 
 class AccountMenuItem {
@@ -958,12 +957,7 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
                               0;
                         }
 
-                        // 4. Delete stale controller instances
-                        Get.delete<MainNavigationController>(force: true);
-                        Get.delete<HomeController>(force: true);
-                        Get.delete<AccountController>(force: true);
-
-                        // 5. Navigate to Login cleanly
+                        // 4. Navigate to Login cleanly
                         Get.offAllNamed(Routes.LOGIN);
                       },
                       style: ElevatedButton.styleFrom(

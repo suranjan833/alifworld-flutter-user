@@ -25,7 +25,7 @@ class MainNavigationView extends GetView<MainNavigationController> {
     return Get.find<MainNavigationController>();
   }
 
-  static const List<Widget> _views = [
+  final List<Widget> _views = const [
     HomeView(),
     CategoriesView(),
     DiscoverView(),
@@ -173,6 +173,7 @@ class MainNavigationView extends GetView<MainNavigationController> {
           onTap: () => controller.changeTab(index),
           child: Container(
             color: Colors.transparent,
+            height: double.infinity,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

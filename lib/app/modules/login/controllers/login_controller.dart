@@ -405,18 +405,20 @@ class LoginController extends GetxController {
       Get.find<MainNavigationController>().currentIndex.value = 0;
     }
 
-    // 3. Clear stale controller instances so fresh state is initialized
-    Get.delete<AccountController>(force: true);
-    Get.delete<MainNavigationController>(force: true);
-    Get.delete<HomeController>(force: true);
+    // 3. Refresh user data in AccountController and HomeController
+    if (Get.isRegistered<AccountController>()) {
+      final accountCtrl = Get.find<AccountController>();
+      accountCtrl.isLoggedIn.value = true;
+      accountCtrl.fetchUserProfile();
+      accountCtrl.fetchTotalBalance();
+      accountCtrl.fetchMyProgress();
+    }
+    if (Get.isRegistered<HomeController>()) {
+      Get.find<HomeController>().refreshData();
+    }
 
     // 4. Navigate to MAIN_NAVIGATION cleanly
     Get.offAllNamed(Routes.MAIN_NAVIGATION);
-
-    // 5. Show success message AFTER navigation so it does not block the UI
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      showSnack('Success', 'Logged in successfully!', bg: AppColor.black87);
-    });
   }
 
   void goToSignup() {
