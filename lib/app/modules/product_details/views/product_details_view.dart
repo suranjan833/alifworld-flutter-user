@@ -1030,8 +1030,9 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
   }
 
   Widget _buildRecentlyViewedStrip() {
-    if (!Get.isRegistered<RecentlyViewedService>())
+    if (!Get.isRegistered<RecentlyViewedService>()) {
       return const SizedBox.shrink();
+    }
 
     return Obx(() {
       final currentSlug = controller.product.value?.slug;
