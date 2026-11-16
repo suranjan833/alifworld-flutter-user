@@ -10,10 +10,12 @@ import '../controllers/main_navigation_controller.dart';
 class MainNavigationBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<MainNavigationController>(
-      () => MainNavigationController(),
-      fenix: true,
-    );
+    if (!Get.isRegistered<MainNavigationController>()) {
+      Get.put<MainNavigationController>(
+        MainNavigationController(),
+        permanent: true,
+      );
+    }
     Get.lazyPut<HomeController>(() => HomeController(), fenix: true);
     Get.lazyPut<CategoriesController>(
       () => CategoriesController(),
