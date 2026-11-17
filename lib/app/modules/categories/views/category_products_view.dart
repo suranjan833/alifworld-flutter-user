@@ -220,7 +220,10 @@ class CategoryProductsView extends GetView<CategoryProductsController> {
         ),
       ),
       actions: [
-        _buildCircularAction(icon: Iconsax.search_normal_1, onTap: () {}),
+        _buildCircularAction(
+          icon: Iconsax.search_normal_1,
+          onTap: () => Get.toNamed(Routes.SEARCH),
+        ),
         SizedBox(width: 6.w),
         Obx(() {
           if (!Get.isRegistered<BagController>()) {

@@ -45,6 +45,8 @@ abstract class Routes {
   static const LOTTERY_DETAIL = _Paths.LOTTERY_DETAIL;
   static const LOTTERY_RESULTS = _Paths.LOTTERY_RESULTS;
   static const MY_LOTTERY_TICKETS = _Paths.MY_LOTTERY_TICKETS;
+  static const ADVANCED_SHOPPING = _Paths.ADVANCED_SHOPPING;
+  static const SEARCH = _Paths.SEARCH;
 }
 
 abstract class _Paths {
@@ -87,4 +89,6 @@ abstract class _Paths {
   static const LOTTERY_DETAIL = '/lottery-detail';
   static const LOTTERY_RESULTS = '/lottery-results';
   static const MY_LOTTERY_TICKETS = '/my-lottery-tickets';
+  static const ADVANCED_SHOPPING = '/advanced-shopping';
+  static const SEARCH = '/search';
 }

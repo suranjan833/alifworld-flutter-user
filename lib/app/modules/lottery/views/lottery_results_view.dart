@@ -191,12 +191,19 @@ class _LotteryResultsViewState extends State<LotteryResultsView> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Prize Pool: ৳${res.poolAmount.toStringAsFixed(2)}',
-                style: GoogleFonts.lato(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppColor.textPrimary,
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(6.r),
+                ),
+                child: Text(
+                  'PER-RANK GIFTS',
+                  style: GoogleFonts.lato(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF92400E),
+                  ),
                 ),
               ),
               Text(
@@ -259,6 +266,9 @@ class _LotteryResultsViewState extends State<LotteryResultsView> {
         ? winnerUser!.name
         : (winnerUser?.maskedPhone ?? 'Winner #${winner.position}');
 
+    final isCustomGift = winner.gift != null && winner.gift!.isCustom;
+    final giftTitle = winner.gift?.title ?? 'Gift';
+
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
       padding: EdgeInsets.all(14.r),
@@ -281,120 +291,183 @@ class _LotteryResultsViewState extends State<LotteryResultsView> {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Position Trophy / Badge
-          Container(
-            width: 38.r,
-            height: 38.r,
-            decoration: BoxDecoration(
-              color: isFirst
-                  ? const Color(0xFFF59E0B)
-                  : const Color(0xFF0F172A),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: isFirst
-                  ? const Icon(Icons.emoji_events, color: Colors.white, size: 20)
-                  : Text(
-                      '#${winner.position}',
-                      style: GoogleFonts.lato(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-            ),
-          ),
-          SizedBox(width: 10.w),
-
-          // Winner Avatar
-          CircleAvatar(
-            radius: 18.r,
-            backgroundColor: const Color(0xFFE2E8F0),
-            backgroundImage: (winnerUser?.avatarUrl != null && winnerUser!.avatarUrl!.isNotEmpty)
-                ? NetworkImage(winnerUser.avatarUrl!)
-                : null,
-            child: (winnerUser?.avatarUrl == null || winnerUser!.avatarUrl!.isEmpty)
-                ? const Icon(Icons.person, color: Color(0xFF64748B), size: 18)
-                : null,
-          ),
-          SizedBox(width: 12.w),
-
-          // Winner details + Ticket number
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        displayName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.lato(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.bold,
-                          color: AppColor.textPrimary,
-                        ),
-                      ),
-                    ),
-                    if (isMyTicket) ...[
-                      SizedBox(width: 6.w),
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2563EB),
-                          borderRadius: BorderRadius.circular(4.r),
-                        ),
-                        child: Text(
-                          'YOUR TICKET!',
+          Row(
+            children: [
+              // Position Trophy / Badge
+              Container(
+                width: 38.r,
+                height: 38.r,
+                decoration: BoxDecoration(
+                  color: isFirst
+                      ? const Color(0xFFF59E0B)
+                      : const Color(0xFF0F172A),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: isFirst
+                      ? const Icon(Icons.emoji_events, color: Colors.white, size: 20)
+                      : Text(
+                          '#${winner.position}',
                           style: GoogleFonts.lato(
-                            fontSize: 9.sp,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
                         ),
+                ),
+              ),
+              SizedBox(width: 10.w),
+
+              // Winner Avatar
+              CircleAvatar(
+                radius: 18.r,
+                backgroundColor: const Color(0xFFE2E8F0),
+                backgroundImage: (winnerUser?.avatarUrl != null && winnerUser!.avatarUrl!.isNotEmpty)
+                    ? NetworkImage(winnerUser.avatarUrl!)
+                    : null,
+                child: (winnerUser?.avatarUrl == null || winnerUser!.avatarUrl!.isEmpty)
+                    ? const Icon(Icons.person, color: Color(0xFF64748B), size: 18)
+                    : null,
+              ),
+              SizedBox(width: 12.w),
+
+              // Winner details + Ticket number
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            displayName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.lato(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.bold,
+                              color: AppColor.textPrimary,
+                            ),
+                          ),
+                        ),
+                        if (isMyTicket) ...[
+                          SizedBox(width: 6.w),
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2563EB),
+                              borderRadius: BorderRadius.circular(4.r),
+                            ),
+                            child: Text(
+                              'YOUR TICKET!',
+                              style: GoogleFonts.lato(
+                                fontSize: 9.sp,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    if (winnerUser?.maskedPhone != null &&
+                        winnerUser!.maskedPhone!.isNotEmpty &&
+                        winnerUser.maskedPhone != displayName) ...[
+                      SizedBox(height: 2.h),
+                      Text(
+                        winnerUser.maskedPhone!,
+                        style: GoogleFonts.lato(
+                          fontSize: 11.sp,
+                          color: AppColor.textSecondary,
+                        ),
                       ),
                     ],
+                    SizedBox(height: 2.h),
+                    Text(
+                      'Ticket #${winner.ticketNumber}',
+                      style: GoogleFonts.lato(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                        color: AppColor.primary,
+                      ),
+                    ),
                   ],
                 ),
-                if (winnerUser?.maskedPhone != null &&
-                    winnerUser!.maskedPhone!.isNotEmpty &&
-                    winnerUser.maskedPhone != displayName) ...[
+              ),
+
+              // Prize / Gift
+              if (isCustomGift)
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFCE7F3),
+                    borderRadius: BorderRadius.circular(6.r),
+                    border: Border.all(color: const Color(0xFFFBCFE8)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Iconsax.gift, size: 14.r, color: const Color(0xFFBE185D)),
+                      SizedBox(width: 4.w),
+                      Text(
+                        giftTitle,
+                        style: GoogleFonts.lato(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFFBE185D),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Text(
+                  '৳${winner.prize.toStringAsFixed(2)}',
+                  style: GoogleFonts.lato(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w800,
+                    color: isFirst ? const Color(0xFF92400E) : AppColor.primary,
+                  ),
+                ),
+            ],
+          ),
+          if (isMyTicket && isCustomGift) ...[
+            SizedBox(height: 10.h),
+            Container(
+              padding: EdgeInsets.all(10.r),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10.r),
+                border: Border.all(color: const Color(0xFF93C5FD)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '🎉 You won $giftTitle!',
+                    style: GoogleFonts.lato(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF1E40AF),
+                    ),
+                  ),
                   SizedBox(height: 2.h),
                   Text(
-                    winnerUser.maskedPhone!,
+                    'Our team will contact you directly, or contact customer service for more information.',
                     style: GoogleFonts.lato(
                       fontSize: 11.sp,
-                      color: AppColor.textSecondary,
+                      color: const Color(0xFF1D4ED8),
+                      height: 1.3,
                     ),
                   ),
                 ],
-                SizedBox(height: 2.h),
-                Text(
-                  'Ticket #${winner.ticketNumber}',
-                  style: GoogleFonts.lato(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
-                    color: AppColor.primary,
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-
-          // Prize
-          Text(
-            '৳${winner.prize.toStringAsFixed(2)}',
-            style: GoogleFonts.lato(
-              fontSize: 15.sp,
-              fontWeight: FontWeight.w800,
-              color: isFirst ? const Color(0xFF92400E) : AppColor.primary,
-            ),
-          ),
+          ],
         ],
       ),
     );

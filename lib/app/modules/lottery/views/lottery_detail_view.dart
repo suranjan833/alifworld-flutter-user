@@ -134,6 +134,12 @@ class _LotteryDetailViewState extends State<LotteryDetailView> {
 
               SizedBox(height: 14.h),
 
+              // 3.1 Per-rank Gifts List (unconditional per-rank lottery gifts)
+              if (lottery.gifts.isNotEmpty) ...[
+                _buildGiftsSection(lottery),
+                SizedBox(height: 14.h),
+              ],
+
               // 4. Ticket Purchase Section (Active draws)
               if (lottery.status.toLowerCase() == 'active')
                 lottery.isSeller
@@ -197,7 +203,7 @@ class _LotteryDetailViewState extends State<LotteryDetailView> {
                             borderRadius: BorderRadius.circular(8.r),
                           ),
                           child: Text(
-                            'PRIZE POOL: ৳${lottery.poolAmount.toStringAsFixed(2)}',
+                            'TOP PRIZE: ${lottery.topPrizeTitle.toUpperCase()}',
                             style: GoogleFonts.lato(
                               fontSize: 11.sp,
                               fontWeight: FontWeight.w800,
@@ -344,6 +350,185 @@ class _LotteryDetailViewState extends State<LotteryDetailView> {
             style: GoogleFonts.lato(
               fontSize: 11.sp,
               color: AppColor.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGiftsSection(LotteryItemModel lottery) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16.w),
+      padding: EdgeInsets.all(16.r),
+      decoration: BoxDecoration(
+        color: AppColor.white,
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(color: AppColor.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(Iconsax.gift, color: const Color(0xFFD97706), size: 20.r),
+                  SizedBox(width: 8.w),
+                  Text(
+                    'Per-Rank Gifts',
+                    style: GoogleFonts.lato(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.bold,
+                      color: AppColor.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(6.r),
+                ),
+                child: Text(
+                  '${lottery.gifts.length} Ranks',
+                  style: GoogleFonts.lato(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF92400E),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          ...lottery.gifts.map((gift) => _buildGiftRow(gift)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGiftRow(LotteryGiftModel gift) {
+    final isFirst = gift.rank == 1;
+    return Container(
+      margin: EdgeInsets.only(bottom: 8.h),
+      padding: EdgeInsets.all(12.r),
+      decoration: BoxDecoration(
+        color: isFirst ? const Color(0xFFFFFBEB) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(
+          color: isFirst ? const Color(0xFFFDE68A) : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 34.r,
+            height: 34.r,
+            decoration: BoxDecoration(
+              color: isFirst ? const Color(0xFFF59E0B) : const Color(0xFF0F172A),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: isFirst
+                  ? const Icon(Icons.emoji_events, color: Colors.white, size: 18)
+                  : Text(
+                      '#${gift.rank}',
+                      style: GoogleFonts.lato(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+            ),
+          ),
+          SizedBox(width: 10.w),
+          if (gift.imageUrl != null && gift.imageUrl!.isNotEmpty) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8.r),
+              child: Image.network(
+                gift.imageUrl!,
+                width: 40.r,
+                height: 40.r,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+              ),
+            ),
+            SizedBox(width: 10.w),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        gift.isCustom
+                            ? (gift.title ?? 'Custom Gift')
+                            : 'Points Gift: ৳${(gift.pointsAmount ?? 0).toStringAsFixed(2)}',
+                        style: GoogleFonts.lato(
+                          fontSize: 13.5.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColor.textPrimary,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                      decoration: BoxDecoration(
+                        color: gift.isCustom
+                            ? const Color(0xFFFCE7F3)
+                            : const Color(0xFFDCFCE7),
+                        borderRadius: BorderRadius.circular(4.r),
+                      ),
+                      child: Text(
+                        gift.isCustom ? 'CUSTOM' : 'POINTS',
+                        style: GoogleFonts.lato(
+                          fontSize: 9.sp,
+                          fontWeight: FontWeight.w800,
+                          color: gift.isCustom
+                              ? const Color(0xFFBE185D)
+                              : const Color(0xFF16A34A),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (gift.isCustom && gift.description != null && gift.description!.isNotEmpty) ...[
+                  SizedBox(height: 2.h),
+                  Text(
+                    gift.description!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.lato(
+                      fontSize: 11.5.sp,
+                      color: AppColor.textSecondary,
+                    ),
+                  ),
+                ],
+                if (gift.isPoints && gift.displayWalletTitle.isNotEmpty) ...[
+                  SizedBox(height: 2.h),
+                  Text(
+                    'Paid into: ${gift.displayWalletTitle} Wallet',
+                    style: GoogleFonts.lato(
+                      fontSize: 11.5.sp,
+                      color: const Color(0xFF059669),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
         ],
@@ -660,6 +845,9 @@ class _LotteryDetailViewState extends State<LotteryDetailView> {
   }
 
   Widget _buildTicketRow(LotteryTicketModel ticket) {
+    final hasCustomGift = ticket.isWinner && ticket.winGift != null && ticket.winGift!.isCustom;
+    final giftTitle = ticket.winGift?.title ?? 'Special Gift';
+
     return Container(
       margin: EdgeInsets.only(bottom: 8.h),
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
@@ -670,53 +858,92 @@ class _LotteryDetailViewState extends State<LotteryDetailView> {
           color: ticket.isWinner ? const Color(0xFFF59E0B) : const Color(0xFFE2E8F0),
         ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(
-                Iconsax.ticket,
-                color: ticket.isWinner ? const Color(0xFFD97706) : AppColor.primary,
-                size: 18.r,
+              Row(
+                children: [
+                  Icon(
+                    Iconsax.ticket,
+                    color: ticket.isWinner ? const Color(0xFFD97706) : AppColor.primary,
+                    size: 18.r,
+                  ),
+                  SizedBox(width: 8.w),
+                  Text(
+                    'Ticket #${ticket.ticketNumber}',
+                    style: GoogleFonts.lato(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.0,
+                      color: AppColor.textPrimary,
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(width: 8.w),
-              Text(
-                'Ticket #${ticket.ticketNumber}',
-                style: GoogleFonts.lato(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.0,
-                  color: AppColor.textPrimary,
+              if (ticket.isWinner)
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF59E0B),
+                    borderRadius: BorderRadius.circular(6.r),
+                  ),
+                  child: Text(
+                    hasCustomGift
+                        ? 'WINNER #${ticket.winPosition ?? 1} • $giftTitle'
+                        : 'WINNER #${ticket.winPosition ?? 1}${ticket.winPrize != null ? " • ৳${ticket.winPrize!.toStringAsFixed(0)}" : ""}',
+                    style: GoogleFonts.lato(
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.bold,
+                      color: AppColor.white,
+                    ),
+                  ),
+                )
+              else
+                Text(
+                  'Active',
+                  style: GoogleFonts.lato(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF10B981),
+                  ),
                 ),
-              ),
             ],
           ),
-          if (ticket.isWinner)
+          if (hasCustomGift) ...[
+            SizedBox(height: 8.h),
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+              padding: EdgeInsets.all(8.r),
               decoration: BoxDecoration(
-                color: const Color(0xFFF59E0B),
-                borderRadius: BorderRadius.circular(6.r),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8.r),
+                border: Border.all(color: const Color(0xFFFDE68A)),
               ),
-              child: Text(
-                'WINNER #${ticket.winPosition ?? 1}${ticket.winPrize != null ? " • ৳${ticket.winPrize!.toStringAsFixed(0)}" : ""}',
-                style: GoogleFonts.lato(
-                  fontSize: 10.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppColor.white,
-                ),
-              ),
-            )
-          else
-            Text(
-              'Active',
-              style: GoogleFonts.lato(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF10B981),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '🎉 You won $giftTitle',
+                    style: GoogleFonts.lato(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF92400E),
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    'Our team will contact you directly, or contact customer service for more information.',
+                    style: GoogleFonts.lato(
+                      fontSize: 10.5.sp,
+                      color: const Color(0xFFB45309),
+                    ),
+                  ),
+                ],
               ),
             ),
+          ],
         ],
       ),
     );

@@ -254,6 +254,11 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
           onTap: () => requireLogin(() => Get.toNamed(Routes.LOTTERY)),
         ),
         AccountMenuItem(
+          title: 'Advance Shopping',
+          icon: Iconsax.trend_up,
+          onTap: () => requireLogin(() => Get.toNamed(Routes.ADVANCED_SHOPPING)),
+        ),
+        AccountMenuItem(
           title: 'Wallet PIN Settings',
           icon: Iconsax.shield_security,
           onTap: () => requireLogin(() {
