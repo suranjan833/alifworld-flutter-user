@@ -395,7 +395,7 @@ class LotteryListView extends GetView<LotteryController> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              item.prizeTitle ?? 'Grand Prize',
+                              item.topPrizeTitle,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.lato(
@@ -405,7 +405,7 @@ class LotteryListView extends GetView<LotteryController> {
                               ),
                             ),
                             Text(
-                              'Pool: ৳${item.poolAmount.toStringAsFixed(2)} • ${item.winnerCountText}',
+                              item.topPrizeSubtitle,
                               style: GoogleFonts.lato(
                                 fontSize: 11.5.sp,
                                 color: const Color(0xFFB45309),
@@ -535,12 +535,12 @@ class LotteryListView extends GetView<LotteryController> {
                 ),
                 SizedBox(height: 10.h),
 
-                // Prize Pool & Draw Date
+                // Top Prize & Draw Date
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      item.prizeTitle ?? 'Prize Pool: ৳${item.poolAmount.toStringAsFixed(2)}',
+                      'Top Prize: ${item.topPrizeTitle}',
                       style: GoogleFonts.lato(
                         fontSize: 13.5.sp,
                         fontWeight: FontWeight.bold,
@@ -604,7 +604,9 @@ class LotteryListView extends GetView<LotteryController> {
                             ),
                           ),
                           Text(
-                            '#${w.ticketNumber} • ৳${w.prize.toStringAsFixed(0)}',
+                            w.gift != null && w.gift!.isCustom
+                                ? '#${w.ticketNumber} • ${w.gift!.title ?? 'Gift'}'
+                                : '#${w.ticketNumber} • ৳${w.prize.toStringAsFixed(0)}',
                             style: GoogleFonts.lato(
                               fontSize: 11.5.sp,
                               fontWeight: FontWeight.bold,

@@ -1486,11 +1486,11 @@ class WalletView extends GetView<WalletController> {
 
             SizedBox(height: 12.h),
 
-            // 2. Advance Shopping Deposit
+            // 2. Advance Shopping Packages
             InkWell(
               onTap: () {
                 Navigator.of(ctx).pop();
-                _showDepositSheet(context);
+                Get.toNamed(Routes.ADVANCED_SHOPPING);
               },
               borderRadius: BorderRadius.circular(14.r),
               child: Container(
@@ -1510,7 +1510,7 @@ class WalletView extends GetView<WalletController> {
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
-                        Iconsax.trend_up,
+                        Iconsax.box_tick,
                         color: AppColor.primary,
                         size: 22,
                       ),
@@ -1521,7 +1521,7 @@ class WalletView extends GetView<WalletController> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Advance Shopping Deposit',
+                            'Advance Shopping Packages',
                             style: GoogleFonts.lato(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.bold,
@@ -1530,7 +1530,7 @@ class WalletView extends GetView<WalletController> {
                           ),
                           SizedBox(height: 2.h),
                           Text(
-                            'Add advance shopping credits for extra purchase perks',
+                            'Invest in fixed packages & scheduled profit payouts',
                             style: GoogleFonts.lato(
                               fontSize: 11.5.sp,
                               color: AppColor.textSecondary,
@@ -1755,375 +1755,6 @@ class WalletView extends GetView<WalletController> {
     );
   }
 
-  void _showDepositSheet(BuildContext context) {
-    final amountController = TextEditingController();
-    final presets = [100.0, 500.0, 1000.0, 5000.0];
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColor.transparent,
-      builder: (ctx) => Container(
-        padding: EdgeInsets.only(
-          left: 20.w,
-          right: 20.w,
-          top: 20.h,
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + 20.h,
-        ),
-        decoration: BoxDecoration(
-          color: AppColor.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40.w,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  color: AppColor.grey.shade300,
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-              ),
-            ),
-            SizedBox(height: 16.h),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Deposit Funds',
-                  style: GoogleFonts.lato(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.bold,
-                    color: AppColor.textPrimary,
-                  ),
-                ),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Text(
-                    'Advance Shopping',
-                    style: GoogleFonts.lato(
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF2563EB),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              'Add advance shopping funds for guaranteed discounts and fast checkout.',
-              style: GoogleFonts.lato(
-                fontSize: 12.sp,
-                color: AppColor.textSecondary,
-              ),
-            ),
-            SizedBox(height: 16.h),
-            TextField(
-              controller: amountController,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              style: GoogleFonts.lato(
-                fontSize: 22.sp,
-                fontWeight: FontWeight.bold,
-              ),
-              decoration: InputDecoration(
-                prefixText: '${controller.currencySymbol.value} ',
-                prefixStyle: GoogleFonts.lato(
-                  fontSize: 22.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppColor.primary,
-                ),
-                hintText: '0.00',
-                filled: true,
-                fillColor: const Color(0xFFF8FAFC),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14.r),
-                  borderSide: BorderSide(color: AppColor.grey.shade200),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14.r),
-                  borderSide: BorderSide(color: AppColor.grey.shade200),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14.r),
-                  borderSide: const BorderSide(
-                    color: AppColor.primary,
-                    width: 1.5,
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: 12.h),
-            Wrap(
-              spacing: 8.w,
-              children: presets.map((p) {
-                return ActionChip(
-                  label: Text(
-                    '+${controller.currencySymbol.value}${p.toInt()}',
-                  ),
-                  backgroundColor: const Color(0xFFF1F5F9),
-                  labelStyle: GoogleFonts.lato(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColor.textPrimary,
-                  ),
-                  onPressed: () {
-                    amountController.text = p.toStringAsFixed(0);
-                  },
-                );
-              }).toList(),
-            ),
-            SizedBox(height: 20.h),
-            SizedBox(
-              width: double.infinity,
-              height: 48.h,
-              child: Obx(
-                () => ElevatedButton(
-                  onPressed: controller.isSubmittingAction.value
-                      ? null
-                      : () async {
-                          final val =
-                              double.tryParse(amountController.text.trim()) ??
-                              0.0;
-                          final ok = await controller.depositAdvanceShopping(
-                            val,
-                          );
-                          if (ok && ctx.mounted) {
-                            Navigator.of(ctx).pop();
-                          }
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColor.primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14.r),
-                    ),
-                  ),
-                  child: controller.isSubmittingAction.value
-                      ? SizedBox(
-                          width: 20.r,
-                          height: 20.r,
-                          child: const CircularProgressIndicator(
-                            color: AppColor.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : Text(
-                          'Confirm Deposit',
-                          style: GoogleFonts.lato(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.bold,
-                            color: AppColor.white,
-                          ),
-                        ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showWithdrawSheet(BuildContext context) {
-    final amountController = TextEditingController();
-    final advWallet = controller.wallets.firstWhereOrNull(
-      (w) => w.kind == 'customer_advanced_shopping',
-    );
-    final availableBal = advWallet?.balance ?? 0.0;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColor.transparent,
-      builder: (ctx) => Container(
-        padding: EdgeInsets.only(
-          left: 20.w,
-          right: 20.w,
-          top: 20.h,
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + 20.h,
-        ),
-        decoration: BoxDecoration(
-          color: AppColor.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40.w,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  color: AppColor.grey.shade300,
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-              ),
-            ),
-            SizedBox(height: 16.h),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Withdraw Funds',
-                  style: GoogleFonts.lato(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.bold,
-                    color: AppColor.textPrimary,
-                  ),
-                ),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFEF3C7),
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Text(
-                    'Advance Shopping',
-                    style: GoogleFonts.lato(
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFFD97706),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 8.h),
-            Row(
-              children: [
-                Text(
-                  'Available to withdraw: ',
-                  style: GoogleFonts.lato(
-                    fontSize: 12.sp,
-                    color: AppColor.textSecondary,
-                  ),
-                ),
-                Text(
-                  '${controller.currencySymbol.value} ${availableBal.toStringAsFixed(2)}',
-                  style: GoogleFonts.lato(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.bold,
-                    color: AppColor.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 16.h),
-            TextField(
-              controller: amountController,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              style: GoogleFonts.lato(
-                fontSize: 22.sp,
-                fontWeight: FontWeight.bold,
-              ),
-              decoration: InputDecoration(
-                prefixText: '${controller.currencySymbol.value} ',
-                prefixStyle: GoogleFonts.lato(
-                  fontSize: 22.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppColor.primary,
-                ),
-                hintText: '0.00',
-                filled: true,
-                fillColor: const Color(0xFFF8FAFC),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14.r),
-                  borderSide: BorderSide(color: AppColor.grey.shade200),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14.r),
-                  borderSide: BorderSide(color: AppColor.grey.shade200),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14.r),
-                  borderSide: const BorderSide(
-                    color: AppColor.primary,
-                    width: 1.5,
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: 12.h),
-            Row(
-              children: [
-                if (availableBal > 0)
-                  ActionChip(
-                    label: const Text('All Balance'),
-                    backgroundColor: const Color(0xFFF1F5F9),
-                    labelStyle: GoogleFonts.lato(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColor.textPrimary,
-                    ),
-                    onPressed: () {
-                      amountController.text = availableBal.toStringAsFixed(2);
-                    },
-                  ),
-              ],
-            ),
-            SizedBox(height: 20.h),
-            SizedBox(
-              width: double.infinity,
-              height: 48.h,
-              child: Obx(
-                () => ElevatedButton(
-                  onPressed: controller.isSubmittingAction.value
-                      ? null
-                      : () async {
-                          final val =
-                              double.tryParse(amountController.text.trim()) ??
-                              0.0;
-                          final ok = await controller.withdrawAdvanceShopping(
-                            val,
-                          );
-                          if (ok && ctx.mounted) {
-                            Navigator.of(ctx).pop();
-                          }
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0F172A),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14.r),
-                    ),
-                  ),
-                  child: controller.isSubmittingAction.value
-                      ? SizedBox(
-                          width: 20.r,
-                          height: 20.r,
-                          child: const CircularProgressIndicator(
-                            color: AppColor.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : Text(
-                          'Confirm Withdrawal',
-                          style: GoogleFonts.lato(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.bold,
-                            color: AppColor.white,
-                          ),
-                        ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _showWalletDetailsSheet(BuildContext context, WalletItemModel wallet) {
     controller.fetchSingleWallet(wallet.kind);
     showModalBottomSheet(
@@ -2242,66 +1873,34 @@ class WalletView extends GetView<WalletController> {
             ),
             SizedBox(height: 20.h),
             if (wallet.kind == 'customer_advanced_shopping') ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.of(ctx).pop();
-                        _showDepositSheet(context);
-                      },
-                      icon: Icon(
-                        Iconsax.add_circle,
-                        size: 16.r,
-                        color: AppColor.white,
-                      ),
-                      label: Text(
-                        'Deposit',
-                        style: GoogleFonts.lato(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.bold,
-                          color: AppColor.white,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColor.primary,
-                        padding: EdgeInsets.symmetric(vertical: 12.h),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                      ),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    Get.toNamed(Routes.ADVANCED_SHOPPING);
+                  },
+                  icon: Icon(
+                    Iconsax.box_tick,
+                    size: 16.r,
+                    color: AppColor.white,
+                  ),
+                  label: Text(
+                    'Explore & Manage Packages',
+                    style: GoogleFonts.lato(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.bold,
+                      color: AppColor.white,
                     ),
                   ),
-                  SizedBox(width: 10.w),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.of(ctx).pop();
-                        _showWithdrawSheet(context);
-                      },
-                      icon: Icon(
-                        Iconsax.export_1,
-                        size: 16.r,
-                        color: AppColor.textPrimary,
-                      ),
-                      label: Text(
-                        'Withdraw',
-                        style: GoogleFonts.lato(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.bold,
-                          color: AppColor.textPrimary,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 12.h),
-                        side: BorderSide(color: AppColor.grey.shade300),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                      ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColor.primary,
+                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
                   ),
-                ],
+                ),
               ),
               SizedBox(height: 10.h),
             ],
@@ -2480,7 +2079,7 @@ class WalletView extends GetView<WalletController> {
             ),
             SizedBox(width: 8.w),
             ElevatedButton(
-              onPressed: () => _showDepositSheet(context),
+              onPressed: () => Get.toNamed(Routes.ADVANCED_SHOPPING),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF2563EB),
                 foregroundColor: AppColor.white,
@@ -2491,7 +2090,7 @@ class WalletView extends GetView<WalletController> {
                 ),
               ),
               child: Text(
-                'Top Up',
+                'Packages',
                 style: GoogleFonts.lato(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.bold,

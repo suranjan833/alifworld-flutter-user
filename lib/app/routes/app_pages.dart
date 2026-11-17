@@ -6,6 +6,8 @@ import '../modules/about_us/bindings/about_us_binding.dart';
 import '../modules/about_us/views/about_us_view.dart';
 import '../modules/account/bindings/account_binding.dart';
 import '../modules/account/views/account_view.dart';
+import '../modules/advanced_shopping/bindings/advanced_shopping_binding.dart';
+import '../modules/advanced_shopping/views/advanced_shopping_view.dart';
 import '../modules/bag/bindings/bag_binding.dart';
 import '../modules/bag/views/bag_view.dart';
 import '../modules/categories/bindings/categories_binding.dart';
@@ -56,6 +58,8 @@ import '../modules/refer_and_earn/bindings/refer_and_earn_binding.dart';
 import '../modules/refer_and_earn/views/refer_and_earn_view.dart';
 import '../modules/refund_policy/bindings/refund_policy_binding.dart';
 import '../modules/refund_policy/views/refund_policy_view.dart';
+import '../modules/search/bindings/search_binding.dart';
+import '../modules/search/views/search_view.dart';
 import '../modules/seller_details/bindings/seller_details_binding.dart';
 import '../modules/seller_details/views/seller_details_view.dart';
 import '../modules/shipping_policy/bindings/shipping_policy_binding.dart';
@@ -307,6 +311,18 @@ class AppPages {
       page: () => const MyLotteryTicketsView(),
       binding: LotteryBinding(),
       transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: _Paths.ADVANCED_SHOPPING,
+      page: () => const AdvancedShoppingView(),
+      binding: AdvancedShoppingBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: _Paths.SEARCH,
+      page: () => const SearchView(),
+      binding: SearchBinding(),
+      transition: Transition.fadeIn,
     ),
   ];
 }

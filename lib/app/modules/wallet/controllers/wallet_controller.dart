@@ -5,7 +5,6 @@ import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/models/wallet_model.dart';
 import '../../../routes/app_pages.dart';
-import '../../../data/config/app_color.dart';
 
 class WalletController extends GetxController {
   final isLoading = false.obs;
@@ -215,104 +214,6 @@ class WalletController extends GetxController {
       debugPrint('Error fetching single wallet ($kind): $e');
     } finally {
       isSingleWalletLoading.value = false;
-    }
-  }
-
-  /// POST /api/v1/advanced-shopping/deposit
-  Future<bool> depositAdvanceShopping(double amount) async {
-    if (amount <= 0) {
-      showSnack('Invalid Amount', 'Please enter a valid deposit amount', bg: AppColor.red);
-      return false;
-    }
-
-    final amountMinor = (amount * 100).round();
-    final idempotencyKey = 'DEP_${DateTime.now().millisecondsSinceEpoch}';
-
-    isSubmittingAction.value = true;
-    try {
-      final res = await dioPost(
-        endUrl: 'advanced-shopping/deposit',
-        data: {'amountMinor': amountMinor},
-        isJson: true,
-        customHeaders: {'Idempotency-Key': idempotencyKey},
-      );
-
-      isSubmittingAction.value = false;
-      if (res.statusCode == 200 || res.statusCode == 201) {
-        showSnack(
-          'Deposit Successful',
-          '${currencySymbol.value}${amount.toStringAsFixed(2)} added to Advance Shopping wallet',
-          bg: AppColor.green,
-        );
-        await refreshAll();
-        return true;
-      } else {
-        String msg = 'Deposit failed. Please try again.';
-        if (res.data is Map && res.data['message'] != null) {
-          msg = res.data['message'].toString();
-        } else if (res.data is Map && res.data['error'] is Map && res.data['error']['message'] != null) {
-          msg = res.data['error']['message'].toString();
-        }
-        showSnack('Deposit Failed', msg, bg: AppColor.red);
-        return false;
-      }
-    } catch (e) {
-      isSubmittingAction.value = false;
-      showSnack('Deposit Error', 'Something went wrong. Please try again.', bg: AppColor.red);
-      return false;
-    }
-  }
-
-  /// POST /api/v1/advanced-shopping/withdraw
-  Future<bool> withdrawAdvanceShopping(double amount) async {
-    if (amount <= 0) {
-      showSnack('Invalid Amount', 'Please enter a valid withdrawal amount', bg: AppColor.red);
-      return false;
-    }
-
-    final advWallet = wallets.firstWhereOrNull((w) => w.kind == 'customer_advanced_shopping');
-    if (advWallet != null && amount > advWallet.balance) {
-      showSnack(
-        'Insufficient Balance',
-        'Available Advance Shopping balance is ${currencySymbol.value}${advWallet.balance.toStringAsFixed(2)}',
-        bg: AppColor.red,
-      );
-      return false;
-    }
-
-    final amountMinor = (amount * 100).round();
-
-    isSubmittingAction.value = true;
-    try {
-      final res = await dioPost(
-        endUrl: 'advanced-shopping/withdraw',
-        data: {'amountMinor': amountMinor},
-        isJson: true,
-      );
-
-      isSubmittingAction.value = false;
-      if (res.statusCode == 200 || res.statusCode == 201) {
-        showSnack(
-          'Withdrawal Successful',
-          '${currencySymbol.value}${amount.toStringAsFixed(2)} withdrawn from Advance Shopping wallet',
-          bg: AppColor.green,
-        );
-        await refreshAll();
-        return true;
-      } else {
-        String msg = 'Withdrawal failed. Please try again.';
-        if (res.data is Map && res.data['message'] != null) {
-          msg = res.data['message'].toString();
-        } else if (res.data is Map && res.data['error'] is Map && res.data['error']['message'] != null) {
-          msg = res.data['error']['message'].toString();
-        }
-        showSnack('Withdrawal Failed', msg, bg: AppColor.red);
-        return false;
-      }
-    } catch (e) {
-      isSubmittingAction.value = false;
-      showSnack('Withdrawal Error', 'Something went wrong. Please try again.', bg: AppColor.red);
-      return false;
     }
   }
 

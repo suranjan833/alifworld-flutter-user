@@ -833,51 +833,55 @@ class HomeView extends GetView<HomeController> {
           SizedBox(height: 10.h),
 
           // Row 2: Search input with orange search button on right
-          Container(
-            height: 44.h,
-            decoration: BoxDecoration(
-              color: AppColor.white,
-              borderRadius: BorderRadius.circular(22.r),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: Row(
-              children: [
-                SizedBox(width: 14.w),
-                Expanded(
-                  child: Obx(
-                    () => TypewriterSearchHintText(
-                      hints: [
-                        controller.currentCategory.searchHint,
-                        ...controller.searchHints,
-                      ],
-                      style: GoogleFonts.lato(
-                        fontSize: 13.5.sp,
-                        color: AppColor.textSecondary,
-                        fontWeight: FontWeight.w400,
+          GestureDetector(
+            onTap: () => Get.toNamed(Routes.SEARCH),
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              height: 44.h,
+              decoration: BoxDecoration(
+                color: AppColor.white,
+                borderRadius: BorderRadius.circular(22.r),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Row(
+                children: [
+                  SizedBox(width: 14.w),
+                  Expanded(
+                    child: Obx(
+                      () => TypewriterSearchHintText(
+                        hints: [
+                          controller.currentCategory.searchHint,
+                          ...controller.searchHints,
+                        ],
+                        style: GoogleFonts.lato(
+                          fontSize: 13.5.sp,
+                          color: AppColor.textSecondary,
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                // Orange search button
-                Container(
-                  width: 48.w,
-                  height: 44.h,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFF5A00),
-                    borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(22.r),
-                      bottomRight: Radius.circular(22.r),
+                  // Orange search button
+                  Container(
+                    width: 48.w,
+                    height: 44.h,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF5A00),
+                      borderRadius: BorderRadius.only(
+                        topRight: Radius.circular(22.r),
+                        bottomRight: Radius.circular(22.r),
+                      ),
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.search_rounded,
+                        color: AppColor.white,
+                        size: 22,
+                      ),
                     ),
                   ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.search_rounded,
-                      color: AppColor.white,
-                      size: 22,
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],

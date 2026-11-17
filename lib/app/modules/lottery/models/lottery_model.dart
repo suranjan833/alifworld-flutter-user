@@ -1,19 +1,75 @@
+class LotteryGiftModel {
+  final int rank;
+  final String kind; // 'points' or 'custom'
+  final int? pointsMinor;
+  final String? walletKind;
+  final String? title;
+  final String? description;
+  final String? imageUrl;
+
+  LotteryGiftModel({
+    required this.rank,
+    required this.kind,
+    this.pointsMinor,
+    this.walletKind,
+    this.title,
+    this.description,
+    this.imageUrl,
+  });
+
+  bool get isCustom => kind.toLowerCase() == 'custom';
+  bool get isPoints => kind.toLowerCase() == 'points';
+  double? get pointsAmount => pointsMinor != null ? pointsMinor! / 100.0 : null;
+
+  String get displayWalletTitle {
+    if (walletKind == null) return '';
+    return walletKind!
+        .replaceAll('customer_', '')
+        .replaceAll('seller_', '')
+        .replaceAll('_', ' ')
+        .split(' ')
+        .map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '')
+        .join(' ');
+  }
+
+  factory LotteryGiftModel.fromJson(Map<String, dynamic> json) {
+    return LotteryGiftModel(
+      rank: (json['rank'] as num?)?.toInt() ?? 1,
+      kind: json['kind']?.toString() ?? 'points',
+      pointsMinor: (json['pointsMinor'] as num?)?.toInt(),
+      walletKind: json['walletKind']?.toString(),
+      title: json['title']?.toString(),
+      description: json['description']?.toString(),
+      imageUrl: json['imageUrl']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'rank': rank,
+        'kind': kind,
+        'pointsMinor': pointsMinor,
+        'walletKind': walletKind,
+        'title': title,
+        'description': description,
+        'imageUrl': imageUrl,
+      };
+}
+
 class LotteryItemModel {
   final String id;
   final String title;
   final String? description;
   final int ticketPriceMinor;
-  final int poolAmountMinor;
   final int winnerCount;
   final int minParticipants;
   final DateTime? startAt;
   final DateTime? resultAt;
-  final String? prizeWalletKind;
   final String? prizeTitle;
   final String? prizeImageUrl;
   final String? prizeDescription;
   final String status; // 'active', 'drawn', etc.
   final String audience; // 'customer' or 'seller'
+  final List<LotteryGiftModel> gifts;
   final DateTime? drawnAt;
   final int ticketCount;
   final int winnersDeclared;
@@ -24,17 +80,16 @@ class LotteryItemModel {
     required this.title,
     this.description,
     required this.ticketPriceMinor,
-    required this.poolAmountMinor,
     required this.winnerCount,
     this.minParticipants = 0,
     this.startAt,
     this.resultAt,
-    this.prizeWalletKind,
     this.prizeTitle,
     this.prizeImageUrl,
     this.prizeDescription,
     required this.status,
     this.audience = 'customer',
+    this.gifts = const [],
     this.drawnAt,
     this.ticketCount = 0,
     this.winnersDeclared = 0,
@@ -45,7 +100,34 @@ class LotteryItemModel {
   bool get isSeller => audience.toLowerCase() == 'seller';
 
   double get ticketPrice => ticketPriceMinor / 100.0;
-  double get poolAmount => poolAmountMinor / 100.0;
+
+  LotteryGiftModel? get rank1Gift {
+    if (gifts.isEmpty) return null;
+    for (final g in gifts) {
+      if (g.rank == 1) return g;
+    }
+    return gifts.first;
+  }
+
+  String get topPrizeTitle {
+    final g = rank1Gift;
+    if (g == null) return prizeTitle ?? 'Top Prize';
+    if (g.isCustom) return g.title ?? prizeTitle ?? 'Top Prize';
+    if (g.pointsAmount != null) return '৳${g.pointsAmount!.toStringAsFixed(2)} Points';
+    return prizeTitle ?? 'Top Prize';
+  }
+
+  String get topPrizeSubtitle {
+    final g = rank1Gift;
+    if (g == null) return winnerCountText;
+    if (g.isCustom) {
+      return 'Top Prize (Rank 1) • $winnerCountText';
+    }
+    final wallet = g.displayWalletTitle;
+    return wallet.isNotEmpty
+        ? 'Rank 1 ($wallet) • $winnerCountText'
+        : 'Top Prize (Rank 1) • $winnerCountText';
+  }
 
   String get winnerCountText =>
       winnerCount == 1 ? '1 winner' : '$winnerCount winners';
@@ -92,17 +174,20 @@ class LotteryItemModel {
       title: json['title']?.toString() ?? '',
       description: json['description']?.toString(),
       ticketPriceMinor: (json['ticketPriceMinor'] as num?)?.toInt() ?? 0,
-      poolAmountMinor: (json['poolAmountMinor'] as num?)?.toInt() ?? 0,
       winnerCount: (json['winnerCount'] as num?)?.toInt() ?? 1,
       minParticipants: (json['minParticipants'] as num?)?.toInt() ?? 0,
       startAt: parseDate(json['startAt']),
       resultAt: parseDate(json['resultAt']),
-      prizeWalletKind: json['prizeWalletKind']?.toString(),
       prizeTitle: json['prizeTitle']?.toString(),
       prizeImageUrl: json['prizeImageUrl']?.toString(),
       prizeDescription: json['prizeDescription']?.toString(),
       status: json['status']?.toString() ?? 'active',
       audience: json['audience']?.toString() ?? 'customer',
+      gifts: (json['gifts'] as List<dynamic>?)
+              ?.map((e) =>
+                  LotteryGiftModel.fromJson(Map<String, dynamic>.from(e)))
+              .toList() ??
+          const [],
       drawnAt: parseDate(json['drawnAt']),
       ticketCount: (json['ticketCount'] as num?)?.toInt() ?? 0,
       winnersDeclared: (json['winnersDeclared'] as num?)?.toInt() ?? 0,
@@ -147,6 +232,7 @@ class LotteryTicketModel {
   final bool isWinner;
   final int? winPosition;
   final int? winPrizeMinor;
+  final LotteryGiftModel? winGift;
 
   LotteryTicketModel({
     required this.ticketNumber,
@@ -154,6 +240,7 @@ class LotteryTicketModel {
     this.isWinner = false,
     this.winPosition,
     this.winPrizeMinor,
+    this.winGift,
   });
 
   double? get winPrize =>
@@ -172,6 +259,10 @@ class LotteryTicketModel {
       isWinner: json['isWinner'] == true,
       winPosition: (json['winPosition'] as num?)?.toInt(),
       winPrizeMinor: (json['winPrizeMinor'] as num?)?.toInt(),
+      winGift: json['winGift'] is Map<String, dynamic>
+          ? LotteryGiftModel.fromJson(
+              Map<String, dynamic>.from(json['winGift']))
+          : null,
     );
   }
 }
@@ -215,6 +306,7 @@ class LotteryWinnerModel {
   final int position;
   final String ticketNumber;
   final int prizeMinor;
+  final LotteryGiftModel? gift;
   final DateTime? settledAt;
   final WinnerUserModel? winner;
 
@@ -222,6 +314,7 @@ class LotteryWinnerModel {
     required this.position,
     required this.ticketNumber,
     required this.prizeMinor,
+    this.gift,
     this.settledAt,
     this.winner,
   });
@@ -239,6 +332,9 @@ class LotteryWinnerModel {
       position: (json['position'] as num?)?.toInt() ?? 1,
       ticketNumber: json['ticketNumber']?.toString() ?? '',
       prizeMinor: (json['prizeMinor'] as num?)?.toInt() ?? 0,
+      gift: json['gift'] is Map<String, dynamic>
+          ? LotteryGiftModel.fromJson(Map<String, dynamic>.from(json['gift']))
+          : null,
       settledAt: sAt,
       winner: json['winner'] is Map<String, dynamic>
           ? WinnerUserModel.fromJson(Map<String, dynamic>.from(json['winner']))
@@ -254,7 +350,6 @@ class LotteryResultsResponseModel {
   final String audience;
   final DateTime? resultAt;
   final DateTime? drawnAt;
-  final int poolAmountMinor;
   final int winnerCount;
   final String? prizeTitle;
   final String? prizeImageUrl;
@@ -268,15 +363,12 @@ class LotteryResultsResponseModel {
     this.audience = 'customer',
     this.resultAt,
     this.drawnAt,
-    required this.poolAmountMinor,
     required this.winnerCount,
     this.prizeTitle,
     this.prizeImageUrl,
     this.prizeDescription,
     required this.winners,
   });
-
-  double get poolAmount => poolAmountMinor / 100.0;
 
   factory LotteryResultsResponseModel.fromJson(Map<String, dynamic> json) {
     DateTime? parseDate(dynamic v) {
@@ -301,7 +393,6 @@ class LotteryResultsResponseModel {
       audience: json['audience']?.toString() ?? 'customer',
       resultAt: parseDate(json['resultAt']),
       drawnAt: parseDate(json['drawnAt']),
-      poolAmountMinor: (json['poolAmountMinor'] as num?)?.toInt() ?? 0,
       winnerCount: (json['winnerCount'] as num?)?.toInt() ?? 1,
       prizeTitle: json['prizeTitle']?.toString(),
       prizeImageUrl: json['prizeImageUrl']?.toString(),
@@ -318,6 +409,7 @@ class MyLotteryTicketItemModel {
   final bool isWinner;
   final int? winPosition;
   final int? winPrizeMinor;
+  final LotteryGiftModel? winGift;
   final LotteryItemModel? lottery;
 
   MyLotteryTicketItemModel({
@@ -327,6 +419,7 @@ class MyLotteryTicketItemModel {
     this.isWinner = false,
     this.winPosition,
     this.winPrizeMinor,
+    this.winGift,
     this.lottery,
   });
 
@@ -353,6 +446,9 @@ class MyLotteryTicketItemModel {
       isWinner: json['isWinner'] == true,
       winPosition: (json['winPosition'] as num?)?.toInt(),
       winPrizeMinor: (json['winPrizeMinor'] as num?)?.toInt(),
+      winGift: json['winGift'] is Map<String, dynamic>
+          ? LotteryGiftModel.fromJson(Map<String, dynamic>.from(json['winGift']))
+          : null,
       lottery: lot,
     );
   }

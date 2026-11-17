@@ -213,6 +213,10 @@ class _MyLotteryTicketsViewState extends State<MyLotteryTicketsView> {
         ? '${dt.day}/${dt.month}/${dt.year}'
         : '';
 
+    final isCustomGift = item.isWinner && item.winGift != null && item.winGift!.isCustom;
+    final isPointsGift = item.isWinner && item.winGift != null && item.winGift!.isPoints;
+    final giftTitle = item.winGift?.title ?? 'Special Gift';
+
     return Container(
       margin: EdgeInsets.only(bottom: 10.h),
       padding: EdgeInsets.all(14.r),
@@ -264,7 +268,11 @@ class _MyLotteryTicketsViewState extends State<MyLotteryTicketsView> {
                     borderRadius: BorderRadius.circular(6.r),
                   ),
                   child: Text(
-                    'WINNER #${item.winPosition ?? 1}${item.winPrize != null ? " • ৳${item.winPrize!.toStringAsFixed(0)}" : ""}',
+                    isCustomGift
+                        ? 'WINNER #${item.winPosition ?? 1} • $giftTitle'
+                        : isPointsGift
+                            ? 'WINNER #${item.winPosition ?? 1} • ৳${(item.winGift!.pointsAmount ?? item.winPrize ?? 0).toStringAsFixed(0)}'
+                            : 'WINNER #${item.winPosition ?? 1}${item.winPrize != null ? " • ৳${item.winPrize!.toStringAsFixed(0)}" : ""}',
                     style: GoogleFonts.lato(
                       fontSize: 11.sp,
                       fontWeight: FontWeight.bold,
@@ -283,6 +291,48 @@ class _MyLotteryTicketsViewState extends State<MyLotteryTicketsView> {
                 ),
             ],
           ),
+
+          if (isCustomGift) ...[
+            SizedBox(height: 8.h),
+            Container(
+              padding: EdgeInsets.all(10.r),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10.r),
+                border: Border.all(color: const Color(0xFFFDE68A)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Iconsax.gift, color: const Color(0xFFD97706), size: 18.r),
+                      SizedBox(width: 6.w),
+                      Expanded(
+                        child: Text(
+                          '🎉 You won $giftTitle!',
+                          style: GoogleFonts.lato(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF92400E),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    'Our team will contact you directly, or contact customer service for more information.',
+                    style: GoogleFonts.lato(
+                      fontSize: 11.5.sp,
+                      color: const Color(0xFFB45309),
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
 
           if (item.lottery != null) ...[
             SizedBox(height: 8.h),

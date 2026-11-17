@@ -71,7 +71,7 @@ class CategoriesView extends GetView<CategoriesController> {
               ),
               // Search button in a soft tinted circle
               GestureDetector(
-                onTap: () {},
+                onTap: () => Get.toNamed(Routes.SEARCH),
                 child: Container(
                   width: 40.r,
                   height: 40.r,
