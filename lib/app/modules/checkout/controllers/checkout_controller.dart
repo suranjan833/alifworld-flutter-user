@@ -571,6 +571,8 @@ class CheckoutController extends GetxController {
 
   /// 3. POST /checkout/place - Place order
   Future<void> placeOrder() async {
+    if (isProcessingPayment.value) return;
+
     if (addresses.isEmpty ||
         selectedAddressId == null ||
         selectedAddressId!.isEmpty) {
@@ -599,18 +601,25 @@ class CheckoutController extends GetxController {
   }
 
   Future<void> _startWalletPinCheckout() async {
-    if (Get.context == null) return;
-    await WalletPinDialog.promptPin(
+    if (Get.context == null || isProcessingPayment.value) return;
+    final pin = await WalletPinDialog.promptPin(
       Get.context!,
       title: 'Wallet Payment PIN',
       subtitle: 'Enter your 6-digit wallet PIN to complete payment',
-      onConfirm: (pin) async {
-        return await _executePlaceOrder(walletPin: pin);
-      },
     );
+    if (pin != null && pin.isNotEmpty) {
+      await _executePlaceOrder(walletPin: pin);
+    }
   }
 
   Future<WalletPinActionResult> _executePlaceOrder({String? walletPin}) async {
+    if (isProcessingPayment.value) {
+      return const WalletPinActionResult.failure(
+        errorCode: 'ALREADY_PROCESSING',
+        errorMessage: 'Payment is already processing',
+      );
+    }
+
     if (selectedAddressId == null || selectedAddressId!.isEmpty) {
       Get.snackbar(
         'Address Required',
@@ -719,8 +728,15 @@ class CheckoutController extends GetxController {
 
         // 1. PIN-related errors (WALLET_PIN_*)
         if (errorCode.startsWith('WALLET_PIN_')) {
-          if (walletPin == null) {
-            // Safety net: place called without PIN, prompt now
+          Get.snackbar(
+            'Invalid PIN',
+            errorMsg,
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: AppColor.error,
+            colorText: AppColor.white,
+            duration: const Duration(seconds: 4),
+          );
+          if (errorCode != 'WALLET_PIN_LOCKED') {
             _startWalletPinCheckout();
           }
           return WalletPinActionResult.failure(
@@ -729,7 +745,27 @@ class CheckoutController extends GetxController {
           );
         }
 
-        // 2. Other non-PIN errors handled on checkout view
+        // 2. Cart empty (already processed)
+        if (errorCode == 'CART_EMPTY') {
+          Get.snackbar(
+            'Order Status',
+            'Your order has already been processed. Viewing your orders...',
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: const Color(0xFFD97706),
+            colorText: AppColor.white,
+            duration: const Duration(seconds: 3),
+          );
+          if (!isDirectBuy.value && Get.isRegistered<BagController>()) {
+            Get.find<BagController>().clearLocalCart();
+          }
+          Get.offNamed(Routes.MY_ORDERS);
+          return WalletPinActionResult.failure(
+            errorCode: errorCode,
+            errorMessage: errorMsg,
+          );
+        }
+
+        // 3. Other non-PIN errors handled on checkout view
         if (response.statusCode == 401 || errorCode == 'UNAUTHENTICATED') {
           Get.snackbar(
             'Login Required',
@@ -833,7 +869,7 @@ class CheckoutController extends GetxController {
 
     // Clear Cart if order was placed from Shopping Bag
     if (!isDirectBuy.value && Get.isRegistered<BagController>()) {
-      Get.find<BagController>().clearCart();
+      Get.find<BagController>().clearLocalCart();
     }
 
     Get.offNamed(

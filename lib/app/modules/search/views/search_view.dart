@@ -53,7 +53,12 @@ class SearchView extends GetView<CatalogSearchController> {
       preferredSize: Size.fromHeight(66.h),
       child: Container(
         color: AppColor.white,
-        padding: EdgeInsets.fromLTRB(8.w, MediaQuery.of(context).padding.top + 8.h, 16.w, 10.h),
+        padding: EdgeInsets.fromLTRB(
+          8.w,
+          MediaQuery.of(context).padding.top + 8.h,
+          16.w,
+          10.h,
+        ),
         child: Row(
           children: [
             // Back Button
@@ -90,7 +95,8 @@ class SearchView extends GetView<CatalogSearchController> {
                         controller: controller.textController,
                         focusNode: controller.focusNode,
                         textInputAction: TextInputAction.search,
-                        autofocus: controller.searchQuery.value.isEmpty &&
+                        autofocus:
+                            controller.searchQuery.value.isEmpty &&
                             controller.selectedCategorySlug.value.isEmpty,
                         style: GoogleFonts.lato(
                           fontSize: 14.sp,
@@ -117,7 +123,10 @@ class SearchView extends GetView<CatalogSearchController> {
                               onTap: controller.clearSearch,
                               behavior: HitTestBehavior.opaque,
                               child: Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 10.w,
+                                  vertical: 8.h,
+                                ),
                                 child: Container(
                                   width: 22.r,
                                   height: 22.r,
@@ -265,7 +274,8 @@ class SearchView extends GetView<CatalogSearchController> {
                               ),
                               SizedBox(width: 6.w),
                               GestureDetector(
-                                onTap: () => controller.removeRecentSearch(term),
+                                onTap: () =>
+                                    controller.removeRecentSearch(term),
                                 child: Padding(
                                   padding: EdgeInsets.all(2.r),
                                   child: Icon(
@@ -291,11 +301,7 @@ class SearchView extends GetView<CatalogSearchController> {
         // 2. Popular / Trending Searches
         Row(
           children: [
-            Icon(
-              Iconsax.trend_up,
-              size: 16.r,
-              color: const Color(0xFFFF5A00),
-            ),
+            Icon(Iconsax.trend_up, size: 16.r, color: const Color(0xFFFF5A00)),
             SizedBox(width: 6.w),
             Text(
               'Trending Searches',
@@ -324,7 +330,10 @@ class SearchView extends GetView<CatalogSearchController> {
                   borderRadius: BorderRadius.circular(20.r),
                   onTap: () => controller.selectKeyword(kw),
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 14.w,
+                      vertical: 7.h,
+                    ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -394,7 +403,10 @@ class SearchView extends GetView<CatalogSearchController> {
                         borderRadius: BorderRadius.circular(12.r),
                         onTap: () => controller.setCategory(slug, name),
                         child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 8.h,
+                          ),
                           child: Text(
                             name,
                             style: GoogleFonts.lato(
@@ -441,7 +453,9 @@ class SearchView extends GetView<CatalogSearchController> {
                 mainAxisSpacing: 12.h,
                 childAspectRatio: 0.62,
               ),
-              itemCount: controller.products.length + (controller.hasMore.value ? 1 : 0),
+              itemCount:
+                  controller.products.length +
+                  (controller.hasMore.value ? 1 : 0),
               itemBuilder: (context, index) {
                 if (index >= controller.products.length) {
                   return const Center(
@@ -506,7 +520,8 @@ class SearchView extends GetView<CatalogSearchController> {
 
               // Filter Pill (Price, Category)
               Obx(() {
-                final hasFilter = controller.minPriceFilter.value != null ||
+                final hasFilter =
+                    controller.minPriceFilter.value != null ||
                     controller.maxPriceFilter.value != null;
                 return _buildPill(
                   icon: Iconsax.setting_4,
@@ -550,7 +565,8 @@ class SearchView extends GetView<CatalogSearchController> {
                   ...controller.categories.map((c) {
                     final slug = c['slug']?.toString() ?? '';
                     final name = c['name']?.toString() ?? '';
-                    final isSelected = controller.selectedCategorySlug.value == slug;
+                    final isSelected =
+                        controller.selectedCategorySlug.value == slug;
                     return _buildCategoryChip(
                       name: name,
                       isSelected: isSelected,
@@ -580,7 +596,9 @@ class SearchView extends GetView<CatalogSearchController> {
           color: isSelected ? const Color(0xFFFFF7ED) : const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(20.r),
           border: Border.all(
-            color: isSelected ? const Color(0xFFFF5A00) : const Color(0xFFE2E8F0),
+            color: isSelected
+                ? const Color(0xFFFF5A00)
+                : const Color(0xFFE2E8F0),
           ),
         ),
         child: Row(
@@ -589,7 +607,9 @@ class SearchView extends GetView<CatalogSearchController> {
             Icon(
               icon,
               size: 14.r,
-              color: isSelected ? const Color(0xFFFF5A00) : AppColor.textPrimary,
+              color: isSelected
+                  ? const Color(0xFFFF5A00)
+                  : AppColor.textPrimary,
             ),
             SizedBox(width: 4.w),
             Text(
@@ -597,14 +617,18 @@ class SearchView extends GetView<CatalogSearchController> {
               style: GoogleFonts.lato(
                 fontSize: 12.sp,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                color: isSelected ? const Color(0xFFFF5A00) : AppColor.textPrimary,
+                color: isSelected
+                    ? const Color(0xFFFF5A00)
+                    : AppColor.textPrimary,
               ),
             ),
             SizedBox(width: 2.w),
             Icon(
               Icons.keyboard_arrow_down_rounded,
               size: 16.r,
-              color: isSelected ? const Color(0xFFFF5A00) : AppColor.textSecondary,
+              color: isSelected
+                  ? const Color(0xFFFF5A00)
+                  : AppColor.textSecondary,
             ),
           ],
         ),
@@ -624,7 +648,9 @@ class SearchView extends GetView<CatalogSearchController> {
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFFF5A00) : const Color(0xFFF1F5F9),
+            color: isSelected
+                ? const Color(0xFFFF5A00)
+                : const Color(0xFFF1F5F9),
             borderRadius: BorderRadius.circular(16.r),
           ),
           child: Center(
@@ -657,7 +683,8 @@ class SearchView extends GetView<CatalogSearchController> {
     final points = product.productPoints ?? 0;
 
     return GestureDetector(
-      onTap: () => Get.toNamed(Routes.PRODUCT_DETAILS, arguments: product.toJson()),
+      onTap: () =>
+          Get.toNamed(Routes.PRODUCT_DETAILS, arguments: product.toJson()),
       child: Container(
         decoration: BoxDecoration(
           color: AppColor.white,
@@ -694,7 +721,7 @@ class SearchView extends GetView<CatalogSearchController> {
                           : Image.network(
                               imageUrl,
                               fit: BoxFit.contain,
-                              errorBuilder: (_, __, ___) => Icon(
+                              errorBuilder: (_, _, _) => Icon(
                                 Iconsax.image,
                                 size: 32.r,
                                 color: AppColor.textSecondary,
@@ -709,7 +736,10 @@ class SearchView extends GetView<CatalogSearchController> {
                       left: 8.w,
                       top: 8.h,
                       child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 6.w,
+                          vertical: 2.h,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFEF4444),
                           borderRadius: BorderRadius.circular(6.r),
@@ -730,10 +760,7 @@ class SearchView extends GetView<CatalogSearchController> {
                     Positioned(
                       left: 8.w,
                       bottom: 8.h,
-                      child: PointsBadge(
-                        points: points,
-                        compact: true,
-                      ),
+                      child: PointsBadge(points: points, compact: true),
                     ),
 
                   // Wishlist Heart
@@ -741,7 +768,9 @@ class SearchView extends GetView<CatalogSearchController> {
                     right: 6.w,
                     top: 6.h,
                     child: Obx(() {
-                      final isWish = controller.wishlistedProductIds.contains(productId);
+                      final isWish = controller.wishlistedProductIds.contains(
+                        productId,
+                      );
                       return GestureDetector(
                         onTap: () => controller.toggleWishlist(productId),
                         child: Container(
@@ -757,9 +786,13 @@ class SearchView extends GetView<CatalogSearchController> {
                             ],
                           ),
                           child: Icon(
-                            isWish ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                            isWish
+                                ? Icons.favorite_rounded
+                                : Icons.favorite_border_rounded,
                             size: 16.r,
-                            color: isWish ? const Color(0xFFEF4444) : AppColor.textSecondary,
+                            color: isWish
+                                ? const Color(0xFFEF4444)
+                                : AppColor.textSecondary,
                           ),
                         ),
                       );
@@ -927,10 +960,7 @@ class SearchView extends GetView<CatalogSearchController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: SkeletonBox(
-                    height: double.infinity,
-                    radius: 12,
-                  ),
+                  child: SkeletonBox(height: double.infinity, radius: 12),
                 ),
                 SizedBox(height: 10.h),
                 SkeletonBox(height: 10.h, width: 60.w, radius: 4),
@@ -977,7 +1007,11 @@ class SearchView extends GetView<CatalogSearchController> {
                 ),
                 IconButton(
                   onPressed: () => Get.back(),
-                  icon: Icon(Icons.close, size: 20.r, color: AppColor.textSecondary),
+                  icon: Icon(
+                    Icons.close,
+                    size: 20.r,
+                    color: AppColor.textSecondary,
+                  ),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),
@@ -1014,7 +1048,9 @@ class SearchView extends GetView<CatalogSearchController> {
               style: GoogleFonts.lato(
                 fontSize: 14.sp,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                color: isSelected ? const Color(0xFFFF5A00) : AppColor.textPrimary,
+                color: isSelected
+                    ? const Color(0xFFFF5A00)
+                    : AppColor.textPrimary,
               ),
             ),
             if (isSelected)
