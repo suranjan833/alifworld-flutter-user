@@ -315,18 +315,18 @@ class BagController extends GetxController with SkeletonLoadingMixin {
   }
 
   /// 5. POST /cart - Add item to bag directly on server
-  Future<void> addItemToBag(Map<String, dynamic> item, {int quantity = 1}) async {
+  Future<bool> addItemToBag(Map<String, dynamic> item, {int quantity = 1}) async {
     final isOnline = await hasInternetConnection();
     if (!isOnline) {
       showNoInternetDialog(
         onRetry: () => addItemToBag(item, quantity: quantity),
       );
-      return;
+      return false;
     }
 
     if (!_hasAuth) {
       Get.toNamed(Routes.LOGIN);
-      return;
+      return false;
     }
 
     final qtyToAdd = quantity > 0 ? quantity : 1;
@@ -379,7 +379,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
         backgroundColor: AppColor.error,
         colorText: AppColor.white,
       );
-      return;
+      return false;
     }
 
     isMutating.value = true;
@@ -409,6 +409,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
           colorText: AppColor.white,
           duration: const Duration(seconds: 2),
         );
+        return true;
       } else {
         String errMsg = 'Failed to add item to bag';
         if (response.data is Map) {
@@ -426,6 +427,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
           backgroundColor: AppColor.error,
           colorText: AppColor.white,
         );
+        return false;
       }
     } catch (_) {
       final isOnline = await hasInternetConnection();
@@ -442,9 +444,17 @@ class BagController extends GetxController with SkeletonLoadingMixin {
           colorText: AppColor.white,
         );
       }
+      return false;
     } finally {
       isMutating.value = false;
     }
+  }
+
+  /// Clears cart items locally after order placement without calling DELETE /cart API
+  void clearLocalCart() {
+    cartItems.clear();
+    cartItems.refresh();
+    update();
   }
 
   /// 6. DELETE /cart - Clear whole cart directly on server

@@ -6,7 +6,6 @@ import 'package:iconsax/iconsax.dart';
 
 import '../../../data/config/app_color.dart';
 import '../../../data/services/recently_viewed_service.dart';
-import '../../../data/services/rewards_service.dart';
 import '../../../data/widgets/points_badge.dart';
 import '../../../routes/app_pages.dart';
 import '../../bag/controllers/bag_controller.dart';
@@ -551,12 +550,6 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
     final savingAmount = controller.mrpSavingAmount;
     final savingPct = controller.mrpSavingPct;
     final pts = controller.activeProductPoints;
-
-    int pointValueMinor = 100;
-    if (Get.isRegistered<RewardsService>()) {
-      pointValueMinor = RewardsService.to.pointValueMinor;
-    }
-    final pointsMoney = (pts * pointValueMinor) / 100.0;
 
     return Container(
       width: double.infinity,
@@ -1225,23 +1218,36 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
             ),
             SizedBox(width: 12.w),
             Expanded(
-              child: ElevatedButton(
-                onPressed: () => controller.buyNow(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColor.primary,
-                  elevation: 0,
-                  padding: EdgeInsets.symmetric(vertical: 14.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14.r),
+              child: Obx(
+                () => ElevatedButton(
+                  onPressed: controller.isBuyingNow.value
+                      ? null
+                      : () => controller.buyNow(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColor.primary,
+                    elevation: 0,
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14.r),
+                    ),
                   ),
-                ),
-                child: Text(
-                  'Buy Now',
-                  style: GoogleFonts.lato(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.bold,
-                    color: AppColor.white,
-                  ),
+                  child: controller.isBuyingNow.value
+                      ? SizedBox(
+                          width: 20.r,
+                          height: 20.r,
+                          child: const CircularProgressIndicator(
+                            color: AppColor.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          'Buy Now',
+                          style: GoogleFonts.lato(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.bold,
+                            color: AppColor.white,
+                          ),
+                        ),
                 ),
               ),
             ),

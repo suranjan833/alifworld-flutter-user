@@ -20,6 +20,7 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
   final isWishlisted = false.obs;
   final selectedQuantity = 1.obs;
   final isLoadingDetails = false.obs;
+  final isBuyingNow = false.obs;
 
   @override
   void onInit() {
@@ -392,9 +393,8 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
     bagCtrl.cartItems.refresh();
   }
 
-  void buyNow() {
-    final p = product.value;
-    if (p == null) return;
+  Future<void> buyNow() async {
+    if (isBuyingNow.value) return;
 
     final token = getBox.read(USER_TOKEN);
     final sessionCookie = getBox.read('SESSION_COOKIE');
@@ -406,40 +406,44 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
       return;
     }
 
-    final priceVal = activePriceValue;
-    final qty = selectedQuantity.value;
-    final subtotal = priceVal * qty;
-    final deliveryFee = subtotal > 499 ? 0.0 : 49.0;
-    final tax = subtotal * 0.05;
-    final totalAmount = subtotal + deliveryFee + tax;
+    final p = product.value;
+    if (p == null) return;
+
+    if (!Get.isRegistered<BagController>()) {
+      Get.put(BagController());
+    }
+    final bagCtrl = Get.find<BagController>();
 
     final sv = selectedVariant;
-    final directItem = {
-      'id': p.id.isNotEmpty
-          ? p.id
-          : DateTime.now().millisecondsSinceEpoch.toString(),
+    final fallbackVariantId =
+        sv?.id ?? (p.variants.isNotEmpty ? p.variants.first.id : null);
+    final itemPayload = <String, dynamic>{
+      'id': p.id,
       'productId': p.id,
-      'variantId': sv?.id,
-      'variantLabel': sv?.label,
+      'variantId': fallbackVariantId,
+      'variantLabel': sv?.label ?? (p.variants.isNotEmpty ? p.variants.first.label : null),
       'brand': p.displayBrand,
       'title': p.name,
-      'price': priceVal,
-      'quantity': qty,
+      'price': activePriceValue,
       'image': imagesList.first,
+      'slug': p.slug,
+      'variants': p.variants.map((v) => v.toJson()).toList(),
     };
 
-    Get.toNamed(
-      Routes.CHECKOUT,
-      arguments: {
-        'items': [directItem],
-        'subtotal': subtotal,
-        'deliveryFee': deliveryFee,
-        'tax': tax,
-        'totalAmount': totalAmount,
-        'totalPoints': activeProductPoints * qty,
-        'isDirectBuy': true,
-      },
-    );
+    isBuyingNow.value = true;
+    try {
+      final success = await bagCtrl.addItemToBag(
+        itemPayload,
+        quantity: selectedQuantity.value,
+      );
+      if (success) {
+        await bagCtrl.fetchCart(showLoading: false, force: true);
+        bagCtrl.cartItems.refresh();
+        Get.toNamed(Routes.BAG);
+      }
+    } finally {
+      isBuyingNow.value = false;
+    }
   }
 
   void openSellerDetails() {
