@@ -89,7 +89,13 @@ class MyWishlistView extends GetView<MyWishlistController> {
           itemBuilder: (context, index) {
             final item = controller.wishlistItems[index];
             return GestureDetector(
-              onTap: () => Get.toNamed(Routes.PRODUCT_DETAILS, arguments: item),
+              onTap: () => Get.toNamed(
+                Routes.PRODUCT_DETAILS,
+                arguments: (item['slug'] != null &&
+                        item['slug'].toString().isNotEmpty)
+                    ? item['slug']
+                    : item,
+              ),
               child: Container(
                 decoration: BoxDecoration(
                   color: AppColor.white,
@@ -112,10 +118,23 @@ class MyWishlistView extends GetView<MyWishlistController> {
                           width: double.infinity,
                           padding: EdgeInsets.all(8.r),
                           child: Center(
-                            child: Image.network(
-                              item['image'] as String,
-                              fit: BoxFit.contain,
-                            ),
+                            child: (item['image'] != null &&
+                                    item['image'].toString().isNotEmpty)
+                                ? Image.network(
+                                    item['image'] as String,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (context, error, stackTrace) =>
+                                        Icon(
+                                      Iconsax.image,
+                                      size: 32.r,
+                                      color: AppColor.textHint,
+                                    ),
+                                  )
+                                : Icon(
+                                    Iconsax.image,
+                                    size: 32.r,
+                                    color: AppColor.textHint,
+                                  ),
                           ),
                         ),
                         Positioned(
@@ -161,15 +180,17 @@ class MyWishlistView extends GetView<MyWishlistController> {
                                   color: AppColor.textPrimary,
                                 ),
                               ),
-                              SizedBox(width: 6.w),
-                              Text(
-                                item['originalPrice'] as String,
-                                style: GoogleFonts.lato(
-                                  fontSize: 11.sp,
-                                  color: AppColor.textHint,
-                                  decoration: TextDecoration.lineThrough,
+                              if ((item['originalPrice'] as String?)?.isNotEmpty == true) ...[
+                                SizedBox(width: 6.w),
+                                Text(
+                                  item['originalPrice'] as String,
+                                  style: GoogleFonts.lato(
+                                    fontSize: 11.sp,
+                                    color: AppColor.textHint,
+                                    decoration: TextDecoration.lineThrough,
+                                  ),
                                 ),
-                              ),
+                              ],
                             ],
                           ),
                           SizedBox(height: 8.h),

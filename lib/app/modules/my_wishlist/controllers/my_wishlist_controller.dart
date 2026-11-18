@@ -4,6 +4,7 @@ import '../../../data/config/app_color.dart';
 import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/mixins/skeleton_loading_mixin.dart';
+import '../../../data/services/wishlist_service.dart';
 import '../../bag/controllers/bag_controller.dart';
 
 class MyWishlistController extends GetxController with SkeletonLoadingMixin {
@@ -25,38 +26,49 @@ class MyWishlistController extends GetxController with SkeletonLoadingMixin {
         if (rawData is Map<String, dynamic> && rawData.containsKey('data')) {
           rawData = rawData['data'];
         }
-        if (rawData is List) {
-          final items = rawData.map<Map<String, dynamic>>((e) {
+        List? rawList;
+        if (rawData is Map<String, dynamic> && rawData.containsKey('items')) {
+          rawList = rawData['items'] as List?;
+        } else if (rawData is List) {
+          rawList = rawData;
+        }
+
+        if (rawList != null) {
+          final items = rawList.map<Map<String, dynamic>>((e) {
             Map<String, dynamic>? v;
             if (e is Map<String, dynamic> &&
                 e['variant'] is Map<String, dynamic>) {
               v = e['variant'] as Map<String, dynamic>;
             }
-            final p = (v != null && v['product'] is Map<String, dynamic>)
-                ? v['product'] as Map<String, dynamic>
-                : ((e is Map<String, dynamic> &&
-                          e['product'] is Map<String, dynamic>)
-                      ? e['product'] as Map<String, dynamic>
-                      : (e is Map<String, dynamic> ? e : <String, dynamic>{}));
+            final p = (e is Map<String, dynamic> &&
+                    e['product'] is Map<String, dynamic>)
+                ? e['product'] as Map<String, dynamic>
+                : ((v != null && v['product'] is Map<String, dynamic>)
+                    ? v['product'] as Map<String, dynamic>
+                    : (e is Map<String, dynamic> ? e : <String, dynamic>{}));
 
             final priceMinor =
-                v?['priceMinor'] ?? p['priceMinor'] ?? e['priceMinor'] ?? 0;
+                p['priceMinor'] ?? v?['priceMinor'] ?? e['priceMinor'] ?? 0;
             final price = (priceMinor / 100.0).toStringAsFixed(2);
 
             final comparePriceMinor =
-                v?['compareAtPriceMinor'] ?? p['compareAtPriceMinor'] ?? 0;
+                p['compareAtPriceMinor'] ?? v?['compareAtPriceMinor'] ?? 0;
             final origPrice = comparePriceMinor > priceMinor
                 ? '৳${(comparePriceMinor / 100.0).toStringAsFixed(2)}'
                 : '';
 
             List? images =
-                v?['images'] ??
                 p['images'] ??
+                v?['images'] ??
                 (e is Map ? e['images'] as List? : null);
             String img = '';
             if (images != null && images.isNotEmpty && images.first != null) {
               img = resolveImageUrl(images.first.toString());
-            } else if (p['image'] != null) {
+            } else if (p['imageUrl'] != null &&
+                p['imageUrl'].toString().isNotEmpty) {
+              img = resolveImageUrl(p['imageUrl'].toString());
+            } else if (p['image'] != null &&
+                p['image'].toString().isNotEmpty) {
               img = resolveImageUrl(p['image'].toString());
             }
 
@@ -64,18 +76,18 @@ class MyWishlistController extends GetxController with SkeletonLoadingMixin {
                 e['variantId']?.toString() ??
                 v?['id']?.toString() ??
                 p['variantId']?.toString() ??
-                p['id']?.toString() ??
                 '';
 
             return {
-              'id': e['id']?.toString() ?? p['id']?.toString() ?? variantId,
+              'id': e['id']?.toString() ?? variantId,
               'productId': p['id']?.toString() ?? '',
               'variantId': variantId,
               'title':
-                  p['title']?.toString() ?? p['name']?.toString() ?? 'Product',
-              'brand': p['brand'] is Map
-                  ? (p['brand'] as Map)['name']?.toString() ?? 'Alif'
-                  : (p['brand']?.toString() ?? 'Alif'),
+                  p['name']?.toString() ?? p['title']?.toString() ?? 'Product',
+              'brand': p['brandName']?.toString() ??
+                  (p['brand'] is Map
+                      ? (p['brand'] as Map)['name']?.toString() ?? 'Alif'
+                      : (p['brand']?.toString() ?? 'Alif')),
               'price': '৳$price',
               'rawPrice': priceMinor / 100.0,
               'originalPrice': origPrice,
@@ -86,8 +98,21 @@ class MyWishlistController extends GetxController with SkeletonLoadingMixin {
             };
           }).toList();
           wishlistItems.assignAll(items);
+          if (Get.isRegistered<WishlistService>()) {
+            WishlistService.to.count.value = items.length;
+            for (var it in items) {
+              final vId = it['variantId']?.toString();
+              if (vId != null && vId.isNotEmpty) {
+                WishlistService.to.wishlistedVariantIds.add(vId);
+              }
+            }
+          }
         } else {
           wishlistItems.clear();
+          if (Get.isRegistered<WishlistService>()) {
+            WishlistService.to.count.value = 0;
+            WishlistService.to.wishlistedVariantIds.clear();
+          }
         }
       } else {
         wishlistItems.clear();
@@ -101,7 +126,14 @@ class MyWishlistController extends GetxController with SkeletonLoadingMixin {
 
   /// 2. DELETE /wishlist?variantId={variantId} - Remove specific variant from wishlist
   Future<void> removeItem(String id, [String? variantId]) async {
-    final vId = (variantId != null && variantId.isNotEmpty) ? variantId : id;
+    String vId = (variantId != null && variantId.isNotEmpty) ? variantId : '';
+    if (vId.isEmpty) {
+      final existing = wishlistItems.firstWhereOrNull(
+        (item) => item['id'] == id || item['variantId'] == id,
+      );
+      vId = existing?['variantId']?.toString() ?? id;
+    }
+
     wishlistItems.removeWhere(
       (item) =>
           item['id'] == id ||
@@ -109,8 +141,22 @@ class MyWishlistController extends GetxController with SkeletonLoadingMixin {
           item['variantId'] == vId,
     );
 
+    if (Get.isRegistered<WishlistService>()) {
+      if (vId.isNotEmpty) {
+        WishlistService.to.wishlistedVariantIds.remove(vId);
+      }
+      if (WishlistService.to.count.value > 0) {
+        WishlistService.to.count.value--;
+      }
+    }
+
     try {
-      await dioDelete('wishlist?variantId=$vId');
+      if (vId.isNotEmpty) {
+        await dioDelete('wishlist?variantId=$vId');
+        if (Get.isRegistered<WishlistService>()) {
+          WishlistService.to.refreshCount();
+        }
+      }
     } catch (_) {}
 
     Get.snackbar(
@@ -126,6 +172,9 @@ class MyWishlistController extends GetxController with SkeletonLoadingMixin {
   /// 3. DELETE /wishlist - Clear entire wishlist
   Future<void> clearWishlist() async {
     wishlistItems.clear();
+    if (Get.isRegistered<WishlistService>()) {
+      WishlistService.to.clear();
+    }
     try {
       await dioDelete('wishlist');
     } catch (_) {}

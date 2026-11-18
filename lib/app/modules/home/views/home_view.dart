@@ -8,6 +8,7 @@ import 'package:iconsax/iconsax.dart';
 import '../../../data/config/app_color.dart';
 import '../../../data/config/app_image.dart';
 import '../../../data/config/functions/dio_function/app_config.dart';
+import '../../../data/services/wishlist_service.dart';
 import '../../../data/widgets/brand_logo_widget.dart';
 import '../../../data/widgets/points_badge.dart';
 import '../../../data/widgets/skeleton_box.dart';
@@ -699,17 +700,55 @@ class HomeView extends GetView<HomeController> {
             children: [
               Image.asset(AppImage.logo, height: 28.h, fit: BoxFit.contain),
               const Spacer(),
-              // Wishlist Heart
+              // Wishlist Heart with Badge
               GestureDetector(
                 onTap: () => Get.toNamed(Routes.MY_WISHLIST),
                 behavior: HitTestBehavior.opaque,
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 6.w),
-                  child: Icon(
-                    Iconsax.heart,
-                    size: 22.r,
-                    color: AppColor.textPrimary,
-                  ),
+                  child: Obx(() {
+                    final count = Get.isRegistered<WishlistService>()
+                        ? WishlistService.to.count.value
+                        : 0;
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Icon(
+                          Iconsax.heart,
+                          size: 22.r,
+                          color: AppColor.textPrimary,
+                        ),
+                        if (count > 0)
+                          Positioned(
+                            right: -6.w,
+                            top: -4.h,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 4.w,
+                                vertical: 1.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColor.primary,
+                                borderRadius: BorderRadius.circular(10.r),
+                              ),
+                              constraints: BoxConstraints(
+                                minWidth: 16.r,
+                                minHeight: 16.r,
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                count > 99 ? '99+' : '$count',
+                                style: GoogleFonts.lato(
+                                  fontSize: 9.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColor.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  }),
                 ),
               ),
               // Notifications Bell

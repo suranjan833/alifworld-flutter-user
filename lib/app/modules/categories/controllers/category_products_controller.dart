@@ -2,6 +2,8 @@ import 'package:get/get.dart';
 
 import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
+import '../../../data/services/wishlist_service.dart';
+import '../../../routes/app_pages.dart';
 import '../../bag/controllers/bag_controller.dart';
 import '../models/product_model.dart';
 
@@ -282,56 +284,57 @@ class CategoryProductsController extends GetxController {
     }
   }
 
+  bool isVariantWishlisted(String? vId) {
+    if (vId == null || vId.isEmpty) return false;
+    return wishlistedProductIds.contains(vId) ||
+        (Get.isRegistered<WishlistService>() &&
+            WishlistService.to.isWishlisted(vId));
+  }
+
   Future<void> _syncWishlistFromApi() async {
-    final token = getBox.read(USER_TOKEN);
-    if (token == null || token.toString().isEmpty) return;
-    try {
-      final response = await dioGet('wishlist');
-      if (response.statusCode == 200 && response.data != null) {
-        dynamic raw = response.data;
-        if (raw is Map && raw.containsKey('data')) raw = raw['data'];
-        if (raw is List) {
-          final ids = <String>{};
-          for (var item in raw) {
-            if (item is Map) {
-              if (item['productId'] != null) ids.add(item['productId'].toString());
-              if (item['variantId'] != null) ids.add(item['variantId'].toString());
-              if (item['product'] is Map && item['product']['id'] != null) {
-                ids.add(item['product']['id'].toString());
-              }
-            }
-          }
-          if (ids.isNotEmpty) {
-            wishlistedProductIds.addAll(ids);
-          }
+    if (!Get.isRegistered<WishlistService>()) return;
+    final wishlistSvc = WishlistService.to;
+    if (!wishlistSvc.hasAuth) return;
+
+    final visibleVariantIds = <String>[];
+    for (final p in allProducts) {
+      if (p.variants != null && p.variants!.isNotEmpty) {
+        final fv = p.variants!.first;
+        if (fv['id'] != null) {
+          visibleVariantIds.add(fv['id'].toString());
         }
       }
-    } catch (_) {}
+    }
+
+    if (visibleVariantIds.isNotEmpty) {
+      await wishlistSvc.checkStatus(visibleVariantIds);
+      wishlistedProductIds.assignAll(wishlistSvc.wishlistedVariantIds);
+    }
   }
 
   Future<void> toggleWishlist(String productId, [String? variantId]) async {
-    final vId = (variantId != null && variantId.isNotEmpty) ? variantId : productId;
-    final isAdding = !wishlistedProductIds.contains(productId);
-    if (isAdding) {
-      wishlistedProductIds.add(productId);
-    } else {
-      wishlistedProductIds.remove(productId);
+    String resolvedVariantId =
+        (variantId != null && variantId.isNotEmpty) ? variantId : '';
+    if (resolvedVariantId.isEmpty) {
+      final prod = allProducts.firstWhereOrNull((p) => p.id == productId);
+      if (prod?.variants != null && prod!.variants!.isNotEmpty) {
+        final fv = prod.variants!.first;
+        if (fv['id'] != null) {
+          resolvedVariantId = fv['id'].toString();
+        }
+      }
+    }
+    if (resolvedVariantId.isEmpty) return;
+
+    if (!Get.isRegistered<WishlistService>()) return;
+    final wishlistSvc = WishlistService.to;
+    if (!wishlistSvc.hasAuth) {
+      Get.toNamed(Routes.LOGIN);
+      return;
     }
 
-    final token = getBox.read(USER_TOKEN);
-    if (token != null && token.toString().isNotEmpty) {
-      try {
-        if (isAdding) {
-          await dioPost(
-            endUrl: 'wishlist',
-            data: {'variantId': vId},
-            isJson: true,
-          );
-        } else {
-          await dioDelete('wishlist?variantId=$vId');
-        }
-      } catch (_) {}
-    }
+    await wishlistSvc.toggleWishlist(resolvedVariantId);
+    wishlistedProductIds.assignAll(wishlistSvc.wishlistedVariantIds);
   }
 
   Future<void> addToCart(ProductModel product) async {

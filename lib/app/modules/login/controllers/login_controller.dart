@@ -5,6 +5,7 @@ import '../../../data/config/app_color.dart';
 import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/models/country_model.dart';
+import '../../../data/services/wishlist_service.dart';
 import '../../../routes/app_pages.dart';
 import '../../account/controllers/account_controller.dart';
 import '../../home/controllers/home_controller.dart';
@@ -415,6 +416,9 @@ class LoginController extends GetxController {
     }
     if (Get.isRegistered<HomeController>()) {
       Get.find<HomeController>().refreshData();
+    }
+    if (Get.isRegistered<WishlistService>()) {
+      WishlistService.to.refreshCount();
     }
 
     // 4. Navigate to MAIN_NAVIGATION cleanly

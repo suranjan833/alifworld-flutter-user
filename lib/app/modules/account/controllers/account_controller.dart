@@ -12,6 +12,7 @@ import '../../../data/mixins/skeleton_loading_mixin.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/models/wallet_model.dart';
 import '../../../data/services/app_translations.dart';
+import '../../../data/services/wishlist_service.dart';
 import '../../../data/widgets/wallet_pin_dialog.dart';
 import '../../../routes/app_pages.dart';
 import '../../leaderboards/models/leaderboard_model.dart';
@@ -933,6 +934,9 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
                         getBox.remove(USER_EMAIL);
                         getBox.remove(USER_PHONE);
                         getBox.remove(USER_LOGIN);
+                        if (Get.isRegistered<WishlistService>()) {
+                          WishlistService.to.clear();
+                        }
                         user.value = null;
                         isLoggedIn.value = false;
                         userName.value = '';

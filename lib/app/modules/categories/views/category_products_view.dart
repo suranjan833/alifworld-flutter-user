@@ -646,10 +646,14 @@ class CategoryProductsView extends GetView<CategoryProductsController> {
                     right: 8.w,
                     top: 8.h,
                     child: Obx(() {
-                      final isWishlisted = controller.wishlistedProductIds
-                          .contains(productId);
+                      final vId = (product.variants != null &&
+                              product.variants!.isNotEmpty)
+                          ? product.variants!.first['id']?.toString()
+                          : null;
+                      final isWishlisted = controller.isVariantWishlisted(vId);
                       return GestureDetector(
-                        onTap: () => controller.toggleWishlist(productId),
+                        onTap: () =>
+                            controller.toggleWishlist(productId, vId),
                         child: AnimatedSwitcher(
                           duration: const Duration(milliseconds: 200),
                           transitionBuilder: (child, animation) =>
