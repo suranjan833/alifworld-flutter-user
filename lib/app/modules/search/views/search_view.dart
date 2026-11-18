@@ -768,11 +768,14 @@ class SearchView extends GetView<CatalogSearchController> {
                     right: 6.w,
                     top: 6.h,
                     child: Obx(() {
-                      final isWish = controller.wishlistedProductIds.contains(
-                        productId,
-                      );
+                      final vId = (product.variants != null &&
+                              product.variants!.isNotEmpty)
+                          ? product.variants!.first['id']?.toString()
+                          : null;
+                      final isWish = controller.isVariantWishlisted(vId);
                       return GestureDetector(
-                        onTap: () => controller.toggleWishlist(productId),
+                        onTap: () =>
+                            controller.toggleWishlist(productId, vId),
                         child: Container(
                           padding: EdgeInsets.all(6.r),
                           decoration: BoxDecoration(

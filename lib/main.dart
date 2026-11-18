@@ -15,6 +15,7 @@ import 'app/data/services/deep_link_service.dart';
 import 'app/data/services/recently_viewed_service.dart';
 import 'app/data/services/rewards_service.dart';
 import 'app/data/services/wallet_pin_service.dart';
+import 'app/data/services/wishlist_service.dart';
 import 'app/modules/splash/bindings/splash_binding.dart';
 import 'app/modules/splash/views/splash_view.dart';
 import 'app/routes/app_pages.dart';
@@ -54,6 +55,7 @@ void main() async {
   Get.put(RewardsService(), permanent: true);
   Get.put(RecentlyViewedService(), permanent: true);
   Get.put(WalletPinService(), permanent: true);
+  Get.put(WishlistService(), permanent: true);
   Get.put(DeepLinkService(), permanent: true);
   Get.put(AppUpdateService(), permanent: true);
   DeepLinkService.to.init();

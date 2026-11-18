@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/mixins/skeleton_loading_mixin.dart';
+import '../../../data/services/wishlist_service.dart';
 import '../../bag/controllers/bag_controller.dart';
 import '../models/home_category_model.dart';
 import '../models/showcase_model.dart';
@@ -46,6 +47,9 @@ class HomeController extends GetxController with SkeletonLoadingMixin {
     isLoading.value = true;
     try {
       _fetchCartOnHomeLoad();
+      if (Get.isRegistered<WishlistService>()) {
+        WishlistService.to.refreshCount();
+      }
       await fetchCategories();
       await fetchShowcase();
     } finally {
@@ -205,6 +209,7 @@ class HomeController extends GetxController with SkeletonLoadingMixin {
             categories[idx].products = liveProducts;
           }
           categories.refresh();
+          syncWishlistToProducts();
         }
       }
     } catch (_) {
@@ -302,40 +307,70 @@ class HomeController extends GetxController with SkeletonLoadingMixin {
     fetchShowcase(slug);
   }
 
-  Future<void> toggleFavorite(int productIndex) async {
-    final products = currentCategory.products;
-    if (productIndex >= 0 && productIndex < products.length) {
-      final isFav = !(products[productIndex]['isFavorite'] as bool? ?? false);
-      products[productIndex]['isFavorite'] = isFav;
-      selectedCategoryIndex.refresh();
+  Future<void> syncWishlistToProducts() async {
+    if (!Get.isRegistered<WishlistService>()) return;
+    final wishlistSvc = WishlistService.to;
+    if (!wishlistSvc.hasAuth) return;
 
-      final prod = products[productIndex];
-      String vId = '';
-      if (prod['variants'] is List && (prod['variants'] as List).isNotEmpty) {
-        final fv = (prod['variants'] as List).first;
-        if (fv is Map && fv['id'] != null) {
-          vId = fv['id'].toString();
+    final visibleVariantIds = <String>[];
+    for (var cat in categories) {
+      for (var prod in cat.products) {
+        String vId = prod['variantId']?.toString() ?? '';
+        if (vId.isEmpty &&
+            prod['variants'] is List &&
+            (prod['variants'] as List).isNotEmpty) {
+          final fv = (prod['variants'] as List).first;
+          if (fv is Map && fv['id'] != null) vId = fv['id'].toString();
+        }
+        if (vId.isNotEmpty) {
+          visibleVariantIds.add(vId);
         }
       }
-      if (vId.isEmpty) {
-        vId = prod['variantId']?.toString() ?? prod['id']?.toString() ?? '';
-      }
+    }
 
-      final token = getBox.read(USER_TOKEN);
-      if (token != null && token.toString().isNotEmpty && vId.isNotEmpty) {
-        try {
-          if (isFav) {
-            await dioPost(
-              endUrl: 'wishlist',
-              data: {'variantId': vId},
-              isJson: true,
-            );
-          } else {
-            await dioDelete('wishlist?variantId=$vId');
+    if (visibleVariantIds.isNotEmpty) {
+      await wishlistSvc.checkStatus(visibleVariantIds);
+      for (var cat in categories) {
+        for (var prod in cat.products) {
+          String vId = prod['variantId']?.toString() ?? '';
+          if (vId.isEmpty &&
+              prod['variants'] is List &&
+              (prod['variants'] as List).isNotEmpty) {
+            final fv = (prod['variants'] as List).first;
+            if (fv is Map && fv['id'] != null) vId = fv['id'].toString();
           }
-        } catch (_) {}
+          if (vId.isNotEmpty) {
+            prod['isFavorite'] = wishlistSvc.isWishlisted(vId);
+          }
+        }
+      }
+      selectedCategoryIndex.refresh();
+    }
+  }
+
+  Future<void> toggleFavorite(int productIndex) async {
+    final products = currentCategory.products;
+    if (productIndex < 0 || productIndex >= products.length) return;
+
+    final prod = products[productIndex];
+    String vId = '';
+    if (prod['variants'] is List && (prod['variants'] as List).isNotEmpty) {
+      final fv = (prod['variants'] as List).first;
+      if (fv is Map && fv['id'] != null) {
+        vId = fv['id'].toString();
       }
     }
+    if (vId.isEmpty) {
+      vId = prod['variantId']?.toString() ?? '';
+    }
+
+    if (vId.isEmpty) return;
+
+    if (!Get.isRegistered<WishlistService>()) return;
+    final wishlistSvc = WishlistService.to;
+    final newStatus = await wishlistSvc.toggleWishlist(vId);
+    prod['isFavorite'] = newStatus;
+    selectedCategoryIndex.refresh();
   }
 
   void setLocation(String newLocation) {

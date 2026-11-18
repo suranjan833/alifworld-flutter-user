@@ -102,6 +102,9 @@ class ProductVariantModel {
           imgs.add(item.toString());
         }
       }
+    } else if (json['imageUrl'] != null &&
+        json['imageUrl'].toString().isNotEmpty) {
+      imgs = [json['imageUrl'].toString()];
     } else if (json['image'] != null && json['image'].toString().isNotEmpty) {
       imgs = [json['image'].toString()];
     }
@@ -397,6 +400,9 @@ class ProductDetailsModel {
           imgs.add(item.toString());
         }
       }
+    } else if (json['imageUrl'] != null &&
+        json['imageUrl'].toString().isNotEmpty) {
+      imgs = [json['imageUrl'].toString()];
     } else if (json['image'] != null && json['image'].toString().isNotEmpty) {
       imgs = [json['image'].toString()];
     }

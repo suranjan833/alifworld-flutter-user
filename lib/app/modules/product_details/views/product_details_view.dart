@@ -40,6 +40,15 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
         ),
         centerTitle: false,
         actions: [
+          IconButton(
+            icon: Icon(
+              Iconsax.share,
+              color: AppColor.textPrimary,
+              size: 22.r,
+            ),
+            tooltip: 'Share',
+            onPressed: () => controller.shareProduct(),
+          ),
           Obx(
             () => IconButton(
               icon: Icon(
