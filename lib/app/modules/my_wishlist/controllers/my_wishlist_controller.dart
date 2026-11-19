@@ -169,15 +169,27 @@ class MyWishlistController extends GetxController with SkeletonLoadingMixin {
     );
   }
 
-  /// 3. DELETE /wishlist - Clear entire wishlist
+  /// 3. Clear entire wishlist by deleting each wishlisted variant
   Future<void> clearWishlist() async {
+    final idsToDelete = wishlistItems
+        .map((e) => e['variantId']?.toString())
+        .where((id) => id != null && id.isNotEmpty)
+        .cast<String>()
+        .toList();
+
     wishlistItems.clear();
     if (Get.isRegistered<WishlistService>()) {
       WishlistService.to.clear();
     }
-    try {
-      await dioDelete('wishlist');
-    } catch (_) {}
+
+    for (final vId in idsToDelete) {
+      try {
+        await dioDelete('wishlist?variantId=$vId');
+      } catch (_) {}
+    }
+    if (Get.isRegistered<WishlistService>()) {
+      WishlistService.to.refreshCount();
+    }
 
     Get.snackbar(
       'Wishlist Cleared',

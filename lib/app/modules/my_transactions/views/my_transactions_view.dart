@@ -490,7 +490,7 @@ class MyTransactionsView extends GetView<MyTransactionsController> {
                     Text(
                       tx.formattedDate,
                       style: GoogleFonts.lato(
-                        fontSize: 11.5.sp,
+                        fontSize: 10.5.sp,
                         color: AppColor.textSecondary,
                       ),
                     ),
@@ -503,14 +503,17 @@ class MyTransactionsView extends GetView<MyTransactionsController> {
                         ),
                       ),
                       Flexible(
-                        child: Text(
-                          tx.walletTitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.lato(
-                            fontSize: 11.5.sp,
-                            color: AppColor.primary,
-                            fontWeight: FontWeight.w600,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            tx.walletTitle,
+                            maxLines: 1,
+                            style: GoogleFonts.lato(
+                              fontSize: 10.5.sp,
+                              color: AppColor.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),

@@ -527,17 +527,20 @@ class LeaderboardView extends GetView<LeaderboardController> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    poolBand != null
-                        ? '${poolBand.key.toUpperCase()} · ${poolBand.pct}%'
-                        : '—',
-                    style: GoogleFonts.lato(
-                      fontSize: 11.5.sp,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF059669),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      poolBand != null
+                          ? '${poolBand.key.toUpperCase()} · ${poolBand.pct}%'
+                          : '—',
+                      style: GoogleFonts.lato(
+                        fontSize: 11.5.sp,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF059669),
+                      ),
+                      maxLines: 1,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                   if (poolBand != null)
                     Text(
