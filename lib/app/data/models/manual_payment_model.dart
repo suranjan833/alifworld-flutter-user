@@ -170,7 +170,7 @@ class WithdrawalAccountDetailModel {
 
   factory WithdrawalAccountDetailModel.fromJson(Map<String, dynamic> json) {
     return WithdrawalAccountDetailModel(
-      fieldId: json['fieldId']?.toString() ?? '',
+      fieldId: json['fieldId']?.toString() ?? json['id']?.toString() ?? '',
       label: json['label']?.toString() ?? '',
       value: json['value']?.toString() ?? '',
     );

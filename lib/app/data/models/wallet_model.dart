@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 
+import 'manual_payment_model.dart';
+
 class WalletItemModel {
   final String kind;
   final int balanceMinor;
@@ -275,6 +277,113 @@ class WalletResponseModel {
   }
 }
 
+class TransactionManualBlockModel {
+  final String kind; // 'deposit' | 'withdrawal'
+  final String status; // 'pending' | 'approved' | 'paid' | 'rejected'
+  final int amountMinor;
+  final int feeMinor;
+  final int netMinor;
+  final String? reference;
+  final String? proofUrl;
+  final List<WithdrawalAccountDetailModel> details;
+  final String? rejectReason;
+  final String? paidMessage;
+  final DateTime? reviewedAt;
+
+  TransactionManualBlockModel({
+    required this.kind,
+    required this.status,
+    required this.amountMinor,
+    required this.feeMinor,
+    required this.netMinor,
+    this.reference,
+    this.proofUrl,
+    this.details = const [],
+    this.rejectReason,
+    this.paidMessage,
+    this.reviewedAt,
+  });
+
+  bool get isDeposit => kind.toLowerCase() == 'deposit';
+  bool get isWithdrawal => kind.toLowerCase() == 'withdrawal';
+
+  bool get isPending => status.toLowerCase() == 'pending';
+  bool get isApproved => status.toLowerCase() == 'approved';
+  bool get isPaid => status.toLowerCase() == 'paid';
+  bool get isRejected => status.toLowerCase() == 'rejected';
+
+  double get amount => amountMinor / 100.0;
+  double get fee => feeMinor / 100.0;
+  double get net => netMinor / 100.0;
+
+  /// Helper to get masked bank card summary: "Dutch-Bangla Bank · ••••7890" (§1.3)
+  String get maskedCardSummary {
+    if (details.isEmpty) return '';
+    String bankName = '';
+    String acctNo = '';
+    for (var d in details) {
+      final l = d.label.toLowerCase();
+      if (l.contains('bank') ||
+          l.contains('method') ||
+          l.contains('provider') ||
+          l.contains('name')) {
+        if (bankName.isEmpty) bankName = d.value;
+      }
+      if (l.contains('number') ||
+          l.contains('account') ||
+          l.contains('no') ||
+          l.contains('acct') ||
+          l.contains('wallet')) {
+        acctNo = d.value;
+      }
+    }
+    if (bankName.isEmpty && details.isNotEmpty) {
+      bankName = details.first.value;
+    }
+    if (acctNo.isNotEmpty) {
+      final clean = acctNo.trim();
+      final last4 =
+          clean.length > 4 ? clean.substring(clean.length - 4) : clean;
+      return bankName.isNotEmpty ? '$bankName · ••••$last4' : '••••$last4';
+    }
+    return bankName;
+  }
+
+  factory TransactionManualBlockModel.fromJson(Map<String, dynamic> json) {
+    DateTime? parsedReviewed;
+    final rStr =
+        json['reviewedAt']?.toString() ?? json['reviewed_at']?.toString();
+    if (rStr != null && rStr.isNotEmpty) {
+      try {
+        parsedReviewed = DateTime.parse(rStr);
+      } catch (_) {}
+    }
+
+    final rawDetails = json['details'] as List<dynamic>?;
+    final parsedDetails = rawDetails
+            ?.map((e) => WithdrawalAccountDetailModel.fromJson(
+                Map<String, dynamic>.from(e)))
+            .toList() ??
+        [];
+
+    return TransactionManualBlockModel(
+      kind: json['kind']?.toString() ?? '',
+      status: json['status']?.toString() ?? 'pending',
+      amountMinor: (json['amountMinor'] as num?)?.toInt() ?? 0,
+      feeMinor: (json['feeMinor'] as num?)?.toInt() ?? 0,
+      netMinor: (json['netMinor'] as num?)?.toInt() ?? 0,
+      reference: json['reference']?.toString(),
+      proofUrl: json['proofUrl']?.toString() ?? json['proof_url']?.toString(),
+      details: parsedDetails,
+      rejectReason: json['rejectReason']?.toString() ??
+          json['reject_reason']?.toString(),
+      paidMessage:
+          json['paidMessage']?.toString() ?? json['paid_message']?.toString(),
+      reviewedAt: parsedReviewed,
+    );
+  }
+}
+
 class WalletTransactionModel {
   final String id;
   final String walletKind;
@@ -286,6 +395,7 @@ class WalletTransactionModel {
   final String? referenceId;
   final String? status;
   final DateTime? createdAt;
+  final TransactionManualBlockModel? manual;
 
   WalletTransactionModel({
     required this.id,
@@ -298,11 +408,17 @@ class WalletTransactionModel {
     this.referenceId,
     this.status,
     this.createdAt,
+    this.manual,
   });
+
+  bool get isManual => manual != null;
 
   bool get isCredit {
     if (type != null) {
       return type!.toLowerCase().contains('credit');
+    }
+    if (manual != null) {
+      return manual!.isDeposit;
     }
     return amountMinor >= 0;
   }
@@ -321,7 +437,15 @@ class WalletTransactionModel {
   }
 
   String get displayTitle {
+    if (manual != null) {
+      return manual!.isDeposit ? 'Alif Pay Deposit' : 'Alif Pay Withdrawal';
+    }
     switch (reason.toLowerCase()) {
+      case 'manual_deposit':
+        return 'Alif Pay Deposit';
+      case 'manual_withdraw':
+      case 'manual_withdrawal':
+        return 'Alif Pay Withdrawal';
       case 'order_cashback':
         return 'Order Cashback';
       case 'order_payment':
@@ -349,7 +473,8 @@ class WalletTransactionModel {
           return reason
               .replaceAll('_', ' ')
               .split(' ')
-              .map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '')
+              .map((w) =>
+                  w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '')
               .join(' ');
         }
         if (referenceId != null && referenceId!.isNotEmpty) {
@@ -405,6 +530,11 @@ class WalletTransactionModel {
     final amtMinor = (json['amountMinor'] as num?)?.toInt() ??
         (((json['amount'] as num?)?.toDouble() ?? 0.0) * 100).toInt();
 
+    final manualJson = json['manual'] as Map<String, dynamic>?;
+    final manualBlock = manualJson != null
+        ? TransactionManualBlockModel.fromJson(manualJson)
+        : null;
+
     return WalletTransactionModel(
       id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
       walletKind: json['walletKind']?.toString() ?? 'customer_main',
@@ -421,6 +551,7 @@ class WalletTransactionModel {
           json['orderId']?.toString(),
       status: json['status']?.toString() ?? 'completed',
       createdAt: parsedDate,
+      manual: manualBlock,
     );
   }
 }

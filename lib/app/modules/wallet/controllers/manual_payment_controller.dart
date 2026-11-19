@@ -29,6 +29,7 @@ class ManualPaymentController extends GetxController {
 
   // §3 Deposit Form & Upload
   final isUploadingReceipt = false.obs;
+  final localReceiptPath = RxnString();
   final uploadedReceiptUrl = RxnString();
   final uploadedReceiptName = RxnString();
   final isSubmittingDeposit = false.obs;
@@ -72,6 +73,7 @@ class ManualPaymentController extends GetxController {
     depositAmountCtrl.clear();
     depositRefCtrl.clear();
     enteredDepositAmount.value = 0.0;
+    localReceiptPath.value = null;
     uploadedReceiptUrl.value = null;
     uploadedReceiptName.value = null;
     fetchConfig();
@@ -290,16 +292,21 @@ class ManualPaymentController extends GetxController {
 
   /// §3.1 Upload receipt via image picker or camera
   Future<void> pickAndUploadReceipt(ImageSource source) async {
+    debugPrint('[ManualPayment] pickAndUploadReceipt called: source=$source');
     try {
       final XFile? pickedFile = await _picker.pickImage(
         source: source,
         imageQuality: 85,
         maxWidth: 1600,
       );
+      debugPrint('[ManualPayment] pickedFile: $pickedFile');
       if (pickedFile == null) return;
 
-      isUploadingReceipt.value = true;
+      // Update state immediately so thumbnail preview renders INSTANTLY!
+      localReceiptPath.value = pickedFile.path;
       uploadedReceiptName.value = pickedFile.name;
+      uploadedReceiptUrl.value = null;
+      isUploadingReceipt.value = true;
 
       final formDataMap = <String, dynamic>{
         'kind': 'document',
@@ -326,16 +333,13 @@ class ManualPaymentController extends GetxController {
           uploadedReceiptUrl.value = rawData['url'].toString();
           showSnack('Receipt Uploaded', 'Receipt attached successfully');
         } else {
-          uploadedReceiptName.value = null;
           showSnack('Upload Failed', 'No receipt URL returned');
         }
       } else {
-        uploadedReceiptName.value = null;
         final err = _extractErrorMessage(response.data);
         showSnack('Upload Failed', err ?? 'Could not upload receipt image');
       }
     } catch (e) {
-      uploadedReceiptName.value = null;
       showSnack('Upload Error', 'Failed to upload receipt: $e');
     } finally {
       isUploadingReceipt.value = false;
@@ -343,6 +347,7 @@ class ManualPaymentController extends GetxController {
   }
 
   void clearUploadedReceipt() {
+    localReceiptPath.value = null;
     uploadedReceiptUrl.value = null;
     uploadedReceiptName.value = null;
   }

@@ -77,6 +77,5 @@ mera_push.sh
 !.env.example
 .kotlin/
 android/.kotlin/
-refer.md
-alifworld-flutter-order-flow-wallet-pin.md
-alifworld-flutter-manual-payments-customer-app.md
+
+

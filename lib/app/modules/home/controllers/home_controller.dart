@@ -19,13 +19,51 @@ class HomeController extends GetxController with SkeletonLoadingMixin {
 
   final showcase = Rxn<ShowcaseModel>();
 
+  // In-memory cache for fast category switching
+  final Map<String, ShowcaseModel> _showcaseCache = {};
+
+  // Cache keys & TTL
+  static const String _kCachedCategories = 'cached_home_categories';
+  static const String _kCachedCategoriesTs = 'cached_home_categories_ts';
+  static const String _kCachedShowcaseAll = 'cached_home_showcase_all';
+  static const String _kCachedShowcaseAllTs = 'cached_home_showcase_all_ts';
+
+  static const int _categoriesTtlMs = 30 * 60 * 1000; // 30 minutes
+  static const int _showcaseTtlMs = 10 * 60 * 1000; // 10 minutes
+
   @override
   void onInit() {
     super.onInit();
-    // Defer so the shimmer is visible when the tab is first opened.
+    // 1. Immediately hydrate from persistent local cache (Stale-While-Revalidate)
+    _loadFromLocalCache();
+
+    // 2. Fetch fresh or validate cache in background / parallel
     WidgetsBinding.instance.addPostFrameCallback((_) {
       loadHomeData();
     });
+  }
+
+  void _loadFromLocalCache() {
+    try {
+      final cachedCats = getBox.read(_kCachedCategories);
+      if (cachedCats is List && cachedCats.isNotEmpty) {
+        _applyCategoryList(cachedCats);
+      }
+
+      final cachedShowcase = getBox.read(_kCachedShowcaseAll);
+      if (cachedShowcase is Map) {
+        _applyShowcaseData(
+          Map<String, dynamic>.from(cachedShowcase),
+          categorySlug: 'all',
+          isCacheLoad: true,
+        );
+      }
+
+      // If we have cached showcase & categories, dismiss loading immediately
+      if (showcase.value != null && categories.length > 1) {
+        isLoading.value = false;
+      }
+    } catch (_) {}
   }
 
   @override
@@ -43,23 +81,88 @@ class HomeController extends GetxController with SkeletonLoadingMixin {
     } catch (_) {}
   }
 
-  Future<void> loadHomeData() async {
-    isLoading.value = true;
+  Future<void> loadHomeData({bool forceRefresh = false}) async {
+    // Only show shimmer if we don't have cached data displayed yet
+    if (showcase.value == null || categories.length <= 1) {
+      isLoading.value = true;
+    }
+
     try {
       _fetchCartOnHomeLoad();
       if (Get.isRegistered<WishlistService>()) {
         WishlistService.to.refreshCount();
       }
-      await fetchCategories();
-      await fetchShowcase();
+
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final catsTs = getBox.read<int>(_kCachedCategoriesTs) ?? 0;
+      final isCatsExpired = (now - catsTs) > _categoriesTtlMs;
+
+      final showcaseTs = getBox.read<int>(_kCachedShowcaseAllTs) ?? 0;
+      final isShowcaseExpired = (now - showcaseTs) > _showcaseTtlMs;
+
+      // Run parallel network requests only when expired, forced, or missing
+      final tasks = <Future>[];
+      if (forceRefresh || isCatsExpired || categories.length <= 1) {
+        tasks.add(fetchCategories(force: forceRefresh));
+      }
+      if (forceRefresh || isShowcaseExpired || showcase.value == null) {
+        tasks.add(fetchShowcase('all', forceRefresh));
+      }
+
+      if (tasks.isNotEmpty) {
+        await Future.wait(tasks);
+      }
     } finally {
       isLoading.value = false;
     }
   }
 
+  void _applyCategoryList(List categoryList) {
+    if (categoryList.isEmpty) return;
+    final allIcon = showcase.value?.fullAllCategoryIconUrl;
+    final dynCats = <HomeCategoryModel>[
+      categories.first.copyWith(
+        imageUrl: (allIcon != null && allIcon.isNotEmpty)
+            ? allIcon
+            : categories.first.imageUrl,
+      ),
+    ];
+
+    for (int i = 0; i < categoryList.length; i++) {
+      final item = categoryList[i];
+      if (item is Map) {
+        final catId = item['id']?.toString() ?? '';
+        final catName = item['name']?.toString() ?? '';
+        final catSlug = item['slug']?.toString() ?? '';
+        final headerBgMobile = item['headerBgMobileUrl']?.toString();
+        final imgUrl = item['imageUrl']?.toString();
+        if (catName.isNotEmpty) {
+          dynCats.add(HomeCategoryModel.fromApiCategory(
+            id: catId,
+            name: catName,
+            slug: catSlug,
+            headerBgMobile: headerBgMobile,
+            imageUrl: imgUrl,
+            index: i + 1,
+          ));
+        }
+      }
+    }
+    categories.assignAll(dynCats);
+  }
+
   /// 1. GET /catalog/categories
-  Future<void> fetchCategories() async {
+  Future<void> fetchCategories({bool force = false}) async {
     try {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final catsTs = getBox.read<int>(_kCachedCategoriesTs) ?? 0;
+      final isExpired = (now - catsTs) > _categoriesTtlMs;
+
+      // Skip API if cache is fresh and not forced
+      if (!force && !isExpired && categories.length > 1) {
+        return;
+      }
+
       final response = await dioGet('catalog/categories');
       if (response.statusCode == 200 && response.data != null) {
         dynamic rawData = response.data;
@@ -75,48 +178,147 @@ class HomeController extends GetxController with SkeletonLoadingMixin {
         }
 
         if (categoryList != null && categoryList.isNotEmpty) {
-          final allIcon = showcase.value?.fullAllCategoryIconUrl;
-          final dynCats = <HomeCategoryModel>[
-            categories.first.copyWith(
-              imageUrl: (allIcon != null && allIcon.isNotEmpty)
-                  ? allIcon
-                  : categories.first.imageUrl,
-            ),
-          ];
-
-          for (int i = 0; i < categoryList.length; i++) {
-            final item = categoryList[i];
-            if (item is Map<String, dynamic>) {
-              final catId = item['id']?.toString() ?? '';
-              final catName = item['name']?.toString() ?? '';
-              final catSlug = item['slug']?.toString() ?? '';
-              final headerBgMobile = item['headerBgMobileUrl']?.toString();
-              final imgUrl = item['imageUrl']?.toString();
-              if (catName.isNotEmpty) {
-                dynCats.add(HomeCategoryModel.fromApiCategory(
-                  id: catId,
-                  name: catName,
-                  slug: catSlug,
-                  headerBgMobile: headerBgMobile,
-                  imageUrl: imgUrl,
-                  index: i + 1,
-                ));
-              }
-            }
-          }
-          categories.assignAll(dynCats);
+          _applyCategoryList(categoryList);
+          try {
+            getBox.write(_kCachedCategories, categoryList);
+            getBox.write(_kCachedCategoriesTs, now);
+          } catch (_) {}
         }
       }
     } catch (_) {}
   }
 
+  void _applyShowcaseData(
+    Map<String, dynamic> rawData, {
+    String? categorySlug,
+    bool isCacheLoad = false,
+  }) {
+    final model = ShowcaseModel.fromJson(rawData);
+    showcase.value = model;
+
+    final isAll = categorySlug == null ||
+        categorySlug.isEmpty ||
+        categorySlug.toLowerCase() == 'all';
+    final cacheKey = isAll ? 'all' : categorySlug.toLowerCase();
+    _showcaseCache[cacheKey] = model;
+
+    // Cache to GetStorage if it's the main 'all' showcase and not loaded from cache
+    if (isAll && !isCacheLoad) {
+      try {
+        getBox.write(_kCachedShowcaseAll, rawData);
+        getBox.write(
+            _kCachedShowcaseAllTs, DateTime.now().millisecondsSinceEpoch);
+      } catch (_) {}
+    }
+
+    // Update brands for current showcase
+    if (model.brands.isNotEmpty) {
+      topBrands.assignAll(model.brands.map((b) => {
+            'name': b.name,
+            'logo': b.fullLogoUrl,
+            'slug': b.slug,
+          }).toList());
+    }
+
+    // Update mobile header background if provided by showcase
+    final fullMob = model.fullHeaderBgMobileUrl;
+    if (fullMob.isNotEmpty) {
+      final idx = selectedCategoryIndex.value;
+      if (idx >= 0 && idx < categories.length) {
+        categories[idx] = categories[idx].copyWith(
+          headerBgMobileUrl: fullMob,
+        );
+      }
+    }
+
+    // Update "All" category icon if provided by showcase
+    if (model.fullAllCategoryIconUrl.isNotEmpty && categories.isNotEmpty) {
+      categories[0] = categories[0].copyWith(
+        imageUrl: model.fullAllCategoryIconUrl,
+      );
+    }
+
+    // Populate or update categories dynamically from showcase
+    if (model.rawCategories.isNotEmpty) {
+      if (categories.length <= 1) {
+        final dynCats = <HomeCategoryModel>[
+          categories.first,
+        ];
+        for (int i = 0; i < model.rawCategories.length; i++) {
+          final rawCat = model.rawCategories[i];
+          final catId = rawCat['id']?.toString() ?? '';
+          final catName = rawCat['name']?.toString() ?? '';
+          final catSlug = rawCat['slug']?.toString() ?? '';
+          final rawImg = rawCat['imageUrl']?.toString();
+          if (catName.isNotEmpty) {
+            dynCats.add(HomeCategoryModel.fromApiCategory(
+              id: catId,
+              name: catName,
+              slug: catSlug,
+              imageUrl: rawImg,
+              index: i + 1,
+            ));
+          }
+        }
+        categories.assignAll(dynCats);
+      } else {
+        for (var rawCat in model.rawCategories) {
+          final slug = rawCat['slug']?.toString() ?? '';
+          final rawImg = rawCat['imageUrl']?.toString();
+          if (slug.isNotEmpty && rawImg != null && rawImg.isNotEmpty) {
+            final fullImg = resolveImageUrl(rawImg);
+            final catIdx = categories.indexWhere((c) => c.slug == slug);
+            if (catIdx != -1) {
+              categories[catIdx] =
+                  categories[catIdx].copyWith(imageUrl: fullImg);
+            }
+          }
+        }
+      }
+    }
+
+    // Populate live products across rails into current category
+    final liveProducts = <Map<String, dynamic>>[];
+    for (var rail in model.rails) {
+      for (var prod in rail.products) {
+        liveProducts.add(prod.toDetailsMap());
+      }
+    }
+    final idx = selectedCategoryIndex.value;
+    if (idx >= 0 && idx < categories.length) {
+      categories[idx].products = liveProducts;
+    }
+    categories.refresh();
+    syncWishlistToProducts();
+  }
+
   /// 2. GET /catalog/showcase or GET /catalog/showcase?category=`<slug>`
-  Future<void> fetchShowcase([String? categorySlug]) async {
+  Future<void> fetchShowcase([String? categorySlug, bool force = false]) async {
+    final isAll = categorySlug == null ||
+        categorySlug.isEmpty ||
+        categorySlug.toLowerCase() == 'all';
+    final cacheKey = isAll ? 'all' : categorySlug.toLowerCase();
+
+    // Check memory cache first
+    if (!force && _showcaseCache.containsKey(cacheKey)) {
+      final cachedModel = _showcaseCache[cacheKey]!;
+      showcase.value = cachedModel;
+      final idx = selectedCategoryIndex.value;
+      if (idx >= 0 && idx < categories.length) {
+        final liveProds = <Map<String, dynamic>>[];
+        for (var r in cachedModel.rails) {
+          for (var p in r.products) {
+            liveProds.add(p.toDetailsMap());
+          }
+        }
+        categories[idx].products = liveProds;
+        categories.refresh();
+      }
+      return;
+    }
+
     isCategoryProductsLoading.value = true;
     try {
-      final isAll = categorySlug == null ||
-          categorySlug.isEmpty ||
-          categorySlug.toLowerCase() == 'all';
       final endpoint = isAll
           ? 'catalog/showcase'
           : 'catalog/showcase?category=$categorySlug';
@@ -128,88 +330,7 @@ class HomeController extends GetxController with SkeletonLoadingMixin {
           rawData = rawData['data'];
         }
         if (rawData is Map<String, dynamic>) {
-          final model = ShowcaseModel.fromJson(rawData);
-          showcase.value = model;
-
-          // Update brands for current showcase
-          if (model.brands.isNotEmpty) {
-            topBrands.assignAll(model.brands.map((b) => {
-                  'name': b.name,
-                  'logo': b.fullLogoUrl,
-                  'slug': b.slug,
-                }).toList());
-          }
-
-          // Update mobile header background if provided by showcase
-          final fullMob = model.fullHeaderBgMobileUrl;
-          if (fullMob.isNotEmpty) {
-            final idx = selectedCategoryIndex.value;
-            if (idx >= 0 && idx < categories.length) {
-              categories[idx] = categories[idx].copyWith(
-                headerBgMobileUrl: fullMob,
-              );
-            }
-          }
-
-          // Update "All" category icon if provided by showcase
-          if (model.fullAllCategoryIconUrl.isNotEmpty && categories.isNotEmpty) {
-            categories[0] = categories[0].copyWith(
-              imageUrl: model.fullAllCategoryIconUrl,
-            );
-          }
-
-          // Populate or update categories dynamically from showcase
-          if (model.rawCategories.isNotEmpty) {
-            if (categories.length <= 1) {
-              final dynCats = <HomeCategoryModel>[
-                categories.first,
-              ];
-              for (int i = 0; i < model.rawCategories.length; i++) {
-                final rawCat = model.rawCategories[i];
-                final catId = rawCat['id']?.toString() ?? '';
-                final catName = rawCat['name']?.toString() ?? '';
-                final catSlug = rawCat['slug']?.toString() ?? '';
-                final rawImg = rawCat['imageUrl']?.toString();
-                if (catName.isNotEmpty) {
-                  dynCats.add(HomeCategoryModel.fromApiCategory(
-                    id: catId,
-                    name: catName,
-                    slug: catSlug,
-                    imageUrl: rawImg,
-                    index: i + 1,
-                  ));
-                }
-              }
-              categories.assignAll(dynCats);
-            } else {
-              for (var rawCat in model.rawCategories) {
-                final slug = rawCat['slug']?.toString() ?? '';
-                final rawImg = rawCat['imageUrl']?.toString();
-                if (slug.isNotEmpty && rawImg != null && rawImg.isNotEmpty) {
-                  final fullImg = resolveImageUrl(rawImg);
-                  final catIdx = categories.indexWhere((c) => c.slug == slug);
-                  if (catIdx != -1) {
-                    categories[catIdx] =
-                        categories[catIdx].copyWith(imageUrl: fullImg);
-                  }
-                }
-              }
-            }
-          }
-
-          // Populate live products across rails into current category
-          final liveProducts = <Map<String, dynamic>>[];
-          for (var rail in model.rails) {
-            for (var prod in rail.products) {
-              liveProducts.add(prod.toDetailsMap());
-            }
-          }
-          final idx = selectedCategoryIndex.value;
-          if (idx >= 0 && idx < categories.length) {
-            categories[idx].products = liveProducts;
-          }
-          categories.refresh();
-          syncWishlistToProducts();
+          _applyShowcaseData(rawData, categorySlug: categorySlug);
         }
       }
     } catch (_) {
@@ -257,7 +378,7 @@ class HomeController extends GetxController with SkeletonLoadingMixin {
 
   @override
   Future<void> refreshData() async {
-    await loadHomeData();
+    await loadHomeData(forceRefresh: true);
   }
 
   final searchHints = const [
@@ -301,9 +422,11 @@ class HomeController extends GetxController with SkeletonLoadingMixin {
 
   void selectCategory(int index) {
     if (index < 0 || index >= categories.length) return;
+    if (selectedCategoryIndex.value == index) return;
     selectedCategoryIndex.value = index;
     final cat = categories[index];
     final slug = (cat.slug == 'all' || cat.slug.isEmpty) ? '' : cat.slug;
+    currentBannerIndex.value = 0;
     fetchShowcase(slug);
   }
 
