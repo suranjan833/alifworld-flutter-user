@@ -235,20 +235,16 @@ class CheckoutView extends GetView<CheckoutController> {
                                       ),
                                       if (phone.isNotEmpty) ...[
                                         SizedBox(width: 8.w),
-                                        Expanded(
-                                          child: Text(
-                                            phone,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: GoogleFonts.lato(
-                                              fontSize: 12.sp,
-                                              fontWeight: FontWeight.w600,
-                                              color: AppColor.textSecondary,
-                                            ),
+                                        Text(
+                                          phone,
+                                          style: GoogleFonts.lato(
+                                            fontSize: 12.sp,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColor.textSecondary,
                                           ),
                                         ),
-                                      ] else
-                                        const Spacer(),
+                                      ],
+                                      const Spacer(),
                                       SizedBox(width: 6.w),
                                       InkWell(
                                         onTap: () {
@@ -444,7 +440,7 @@ class CheckoutView extends GetView<CheckoutController> {
                                             fontWeight: FontWeight.bold,
                                             color: AppColor.textPrimary,
                                           ),
-                                          maxLines: 1,
+                                          maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                         SizedBox(height: 2.h),
@@ -638,68 +634,7 @@ class CheckoutView extends GetView<CheckoutController> {
                               _buildWalletSelectionSection(),
                             ],
 
-                            // Remainder Method Tile when Wallet is active
-                            if (controller.selectedPaymentMethod.value ==
-                                    'Wallet' &&
-                                controller.remainingPayable > 0) ...[
-                              SizedBox(height: 12.h),
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  'Remaining ৳${controller.remainingPayable.toStringAsFixed(2)} — pay with',
-                                  style: GoogleFonts.lato(
-                                    fontSize: 13.5.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColor.textPrimary,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: 8.h),
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 12.w,
-                                  vertical: 10.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF8FAFC),
-                                  borderRadius: BorderRadius.circular(12.r),
-                                  border: Border.all(
-                                    color: const Color(0xFFE2E8F0),
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 18.r,
-                                      height: 18.r,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: const Color(0xFF0284C7),
-                                          width: 5,
-                                        ),
-                                        color: AppColor.white,
-                                      ),
-                                    ),
-                                    SizedBox(width: 10.w),
-                                    Icon(
-                                      Iconsax.money_send,
-                                      size: 20.r,
-                                      color: AppColor.textPrimary,
-                                    ),
-                                    SizedBox(width: 8.w),
-                                    Text(
-                                      'Cash on Delivery',
-                                      style: GoogleFonts.lato(
-                                        fontSize: 14.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColor.textPrimary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+
 
                             const Divider(color: Color(0xFFF1F5F9), height: 16),
 
@@ -1385,20 +1320,16 @@ class CheckoutView extends GetView<CheckoutController> {
                                       ),
                                       if (phone.isNotEmpty) ...[
                                         SizedBox(width: 8.w),
-                                        Expanded(
-                                          child: Text(
-                                            phone,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: GoogleFonts.lato(
-                                              fontSize: 12.sp,
-                                              fontWeight: FontWeight.w600,
-                                              color: AppColor.textSecondary,
-                                            ),
+                                        Text(
+                                          phone,
+                                          style: GoogleFonts.lato(
+                                            fontSize: 12.sp,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColor.textSecondary,
                                           ),
                                         ),
-                                      ] else
-                                        const Spacer(),
+                                      ],
+                                      const Spacer(),
                                       SizedBox(width: 6.w),
                                       InkWell(
                                         onTap: () {

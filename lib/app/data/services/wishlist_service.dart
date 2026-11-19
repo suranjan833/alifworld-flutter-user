@@ -125,16 +125,29 @@ class WishlistService extends GetxService {
           data: {'variantId': variantId},
           isJson: true,
         );
-        if (res.statusCode == 200 && res.data != null) {
+        if ((res.statusCode == 200 || res.statusCode == 201) &&
+            res.data != null) {
           dynamic d = res.data;
           if (d is Map && d.containsKey('data')) d = d['data'];
           if (d is Map && d['items'] is List) {
             count.value = (d['items'] as List).length;
           }
+        } else {
+          // Revert on API non-success
+          wishlistedVariantIds.remove(variantId);
+          if (count.value > 0) count.value--;
+          return isCurrentlyWish;
         }
       } else {
-        await dioDelete('wishlist?variantId=$variantId');
-        refreshCount();
+        final res = await dioDelete('wishlist?variantId=$variantId');
+        if (res.statusCode == 200 || res.statusCode == 204) {
+          refreshCount();
+        } else {
+          // Revert on API non-success
+          wishlistedVariantIds.add(variantId);
+          count.value++;
+          return isCurrentlyWish;
+        }
       }
       return willAdd;
     } catch (_) {

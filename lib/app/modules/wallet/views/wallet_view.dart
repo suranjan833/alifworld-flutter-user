@@ -5,13 +5,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../../../data/config/app_color.dart';
-import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/models/wallet_model.dart';
 import '../../../data/widgets/skeleton_box.dart';
 import '../../../data/widgets/wallet_pin_dialog.dart';
 import '../../../data/widgets/wallet_redeem_sheet.dart';
 import '../../../routes/app_pages.dart';
 import '../controllers/wallet_controller.dart';
+import '../widgets/add_money_sheet.dart';
+import '../widgets/withdraw_sheet.dart';
 
 class WalletView extends GetView<WalletController> {
   const WalletView({super.key});
@@ -444,7 +445,7 @@ class WalletView extends GetView<WalletController> {
                       ],
                     ),
                     child: ElevatedButton(
-                      onPressed: () => _showAddMoneyOptionsSheet(context),
+                      onPressed: () => AddMoneySheet.show(context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFF5200),
                         foregroundColor: AppColor.white,
@@ -540,7 +541,7 @@ class WalletView extends GetView<WalletController> {
                 SizedBox(width: 8.w),
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () => _showWithdrawDisabledNotice(),
+                    onPressed: () => WithdrawSheet.show(context),
                     style: OutlinedButton.styleFrom(
                       backgroundColor: AppColor.white,
                       foregroundColor: const Color(0xFF1E293B),
@@ -669,14 +670,17 @@ class WalletView extends GetView<WalletController> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          w.shortTitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.lato(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColor.white.withValues(alpha: 0.85),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            w.shortTitle,
+                            maxLines: 1,
+                            style: GoogleFonts.lato(
+                              fontSize: 11.5.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColor.white.withValues(alpha: 0.85),
+                            ),
                           ),
                         ),
                         SizedBox(height: 2.h),
@@ -751,22 +755,25 @@ class WalletView extends GetView<WalletController> {
                               Text(
                                 'Pending Points',
                                 maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.lato(
-                                  fontSize: 15.sp,
+                                  fontSize: 14.5.sp,
                                   fontWeight: FontWeight.bold,
                                   color: AppColor.textPrimary,
                                 ),
                               ),
-                              Text(
-                                orders.isNotEmpty
-                                    ? '${pp!.totalPoints} points pending posting'
-                                    : 'Posts after return window closes',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.lato(
-                                  fontSize: 11.5.sp,
-                                  color: AppColor.textSecondary,
+                              SizedBox(height: 2.h),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  orders.isNotEmpty
+                                      ? '${pp!.totalPoints} points pending posting'
+                                      : 'Posts after return window closes',
+                                  maxLines: 1,
+                                  style: GoogleFonts.lato(
+                                    fontSize: 10.5.sp,
+                                    color: AppColor.textSecondary,
+                                  ),
                                 ),
                               ),
                             ],
@@ -775,26 +782,33 @@ class WalletView extends GetView<WalletController> {
                       ],
                     ),
                   ),
-                  SizedBox(width: 6.w),
-                  TextButton.icon(
-                    onPressed: () => Get.toNamed(Routes.POINTS_HELP),
-                    icon: Icon(
-                      Icons.info_outline_rounded,
-                      size: 16.r,
-                      color: AppColor.primaryDark,
-                    ),
-                    label: Text(
-                      'Points Info',
-                      style: GoogleFonts.lato(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.bold,
-                        color: AppColor.primaryDark,
-                      ),
-                    ),
-                    style: TextButton.styleFrom(
+                  SizedBox(width: 4.w),
+                  InkWell(
+                    onTap: () => Get.toNamed(Routes.POINTS_HELP),
+                    borderRadius: BorderRadius.circular(8.r),
+                    child: Padding(
                       padding: EdgeInsets.symmetric(
-                        horizontal: 6.w,
+                        horizontal: 4.w,
                         vertical: 4.h,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.info_outline_rounded,
+                            size: 15.r,
+                            color: AppColor.primaryDark,
+                          ),
+                          SizedBox(width: 3.w),
+                          Text(
+                            'Points Info',
+                            style: GoogleFonts.lato(
+                              fontSize: 11.5.sp,
+                              fontWeight: FontWeight.bold,
+                              color: AppColor.primaryDark,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -1063,7 +1077,7 @@ class WalletView extends GetView<WalletController> {
                     Text(
                       tx.formattedDate,
                       style: GoogleFonts.lato(
-                        fontSize: 11.sp,
+                        fontSize: 10.5.sp,
                         color: AppColor.textSecondary,
                       ),
                     ),
@@ -1076,14 +1090,17 @@ class WalletView extends GetView<WalletController> {
                         ),
                       ),
                       Flexible(
-                        child: Text(
-                          tx.walletTitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.lato(
-                            fontSize: 11.sp,
-                            color: AppColor.primary,
-                            fontWeight: FontWeight.w600,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            tx.walletTitle,
+                            maxLines: 1,
+                            style: GoogleFonts.lato(
+                              fontSize: 10.5.sp,
+                              color: AppColor.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
@@ -1106,14 +1123,6 @@ class WalletView extends GetView<WalletController> {
           ),
         ],
       ),
-    );
-  }
-
-  void _showWithdrawDisabledNotice() {
-    showSnack(
-      'Withdrawals Disabled',
-      'Wallet withdrawal is temporarily disabled on Alifworld.',
-      bg: const Color(0xFF334155),
     );
   }
 
@@ -1354,407 +1363,6 @@ class WalletView extends GetView<WalletController> {
     );
   }
 
-  void _showAddMoneyOptionsSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-        decoration: BoxDecoration(
-          color: AppColor.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 40.w,
-                height: 4.h,
-                margin: EdgeInsets.only(bottom: 16.h),
-                decoration: BoxDecoration(
-                  color: AppColor.border,
-                  borderRadius: BorderRadius.circular(2.r),
-                ),
-              ),
-            ),
-            Text(
-              'Add Money Options',
-              style: GoogleFonts.lato(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.bold,
-                color: AppColor.textPrimary,
-              ),
-            ),
-            SizedBox(height: 4.h),
-            Text(
-              'Choose how you want to add funds to your wallets',
-              style: GoogleFonts.lato(
-                fontSize: 12.sp,
-                color: AppColor.textSecondary,
-              ),
-            ),
-            SizedBox(height: 16.h),
-
-            // 1. Main Wallet Service Point Deposit
-            InkWell(
-              onTap: () {
-                Navigator.of(ctx).pop();
-                _showServicePointDepositInfo(context);
-              },
-              borderRadius: BorderRadius.circular(14.r),
-              child: Container(
-                padding: EdgeInsets.all(14.r),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(14.r),
-                  border: Border.all(color: AppColor.border),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 44.r,
-                      height: 44.r,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF0F172A),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Iconsax.shop,
-                        color: AppColor.white,
-                        size: 22,
-                      ),
-                    ),
-                    SizedBox(width: 12.w),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                'Main Wallet Deposit',
-                                style: GoogleFonts.lato(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColor.textPrimary,
-                                ),
-                              ),
-                              SizedBox(width: 6.w),
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 6.w,
-                                  vertical: 1.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFEF3C7),
-                                  borderRadius: BorderRadius.circular(4.r),
-                                ),
-                                child: Text(
-                                  '1% Fee',
-                                  style: GoogleFonts.lato(
-                                    fontSize: 10.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: const Color(0xFFB45309),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 2.h),
-                          Text(
-                            'Cash deposit via authorized Alifworld Service Points',
-                            style: GoogleFonts.lato(
-                              fontSize: 11.5.sp,
-                              color: AppColor.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      color: AppColor.textSecondary,
-                      size: 20.r,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            SizedBox(height: 12.h),
-
-            // 2. Advance Shopping Packages
-            InkWell(
-              onTap: () {
-                Navigator.of(ctx).pop();
-                Get.toNamed(Routes.ADVANCED_SHOPPING);
-              },
-              borderRadius: BorderRadius.circular(14.r),
-              child: Container(
-                padding: EdgeInsets.all(14.r),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(14.r),
-                  border: Border.all(color: AppColor.border),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 44.r,
-                      height: 44.r,
-                      decoration: BoxDecoration(
-                        color: AppColor.primary.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Iconsax.box_tick,
-                        color: AppColor.primary,
-                        size: 22,
-                      ),
-                    ),
-                    SizedBox(width: 12.w),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Advance Shopping Packages',
-                            style: GoogleFonts.lato(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.bold,
-                              color: AppColor.textPrimary,
-                            ),
-                          ),
-                          SizedBox(height: 2.h),
-                          Text(
-                            'Invest in fixed packages & scheduled profit payouts',
-                            style: GoogleFonts.lato(
-                              fontSize: 11.5.sp,
-                              color: AppColor.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      color: AppColor.textSecondary,
-                      size: 20.r,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            SizedBox(height: 20.h),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showServicePointDepositInfo(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-        decoration: BoxDecoration(
-          color: AppColor.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 40.w,
-                height: 4.h,
-                margin: EdgeInsets.only(bottom: 16.h),
-                decoration: BoxDecoration(
-                  color: AppColor.border,
-                  borderRadius: BorderRadius.circular(2.r),
-                ),
-              ),
-            ),
-            Row(
-              children: [
-                Container(
-                  width: 44.r,
-                  height: 44.r,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF0F172A),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Iconsax.shop,
-                    color: AppColor.white,
-                    size: 22,
-                  ),
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Service Point Cash Deposit',
-                        style: GoogleFonts.lato(
-                          fontSize: 17.sp,
-                          fontWeight: FontWeight.bold,
-                          color: AppColor.textPrimary,
-                        ),
-                      ),
-                      Text(
-                        'Main Wallet top-up route (1% service fee)',
-                        style: GoogleFonts.lato(
-                          fontSize: 12.sp,
-                          color: AppColor.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 20.h),
-            _buildStepRow(
-              number: '1',
-              title: 'Visit any authorized Alifworld Service Point',
-              subtitle: 'Locate a partner service point near your location.',
-            ),
-            _buildStepRow(
-              number: '2',
-              title: 'Provide your registered mobile number',
-              subtitle: 'The agent will lookup your customer account ID.',
-            ),
-            _buildStepRow(
-              number: '3',
-              title: 'Hand over cash amount (1% fee)',
-              subtitle: 'The agent initiates an official platform deposit with 1% service charge.',
-            ),
-            _buildStepRow(
-              number: '4',
-              title: 'Instant Main Wallet credit',
-              subtitle: 'Funds are credited to your Main Wallet immediately with SMS confirmation.',
-            ),
-            SizedBox(height: 12.h),
-            Container(
-              padding: EdgeInsets.all(12.r),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEF3C7),
-                borderRadius: BorderRadius.circular(10.r),
-                border: Border.all(color: const Color(0xFFFDE68A)),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Iconsax.info_circle,
-                    color: const Color(0xFFD97706),
-                    size: 18.r,
-                  ),
-                  SizedBox(width: 8.w),
-                  Expanded(
-                    child: Text(
-                      'Direct online self-service top-up is not supported. All Main Wallet cash deposits must go through authorized Service Points.',
-                      style: GoogleFonts.lato(
-                        fontSize: 11.5.sp,
-                        color: const Color(0xFF92400E),
-                        height: 1.35,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 20.h),
-            ElevatedButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0F172A),
-                foregroundColor: AppColor.white,
-                padding: EdgeInsets.symmetric(vertical: 12.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-              ),
-              child: Text(
-                'Got It',
-                style: GoogleFonts.lato(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            SizedBox(height: 10.h),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStepRow({
-    required String number,
-    required String title,
-    required String subtitle,
-  }) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 14.h),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 24.r,
-            height: 24.r,
-            decoration: BoxDecoration(
-              color: AppColor.primary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                number,
-                style: GoogleFonts.lato(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppColor.primary,
-                ),
-              ),
-            ),
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.lato(
-                    fontSize: 13.5.sp,
-                    fontWeight: FontWeight.bold,
-                    color: AppColor.textPrimary,
-                  ),
-                ),
-                SizedBox(height: 2.h),
-                Text(
-                  subtitle,
-                  style: GoogleFonts.lato(
-                    fontSize: 11.5.sp,
-                    color: AppColor.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showWalletDetailsSheet(BuildContext context, WalletItemModel wallet) {
     controller.fetchSingleWallet(wallet.kind);
     showModalBottomSheet(
@@ -1969,14 +1577,17 @@ class WalletView extends GetView<WalletController> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
-                          child: Text(
-                            tx.displayTitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.lato(
-                              fontSize: 12.5.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColor.textPrimary,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              tx.displayTitle,
+                              maxLines: 1,
+                              style: GoogleFonts.lato(
+                                fontSize: 12.5.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColor.textPrimary,
+                              ),
                             ),
                           ),
                         ),

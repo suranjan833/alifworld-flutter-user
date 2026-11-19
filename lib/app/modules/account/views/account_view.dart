@@ -1113,24 +1113,30 @@ class AccountView extends GetView<AccountController> {
               child: Icon(icon, color: iconColor, size: 18.r),
             ),
             SizedBox(height: 10.h),
-            Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.lato(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.bold,
-                color: AppColor.textPrimary,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                title,
+                maxLines: 1,
+                style: GoogleFonts.lato(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.bold,
+                  color: AppColor.textPrimary,
+                ),
               ),
             ),
             SizedBox(height: 2.h),
-            Text(
-              subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.lato(
-                fontSize: 10.5.sp,
-                color: AppColor.textSecondary,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                subtitle,
+                maxLines: 1,
+                style: GoogleFonts.lato(
+                  fontSize: 10.5.sp,
+                  color: AppColor.textSecondary,
+                ),
               ),
             ),
           ],
