@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -514,89 +516,192 @@ class AddMoneySheet extends GetView<ManualPaymentController> {
           ),
           SizedBox(height: 6.h),
 
-          Builder(builder: (_) {
+          Obx(() {
             final isUploading = controller.isUploadingReceipt.value;
             final proofUrl = controller.uploadedReceiptUrl.value;
             final fileName = controller.uploadedReceiptName.value;
+            final localPath = controller.localReceiptPath.value;
 
-            if (isUploading) {
+            // If an image is selected locally (or uploaded), show preview immediately!
+            if (localPath != null && localPath.isNotEmpty) {
               return Container(
-                padding: EdgeInsets.symmetric(vertical: 18.h),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(color: const Color(0xFFCBD5E1), style: BorderStyle.solid),
+                  borderRadius: BorderRadius.circular(14.r),
+                  border: Border.all(
+                    color: proofUrl != null
+                        ? const Color(0xFF86EFAC)
+                        : (isUploading
+                            ? const Color(0xFF93C5FD)
+                            : const Color(0xFFE2E8F0)),
+                    width: 1.5,
+                  ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    SizedBox(
-                      width: 18.r,
-                      height: 18.r,
-                      child: const CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: AppColor.primary,
-                      ),
-                    ),
-                    SizedBox(width: 10.w),
-                    Text(
-                      'Uploading receipt proof...',
-                      style: GoogleFonts.lato(
-                        fontSize: 12.5.sp,
-                        color: AppColor.textSecondary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            if (proofUrl != null && proofUrl.isNotEmpty) {
-              return Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0FDF4),
-                  borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(color: const Color(0xFF86EFAC)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.check_circle_rounded, color: const Color(0xFF16A34A), size: 20.r),
-                    SizedBox(width: 10.w),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            fileName ?? 'Receipt Attached',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.lato(
-                              fontSize: 12.5.sp,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF15803D),
+                    Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius:
+                              BorderRadius.vertical(top: Radius.circular(12.r)),
+                          child: Image.file(
+                            File(localPath),
+                            height: 160.h,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              height: 120.h,
+                              color: const Color(0xFFF1F5F9),
+                              child: Center(
+                                child: Icon(Iconsax.image,
+                                    size: 36.r, color: AppColor.textSecondary),
+                              ),
                             ),
                           ),
-                          Text(
-                            'Ready to submit',
-                            style: GoogleFonts.lato(
-                              fontSize: 11.sp,
-                              color: const Color(0xFF16A34A),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () => controller.clearUploadedReceipt(),
-                      child: Text(
-                        'Remove',
-                        style: GoogleFonts.lato(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFFDC2626),
                         ),
+                        if (isUploading)
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.45),
+                                borderRadius: BorderRadius.vertical(
+                                    top: Radius.circular(12.r)),
+                              ),
+                              child: Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      color: AppColor.white,
+                                    ),
+                                    SizedBox(height: 8.h),
+                                    Text(
+                                      'Uploading receipt...',
+                                      style: GoogleFonts.lato(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColor.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        Positioned(
+                          top: 8.r,
+                          right: 8.r,
+                          child: InkWell(
+                            onTap: isUploading
+                                ? null
+                                : () => controller.clearUploadedReceipt(),
+                            borderRadius: BorderRadius.circular(20.r),
+                            child: Container(
+                              padding: EdgeInsets.all(6.r),
+                              decoration: const BoxDecoration(
+                                color: Colors.black54,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(Icons.close,
+                                  size: 16.r, color: AppColor.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                      child: Row(
+                        children: [
+                          Icon(
+                            proofUrl != null
+                                ? Icons.check_circle_rounded
+                                : (isUploading
+                                    ? Icons.hourglass_top_rounded
+                                    : Icons.info_outline_rounded),
+                            color: proofUrl != null
+                                ? const Color(0xFF16A34A)
+                                : (isUploading
+                                    ? const Color(0xFFD97706)
+                                    : const Color(0xFF64748B)),
+                            size: 18.r,
+                          ),
+                          SizedBox(width: 8.w),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  fileName ?? 'Receipt Screenshot',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.lato(
+                                    fontSize: 12.5.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: proofUrl != null
+                                        ? const Color(0xFF15803D)
+                                        : AppColor.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  proofUrl != null
+                                      ? 'Ready to submit'
+                                      : (isUploading
+                                          ? 'Uploading proof...'
+                                          : 'Selected'),
+                                  style: GoogleFonts.lato(
+                                    fontSize: 11.sp,
+                                    color: proofUrl != null
+                                        ? const Color(0xFF16A34A)
+                                        : const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (!isUploading) ...[
+                            TextButton(
+                              onPressed: () => controller
+                                  .pickAndUploadReceipt(ImageSource.gallery),
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 8.w, vertical: 2.h),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: Text(
+                                'Change',
+                                style: GoogleFonts.lato(
+                                  fontSize: 11.5.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColor.primary,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 4.w),
+                            TextButton(
+                              onPressed: () =>
+                                  controller.clearUploadedReceipt(),
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 8.w, vertical: 2.h),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: Text(
+                                'Remove',
+                                style: GoogleFonts.lato(
+                                  fontSize: 11.5.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFFDC2626),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                   ],
@@ -613,7 +718,8 @@ class AddMoneySheet extends GetView<ManualPaymentController> {
                     icon: const Icon(Iconsax.gallery, size: 16),
                     label: Text(
                       'Pick from Gallery',
-                      style: GoogleFonts.lato(fontSize: 12.sp, fontWeight: FontWeight.bold),
+                      style: GoogleFonts.lato(
+                          fontSize: 12.sp, fontWeight: FontWeight.bold),
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColor.textPrimary,
@@ -633,7 +739,8 @@ class AddMoneySheet extends GetView<ManualPaymentController> {
                     icon: const Icon(Iconsax.camera, size: 16),
                     label: Text(
                       'Take Photo',
-                      style: GoogleFonts.lato(fontSize: 12.sp, fontWeight: FontWeight.bold),
+                      style: GoogleFonts.lato(
+                          fontSize: 12.sp, fontWeight: FontWeight.bold),
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColor.textPrimary,
@@ -652,10 +759,11 @@ class AddMoneySheet extends GetView<ManualPaymentController> {
           SizedBox(height: 20.h),
 
           // 5. Submit Button (§0: Disabled while in flight, no idempotency keys)
-          Builder(builder: (_) {
+          Obx(() {
             final isSubmitting = controller.isSubmittingDeposit.value;
             final isUploading = controller.isUploadingReceipt.value;
-            final hasProof = controller.uploadedReceiptUrl.value?.isNotEmpty ?? false;
+            final hasProof =
+                controller.uploadedReceiptUrl.value?.isNotEmpty ?? false;
             final canSubmit = !isSubmitting && !isUploading && hasProof && enteredAmount > 0;
 
             return SizedBox(

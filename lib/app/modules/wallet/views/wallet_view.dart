@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../data/config/app_color.dart';
 import '../../../data/models/wallet_model.dart';
@@ -1034,6 +1035,7 @@ class WalletView extends GetView<WalletController> {
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             width: 42.r,
@@ -1061,15 +1063,21 @@ class WalletView extends GetView<WalletController> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  tx.displayTitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.lato(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.bold,
-                    color: AppColor.textPrimary,
-                  ),
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 6.w,
+                  runSpacing: 2.h,
+                  children: [
+                    Text(
+                      tx.displayTitle,
+                      style: GoogleFonts.lato(
+                        fontSize: 13.5.sp,
+                        fontWeight: FontWeight.bold,
+                        color: AppColor.textPrimary,
+                      ),
+                    ),
+                    if (tx.manual != null) _buildStatusChip(tx.manual!.status),
+                  ],
                 ),
                 SizedBox(height: 3.h),
                 Row(
@@ -1107,6 +1115,15 @@ class WalletView extends GetView<WalletController> {
                     ],
                   ],
                 ),
+                if (tx.manual != null) _buildManualDetails(tx.manual!),
+                SizedBox(height: 2.h),
+                Text(
+                  'Balance after: ${tx.formattedBalanceAfter}',
+                  style: GoogleFonts.lato(
+                    fontSize: 10.5.sp,
+                    color: AppColor.textHint,
+                  ),
+                ),
               ],
             ),
           ),
@@ -1121,6 +1138,190 @@ class WalletView extends GetView<WalletController> {
                   : AppColor.textPrimary,
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusChip(String status) {
+    final s = status.toLowerCase();
+    Color bg;
+    Color fg;
+    String label;
+    switch (s) {
+      case 'approved':
+        bg = const Color(0xFFDCFCE7);
+        fg = const Color(0xFF16A34A);
+        label = 'Approved';
+        break;
+      case 'paid':
+        bg = const Color(0xFFDBEAFE);
+        fg = const Color(0xFF1D4ED8);
+        label = 'Paid';
+        break;
+      case 'rejected':
+        bg = const Color(0xFFFEE2E2);
+        fg = const Color(0xFFDC2626);
+        label = 'Rejected';
+        break;
+      case 'pending':
+      default:
+        bg = const Color(0xFFFEF3C7);
+        fg = const Color(0xFFB45309);
+        label = 'Pending';
+        break;
+    }
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 2.h),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(6.r),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.lato(
+          fontSize: 10.sp,
+          fontWeight: FontWeight.bold,
+          color: fg,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildManualDetails(TransactionManualBlockModel manual) {
+    return Padding(
+      padding: EdgeInsets.only(top: 4.h, bottom: 2.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Deposit reference & proof receipt
+          if (manual.isDeposit) ...[
+            if (manual.reference != null && manual.reference!.trim().isNotEmpty) ...[
+              Text(
+                'Reference: ${manual.reference!.trim()}',
+                style: GoogleFonts.lato(
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColor.textSecondary,
+                ),
+              ),
+              SizedBox(height: 2.h),
+            ],
+            if (manual.proofUrl != null && manual.proofUrl!.trim().isNotEmpty) ...[
+              InkWell(
+                onTap: () async {
+                  final uri = Uri.tryParse(manual.proofUrl!.trim());
+                  if (uri != null) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  }
+                },
+                borderRadius: BorderRadius.circular(4.r),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 2.h),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.receipt_long_rounded,
+                        size: 13.r,
+                        color: AppColor.primary,
+                      ),
+                      SizedBox(width: 4.w),
+                      Text(
+                        'View receipt',
+                        style: GoogleFonts.lato(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColor.primary,
+                          decoration: TextDecoration.underline,
+                          decorationColor: AppColor.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 2.h),
+            ],
+          ],
+
+          // Withdrawal masked account info
+          if (manual.isWithdrawal && manual.maskedCardSummary.isNotEmpty) ...[
+            Row(
+              children: [
+                Icon(
+                  Icons.account_balance_rounded,
+                  size: 12.r,
+                  color: AppColor.textSecondary,
+                ),
+                SizedBox(width: 4.w),
+                Expanded(
+                  child: Text(
+                    manual.maskedCardSummary,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.lato(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColor.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 2.h),
+          ],
+
+          // Withdrawal paid message
+          if (manual.isWithdrawal &&
+              manual.paidMessage != null &&
+              manual.paidMessage!.trim().isNotEmpty) ...[
+            Text(
+              'Message: ${manual.paidMessage!.trim()}',
+              style: GoogleFonts.lato(
+                fontSize: 11.sp,
+                fontStyle: FontStyle.italic,
+                color: const Color(0xFF1D4ED8),
+              ),
+            ),
+            SizedBox(height: 2.h),
+          ],
+
+          // Rejection reason
+          if (manual.isRejected &&
+              manual.rejectReason != null &&
+              manual.rejectReason!.trim().isNotEmpty) ...[
+            Container(
+              margin: EdgeInsets.only(top: 2.h),
+              padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(4.r),
+                border: Border.all(color: const Color(0xFFFECACA)),
+              ),
+              child: Text(
+                'Reason: ${manual.rejectReason!.trim()}',
+                style: GoogleFonts.lato(
+                  fontSize: 10.5.sp,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFFDC2626),
+                ),
+              ),
+            ),
+            SizedBox(height: 2.h),
+          ],
+
+          // Fee note if applicable
+          if (manual.feeMinor > 0) ...[
+            Text(
+              'Fee: ৳${manual.fee.toStringAsFixed(2)}',
+              style: GoogleFonts.lato(
+                fontSize: 10.5.sp,
+                color: AppColor.textHint,
+              ),
+            ),
+            SizedBox(height: 2.h),
+          ],
         ],
       ),
     );
