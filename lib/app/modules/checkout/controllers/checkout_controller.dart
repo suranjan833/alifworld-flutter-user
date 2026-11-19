@@ -68,19 +68,77 @@ class CheckoutController extends GetxController {
   double get combinedWalletBalance =>
       mainWalletBalance + shoppingWalletBalance;
 
-  // Selected wallet kinds (default: customer_main & customer_shopping)
-  final selectedWalletKinds = <String>{'customer_main', 'customer_shopping'}.obs;
+  // Selected wallet kinds
+  final selectedWalletKinds = <String>{}.obs;
+
+  List<String> get effectiveWalletKinds {
+    final list = <String>[];
+    if (selectedWalletKinds.contains('customer_main') && mainWalletBalance > 0) {
+      list.add('customer_main');
+    }
+    if (selectedWalletKinds.contains('customer_shopping') &&
+        shoppingWalletBalance > 0) {
+      list.add('customer_shopping');
+    }
+    return list;
+  }
+
+  void _ensureValidWalletSelection() {
+    selectedWalletKinds.removeWhere((kind) {
+      if (kind == 'customer_main') return mainWalletBalance <= 0;
+      if (kind == 'customer_shopping') return shoppingWalletBalance <= 0;
+      return true;
+    });
+
+    if (selectedWalletKinds.isEmpty && combinedWalletBalance > 0) {
+      if (mainWalletBalance > 0) {
+        selectedWalletKinds.add('customer_main');
+      } else if (shoppingWalletBalance > 0) {
+        selectedWalletKinds.add('customer_shopping');
+      }
+    }
+  }
 
   void toggleWalletKind(String kind) {
-    if (selectedWalletKinds.contains(kind)) {
+    final active = effectiveWalletKinds;
+    if (active.contains(kind)) {
+      if (active.length <= 1) {
+        Get.snackbar(
+          'Pay from Wallet',
+          'At least one wallet must remain selected',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: const Color(0xFFD97706),
+          colorText: AppColor.white,
+          duration: const Duration(seconds: 2),
+        );
+        return;
+      }
       selectedWalletKinds.remove(kind);
     } else {
+      final bal = kind == 'customer_main'
+          ? mainWalletBalance
+          : (kind == 'customer_shopping' ? shoppingWalletBalance : 0.0);
+      if (bal <= 0) {
+        Get.snackbar(
+          'Pay from Wallet',
+          'There is no balance in this wallet',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: const Color(0xFFDC2626),
+          colorText: AppColor.white,
+          duration: const Duration(seconds: 2),
+        );
+        return;
+      }
       selectedWalletKinds.add(kind);
     }
     fetchQuote();
   }
 
-  bool isWalletKindSelected(String kind) => selectedWalletKinds.contains(kind);
+  bool isWalletKindSelected(String kind) {
+    if (kind == 'customer_main' && mainWalletBalance <= 0) return false;
+    if (kind == 'customer_shopping' && shoppingWalletBalance <= 0) return false;
+    return selectedWalletKinds.contains(kind);
+  }
 
   double get orderTotal =>
       (subtotal.value + deliveryFee.value + tax.value - discount.value).clamp(
@@ -111,7 +169,7 @@ class CheckoutController extends GetxController {
 
   double get mainWalletWillUse {
     if (selectedPaymentMethod.value != 'Wallet' ||
-        !selectedWalletKinds.contains('customer_main')) {
+        !isWalletKindSelected('customer_main')) {
       return 0.0;
     }
     final cap = mainWalletCap < walletCap ? mainWalletCap : walletCap;
@@ -122,7 +180,7 @@ class CheckoutController extends GetxController {
 
   double get shoppingWalletWillUse {
     if (selectedPaymentMethod.value != 'Wallet' ||
-        !selectedWalletKinds.contains('customer_shopping')) {
+        !isWalletKindSelected('customer_shopping')) {
       return 0.0;
     }
     final remainingOrder =
@@ -234,10 +292,11 @@ class CheckoutController extends GetxController {
       return;
     }
     selectedPaymentMethod.value = method;
-    fetchQuote();
     if (method == 'Wallet') {
+      _ensureValidWalletSelection();
       fetchUserWallets();
     }
+    fetchQuote();
   }
 
   /// GET /payments/gateways - (§3 of checkout_flow.txt)
@@ -303,6 +362,11 @@ class CheckoutController extends GetxController {
             selectedPaymentMethod.value == 'Wallet') {
           selectedPaymentMethod.value = 'COD';
           fetchQuote();
+        } else {
+          _ensureValidWalletSelection();
+          if (selectedPaymentMethod.value == 'Wallet') {
+            fetchQuote();
+          }
         }
       }
     } catch (e) {
@@ -376,12 +440,14 @@ class CheckoutController extends GetxController {
   Future<void> fetchQuote() async {
     try {
       final isWallet = selectedPaymentMethod.value == 'Wallet';
+      final activeWallets = effectiveWalletKinds;
       final reqData = <String, dynamic>{
         'paymentMethod': isWallet ? 'wallet' : 'cod',
         if (selectedAddressId != null) 'addressId': selectedAddressId,
         if (appliedPromoCode.value.isNotEmpty)
           'couponCode': appliedPromoCode.value,
-        if (isWallet) 'walletKinds': selectedWalletKinds.toList(),
+        if (isWallet && activeWallets.isNotEmpty)
+          'walletKinds': activeWallets,
       };
 
       final response = await dioPost(
@@ -591,7 +657,8 @@ class CheckoutController extends GetxController {
 
     final isWallet = selectedPaymentMethod.value == 'Wallet' &&
         combinedWalletBalance > 0 &&
-        walletDeductionAmount > 0;
+        walletDeductionAmount > 0 &&
+        effectiveWalletKinds.isNotEmpty;
     if (isWallet) {
       await _startWalletPinCheckout();
     } else {
@@ -635,9 +702,11 @@ class CheckoutController extends GetxController {
     }
 
     isProcessingPayment.value = true;
+    final activeWallets = effectiveWalletKinds;
     final isWallet = selectedPaymentMethod.value == 'Wallet' &&
         combinedWalletBalance > 0 &&
-        walletDeductionAmount > 0;
+        walletDeductionAmount > 0 &&
+        activeWallets.isNotEmpty;
     final apiPayment = isWallet ? 'wallet' : 'cod';
     final randomPart = Random().nextInt(999999);
     final idempotencyKey =
@@ -649,7 +718,7 @@ class CheckoutController extends GetxController {
       if (appliedPromoCode.value.isNotEmpty)
         'couponCode': appliedPromoCode.value,
       if (isWallet) ...{
-        'walletKinds': selectedWalletKinds.toList(),
+        'walletKinds': activeWallets,
         'remainderMethod': 'cod',
         if (walletPin != null && walletPin.isNotEmpty)
           'walletPin': walletPin,

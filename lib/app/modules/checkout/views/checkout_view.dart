@@ -1050,7 +1050,18 @@ class CheckoutView extends GetView<CheckoutController> {
       final hasBalance = balance > 0;
 
       return InkWell(
-        onTap: hasBalance ? () => controller.toggleWalletKind(kind) : null,
+        onTap: hasBalance
+            ? () => controller.toggleWalletKind(kind)
+            : () {
+                Get.snackbar(
+                  'Pay from Wallet',
+                  'There is no balance in $title',
+                  snackPosition: SnackPosition.TOP,
+                  backgroundColor: const Color(0xFFD97706),
+                  colorText: AppColor.white,
+                  duration: const Duration(seconds: 2),
+                );
+              },
         borderRadius: BorderRadius.circular(10.r),
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),

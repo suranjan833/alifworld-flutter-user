@@ -57,11 +57,7 @@ class BagView extends GetView<BagController> {
           Obx(
             () => controller.cartItems.isNotEmpty
                 ? IconButton(
-                    icon: Icon(
-                      Icons.close,
-                      color: AppColor.error,
-                      size: 22.r,
-                    ),
+                    icon: Icon(Icons.close, color: AppColor.error, size: 22.r),
                     tooltip: 'Clear Cart',
                     onPressed: () => _confirmClearCart(context),
                   )
@@ -83,7 +79,8 @@ class BagView extends GetView<BagController> {
               child: SizedBox(
                 height: 0.75.sh,
                 child: NoInternetWidget(
-                  onRetry: () => controller.fetchCart(showLoading: true, force: true),
+                  onRetry: () =>
+                      controller.fetchCart(showLoading: true, force: true),
                 ),
               ),
             ),
@@ -184,7 +181,6 @@ class BagView extends GetView<BagController> {
         return Column(
           children: [
             // Free Shipping threshold banner
-            _buildFreeShippingBanner(),
 
             Expanded(
               child: RefreshIndicator(
@@ -192,7 +188,10 @@ class BagView extends GetView<BagController> {
                 onRefresh: () => controller.refreshCart(),
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -397,43 +396,11 @@ class BagView extends GetView<BagController> {
     );
   }
 
-  Widget _buildFreeShippingBanner() {
-    final sub = controller.subtotal;
-    final isFree = sub >= 499;
-    final diff = (499 - sub).clamp(0.0, 499.0);
-
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-      color: isFree ? const Color(0xFFECFDF5) : const Color(0xFFFFFBEB),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            isFree ? Iconsax.tick_circle : Iconsax.truck_fast,
-            size: 16.r,
-            color: isFree ? const Color(0xFF059669) : const Color(0xFFD97706),
-          ),
-          SizedBox(width: 8.w),
-          Text(
-            isFree
-                ? '🎉 You have unlocked FREE Delivery!'
-                : 'Add ৳${diff.toStringAsFixed(0)} more to unlock FREE Delivery',
-            style: GoogleFonts.lato(
-              fontSize: 12.5.sp,
-              fontWeight: FontWeight.w600,
-              color: isFree ? const Color(0xFF059669) : const Color(0xFFB45309),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildCartItemCard(CartItemModel item, int index) {
     final price = item.price;
     final qty = item.quantity;
-    final hasStockWarning = item.maxStock != null && item.maxStock! <= 5 && item.maxStock! > 0;
+    final hasStockWarning =
+        item.maxStock != null && item.maxStock! <= 5 && item.maxStock! > 0;
     final isMaxReached = item.maxStock != null && qty >= item.maxStock!;
 
     return Dismissible(
