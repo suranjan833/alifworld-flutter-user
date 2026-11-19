@@ -206,6 +206,24 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
     } catch (_) {}
   }
 
+  DateTime? _lastWalletRefreshAt;
+
+  /// Re-fetches the wallet total and club achievements without toggling
+  /// [isLoading], so revisiting the Account tab never shows a loader.
+  Future<void> refreshWalletAndProgress() async {
+    if (!_hasAuth) return;
+
+    final now = DateTime.now();
+    if (_lastWalletRefreshAt != null &&
+        now.difference(_lastWalletRefreshAt!).inMilliseconds < 600) {
+      return;
+    }
+    _lastWalletRefreshAt = now;
+
+    isLoggedIn.value = true;
+    await Future.wait([fetchTotalBalance(), fetchMyProgress()]);
+  }
+
   /// GET /api/v1/leaderboards/my-progress - Fetch customer club progress
   Future<void> fetchMyProgress() async {
     if (!_hasAuth) return;
