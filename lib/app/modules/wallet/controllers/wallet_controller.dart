@@ -5,6 +5,7 @@ import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/models/wallet_model.dart';
 import '../../../routes/app_pages.dart';
+import '../../account/controllers/account_controller.dart';
 
 class WalletController extends GetxController {
   final isLoading = false.obs;
@@ -82,6 +83,11 @@ class WalletController extends GetxController {
           totalBalance.value = resModel.totalBalance;
           walletMaxPercent.value = resModel.walletMaxPercent;
           walletCaps.value = resModel.walletCaps;
+          // Keep the Account tab's balance in sync with the wallet page.
+          if (Get.isRegistered<AccountController>()) {
+            Get.find<AccountController>().totalBalance.value =
+                resModel.totalBalance;
+          }
         }
       } else {
         _loadFallbackWallets();
