@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -7,9 +6,9 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../data/config/app_color.dart';
-import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/models/address_model.dart';
+import '../../../data/models/redeem_model.dart';
 import '../../../data/widgets/address_form_modal.dart';
 import '../../../data/widgets/wallet_pin_dialog.dart';
 import '../../../routes/app_pages.dart';
@@ -263,7 +262,6 @@ class CheckoutController extends GetxController {
       }
     }
     fetchUserAddresses();
-    fetchGateways();
     fetchUserWallets();
     fetchQuote();
   }
@@ -297,28 +295,6 @@ class CheckoutController extends GetxController {
       fetchUserWallets();
     }
     fetchQuote();
-  }
-
-  /// GET /payments/gateways - (§3 of checkout_flow.txt)
-  Future<void> fetchGateways() async {
-    try {
-      final res = await dioGet('payments/gateways');
-      if (res.statusCode == 200 && res.data != null) {
-        dynamic rawData = res.data;
-        if (rawData is Map && rawData.containsKey('data')) {
-          rawData = rawData['data'];
-        }
-        if (rawData is Map && rawData['items'] is List) {
-          final keys = (rawData['items'] as List)
-              .map((e) => e is Map ? e['key']?.toString() : null)
-              .whereType<String>()
-              .toList();
-          if (keys.isNotEmpty) {
-            enabledGateways.assignAll(keys);
-          }
-        }
-      }
-    } catch (_) {}
   }
 
   /// GET /wallets - (§4 of checkout_flow.txt)
@@ -669,14 +645,12 @@ class CheckoutController extends GetxController {
 
   Future<void> _startWalletPinCheckout() async {
     if (Get.context == null || isProcessingPayment.value) return;
-    final pin = await WalletPinDialog.promptPin(
+    await WalletPinDialog.promptPin(
       Get.context!,
       title: 'Wallet Payment PIN',
       subtitle: 'Enter your 6-digit wallet PIN to complete payment',
+      onConfirm: (pin) => _executePlaceOrder(walletPin: pin),
     );
-    if (pin != null && pin.isNotEmpty) {
-      await _executePlaceOrder(walletPin: pin);
-    }
   }
 
   Future<WalletPinActionResult> _executePlaceOrder({String? walletPin}) async {
@@ -708,9 +682,7 @@ class CheckoutController extends GetxController {
         walletDeductionAmount > 0 &&
         activeWallets.isNotEmpty;
     final apiPayment = isWallet ? 'wallet' : 'cod';
-    final randomPart = Random().nextInt(999999);
-    final idempotencyKey =
-        'ALF_IDEMP_${DateTime.now().microsecondsSinceEpoch}_$randomPart';
+    final idempotencyKey = generateUuidV4();
 
     final payload = <String, dynamic>{
       'addressId': selectedAddressId,
@@ -723,7 +695,6 @@ class CheckoutController extends GetxController {
         if (walletPin != null && walletPin.isNotEmpty)
           'walletPin': walletPin,
       },
-      'returnUrl': resolveImageUrl('/checkout/success'),
     };
 
     try {
@@ -797,17 +768,6 @@ class CheckoutController extends GetxController {
 
         // 1. PIN-related errors (WALLET_PIN_*)
         if (errorCode.startsWith('WALLET_PIN_')) {
-          Get.snackbar(
-            'Invalid PIN',
-            errorMsg,
-            snackPosition: SnackPosition.TOP,
-            backgroundColor: AppColor.error,
-            colorText: AppColor.white,
-            duration: const Duration(seconds: 4),
-          );
-          if (errorCode != 'WALLET_PIN_LOCKED') {
-            _startWalletPinCheckout();
-          }
           return WalletPinActionResult.failure(
             errorCode: errorCode,
             errorMessage: errorMsg,

@@ -13,6 +13,7 @@ import '../../../data/widgets/wallet_redeem_sheet.dart';
 import '../../../routes/app_pages.dart';
 import '../controllers/wallet_controller.dart';
 import '../widgets/add_money_sheet.dart';
+import '../widgets/wallet_transfer_sheet.dart';
 import '../widgets/withdraw_sheet.dart';
 
 class WalletView extends GetView<WalletController> {
@@ -429,157 +430,212 @@ class WalletView extends GetView<WalletController> {
 
             SizedBox(height: 16.h),
 
-            // 4. Action Buttons (Add Money, Redeem, Withdraw)
-            Row(
+            // 4. Action Buttons (Add Money, Transfer, Redeem, Withdraw)
+            Column(
               children: [
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12.r),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFFF5200)
-                              .withValues(alpha: 0.35),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton(
-                      onPressed: () => AddMoneySheet.show(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF5200),
-                        foregroundColor: AppColor.white,
-                        elevation: 0,
-                        padding: EdgeInsets.symmetric(
-                          vertical: 10.h,
-                          horizontal: 4.w,
-                        ),
-                        shape: RoundedRectangleBorder(
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFF5200)
+                                  .withValues(alpha: 0.35),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.add_circle_outline_rounded,
-                            size: 15.r,
-                            color: AppColor.white,
-                          ),
-                          SizedBox(width: 4.w),
-                          Text(
-                            'Add Money',
-                            style: GoogleFonts.lato(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w800,
-                              color: AppColor.white,
+                        child: ElevatedButton(
+                          onPressed: () => AddMoneySheet.show(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFF5200),
+                            foregroundColor: AppColor.white,
+                            elevation: 0,
+                            padding: EdgeInsets.symmetric(
+                              vertical: 10.h,
+                              horizontal: 6.w,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.r),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12.r),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF2563EB)
-                              .withValues(alpha: 0.30),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        WalletRedeemSheet.show(
-                          context,
-                          wallets: controller.wallets,
-                          onRedeemSuccess: () => controller.refreshAll(),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2563EB),
-                        foregroundColor: AppColor.white,
-                        elevation: 0,
-                        padding: EdgeInsets.symmetric(
-                          vertical: 10.h,
-                          horizontal: 4.w,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.swap_horiz_rounded,
-                            size: 17.r,
-                            color: AppColor.white,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.add_circle_outline_rounded,
+                                size: 16.r,
+                                color: AppColor.white,
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                'Add Money',
+                                style: GoogleFonts.lato(
+                                  fontSize: 12.5.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColor.white,
+                                ),
+                              ),
+                            ],
                           ),
-                          SizedBox(width: 4.w),
-                          Text(
-                            'Redeem',
-                            style: GoogleFonts.lato(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w800,
-                              color: AppColor.white,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF0D9488)
+                                  .withValues(alpha: 0.30),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: () => WalletTransferSheet.show(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0D9488),
+                            foregroundColor: AppColor.white,
+                            elevation: 0,
+                            padding: EdgeInsets.symmetric(
+                              vertical: 10.h,
+                              horizontal: 6.w,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.r),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => WithdrawSheet.show(context),
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: AppColor.white,
-                      foregroundColor: const Color(0xFF1E293B),
-                      side: const BorderSide(
-                        color: Color(0xFFCBD5E1),
-                        width: 1.2,
-                      ),
-                      elevation: 0,
-                      padding: EdgeInsets.symmetric(
-                        vertical: 10.h,
-                        horizontal: 4.w,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.file_upload_outlined,
-                          size: 16.r,
-                          color: const Color(0xFF1E293B),
-                        ),
-                        SizedBox(width: 4.w),
-                        Text(
-                          'Withdraw',
-                          style: GoogleFonts.lato(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF1E293B),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.send_rounded,
+                                size: 15.r,
+                                color: AppColor.white,
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                'Transfer',
+                                style: GoogleFonts.lato(
+                                  fontSize: 12.5.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColor.white,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
+                ),
+                SizedBox(height: 8.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF2563EB)
+                                  .withValues(alpha: 0.25),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            WalletRedeemSheet.show(
+                              context,
+                              wallets: controller.wallets,
+                              onRedeemSuccess: () => controller.refreshAll(),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2563EB),
+                            foregroundColor: AppColor.white,
+                            elevation: 0,
+                            padding: EdgeInsets.symmetric(
+                              vertical: 10.h,
+                              horizontal: 6.w,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.swap_horiz_rounded,
+                                size: 17.r,
+                                color: AppColor.white,
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                'Redeem',
+                                style: GoogleFonts.lato(
+                                  fontSize: 12.5.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColor.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => WithdrawSheet.show(context),
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: AppColor.white,
+                          foregroundColor: const Color(0xFF1E293B),
+                          side: const BorderSide(
+                            color: Color(0xFFCBD5E1),
+                            width: 1.2,
+                          ),
+                          elevation: 0,
+                          padding: EdgeInsets.symmetric(
+                            vertical: 10.h,
+                            horizontal: 6.w,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.file_upload_outlined,
+                              size: 16.r,
+                              color: const Color(0xFF1E293B),
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              'Withdraw',
+                              style: GoogleFonts.lato(
+                                fontSize: 12.5.sp,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF1E293B),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

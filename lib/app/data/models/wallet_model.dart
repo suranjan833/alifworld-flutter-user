@@ -420,6 +420,9 @@ class WalletTransactionModel {
     if (manual != null) {
       return manual!.isDeposit;
     }
+    final r = reason.toLowerCase();
+    if (r == 'wallet_transfer_out') return false;
+    if (r == 'wallet_transfer_in') return true;
     return amountMinor >= 0;
   }
 
@@ -446,6 +449,10 @@ class WalletTransactionModel {
       case 'manual_withdraw':
       case 'manual_withdrawal':
         return 'Alif Pay Withdrawal';
+      case 'wallet_transfer_out':
+        return 'Transfer Sent';
+      case 'wallet_transfer_in':
+        return 'Transfer Received';
       case 'order_cashback':
         return 'Order Cashback';
       case 'order_payment':
