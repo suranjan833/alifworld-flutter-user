@@ -112,8 +112,11 @@ class SignupView extends GetView<SignupController> {
                       if (!controller.hasEmailInput.value) {
                         return const SizedBox.shrink();
                       }
+                      final cooldown = controller.emailCooldown.value;
+                      final isCooldownActive = cooldown > 0;
                       return GestureDetector(
-                        onTap: controller.isSendingEmailOtp.value
+                        onTap: (controller.isSendingEmailOtp.value ||
+                                isCooldownActive)
                             ? null
                             : controller.sendEmailOtp,
                         child: controller.isSendingEmailOtp.value
@@ -131,23 +134,31 @@ class SignupView extends GetView<SignupController> {
                                   vertical: 3.h,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColor.primaryLight,
+                                  color: isCooldownActive
+                                      ? const Color(0xFFF1F5F9)
+                                      : AppColor.primaryLight,
                                   borderRadius: BorderRadius.circular(10.r),
                                   border: Border.all(
-                                    color: AppColor.primary.withValues(
-                                      alpha: 0.3,
-                                    ),
+                                    color: isCooldownActive
+                                        ? const Color(0xFFCBD5E1)
+                                        : AppColor.primary.withValues(
+                                            alpha: 0.3,
+                                          ),
                                     width: 1.w,
                                   ),
                                 ),
                                 child: Text(
-                                  controller.isEmailOtpSent.value
-                                      ? 'Resend OTP'
-                                      : 'Verify Email',
+                                  isCooldownActive
+                                      ? 'Resend (${cooldown}s)'
+                                      : (controller.isEmailOtpSent.value
+                                          ? 'Resend OTP'
+                                          : 'Verify Email'),
                                   style: GoogleFonts.lato(
                                     fontSize: 11.5.sp,
                                     fontWeight: FontWeight.bold,
-                                    color: AppColor.primaryDark,
+                                    color: isCooldownActive
+                                        ? AppColor.textSecondary
+                                        : AppColor.primaryDark,
                                   ),
                                 ),
                               ),
@@ -195,8 +206,11 @@ class SignupView extends GetView<SignupController> {
                       if (!controller.hasPhoneInput.value) {
                         return const SizedBox.shrink();
                       }
+                      final cooldown = controller.phoneCooldown.value;
+                      final isCooldownActive = cooldown > 0;
                       return GestureDetector(
-                        onTap: controller.isSendingPhoneOtp.value
+                        onTap: (controller.isSendingPhoneOtp.value ||
+                                isCooldownActive)
                             ? null
                             : controller.sendPhoneOtp,
                         child: controller.isSendingPhoneOtp.value
@@ -214,23 +228,31 @@ class SignupView extends GetView<SignupController> {
                                   vertical: 3.h,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColor.primaryLight,
+                                  color: isCooldownActive
+                                      ? const Color(0xFFF1F5F9)
+                                      : AppColor.primaryLight,
                                   borderRadius: BorderRadius.circular(10.r),
                                   border: Border.all(
-                                    color: AppColor.primary.withValues(
-                                      alpha: 0.3,
-                                    ),
+                                    color: isCooldownActive
+                                        ? const Color(0xFFCBD5E1)
+                                        : AppColor.primary.withValues(
+                                            alpha: 0.3,
+                                          ),
                                     width: 1.w,
                                   ),
                                 ),
                                 child: Text(
-                                  controller.isPhoneOtpSent.value
-                                      ? 'Resend OTP'
-                                      : 'Verify Phone',
+                                  isCooldownActive
+                                      ? 'Resend (${cooldown}s)'
+                                      : (controller.isPhoneOtpSent.value
+                                          ? 'Resend OTP'
+                                          : 'Verify Phone'),
                                   style: GoogleFonts.lato(
                                     fontSize: 11.5.sp,
                                     fontWeight: FontWeight.bold,
-                                    color: AppColor.primaryDark,
+                                    color: isCooldownActive
+                                        ? AppColor.textSecondary
+                                        : AppColor.primaryDark,
                                   ),
                                 ),
                               ),
@@ -395,32 +417,188 @@ class SignupView extends GetView<SignupController> {
                   ],
                 ),
                 SizedBox(height: 4.h),
-                ValueListenableBuilder<TextEditingValue>(
-                  valueListenable: controller.referralCodeController,
-                  builder: (context, value, _) {
-                    return TextFormField(
-                      controller: controller.referralCodeController,
-                      textCapitalization: TextCapitalization.characters,
-                      style: _inputTextStyle,
-                      decoration: _buildInputDecoration(
-                        hintText: 'Enter referral code (if any)',
-                        prefixIcon: Iconsax.gift,
-                      ).copyWith(
-                        suffixIcon: value.text.isNotEmpty
-                            ? IconButton(
-                                icon: Icon(
-                                  Icons.clear,
-                                  size: 18.r,
-                                  color: AppColor.textSecondary,
+                Obx(() {
+                  final isLookingUp = controller.isLookingUpReferral.value;
+                  final err = controller.referralError.value;
+                  return ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: controller.referralCodeController,
+                    builder: (context, value, _) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TextFormField(
+                            controller: controller.referralCodeController,
+                            textCapitalization: TextCapitalization.characters,
+                            style: _inputTextStyle,
+                            maxLength: 8,
+                            buildCounter: (
+                              _, {
+                              required currentLength,
+                              required isFocused,
+                              maxLength,
+                            }) =>
+                                null,
+                            decoration: _buildInputDecoration(
+                              hintText: 'Enter 8-digit referral code',
+                              prefixIcon: Iconsax.gift,
+                            ).copyWith(
+                              enabledBorder: err != null
+                                  ? OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12.r),
+                                      borderSide: const BorderSide(
+                                        color: AppColor.error,
+                                        width: 1.2,
+                                      ),
+                                    )
+                                  : null,
+                              focusedBorder: err != null
+                                  ? OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12.r),
+                                      borderSide: const BorderSide(
+                                        color: AppColor.error,
+                                        width: 1.5,
+                                      ),
+                                    )
+                                  : null,
+                              suffixIcon: isLookingUp
+                                  ? SizedBox(
+                                      width: 18.r,
+                                      height: 18.r,
+                                      child: Padding(
+                                        padding: EdgeInsets.all(12.r),
+                                        child: const CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: AppColor.primary,
+                                        ),
+                                      ),
+                                    )
+                                  : (value.text.isNotEmpty
+                                      ? IconButton(
+                                          icon: Icon(
+                                            Icons.clear,
+                                            size: 18.r,
+                                            color: AppColor.textSecondary,
+                                          ),
+                                          onPressed: () {
+                                            controller.referralCodeController
+                                                .clear();
+                                            controller.referralLookup.value =
+                                                null;
+                                            controller.referralError.value =
+                                                null;
+                                          },
+                                        )
+                                      : null),
+                            ),
+                          ),
+                          if (err != null) ...[
+                            Padding(
+                              padding: EdgeInsets.only(top: 4.h, left: 4.w),
+                              child: Text(
+                                err,
+                                style: GoogleFonts.lato(
+                                  fontSize: 11.5.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColor.error,
                                 ),
-                                onPressed: () =>
-                                    controller.referralCodeController.clear(),
-                              )
-                            : null,
+                              ),
+                            ),
+                          ],
+                        ],
+                      );
+                    },
+                  );
+                }),
+
+                // Live Referrer Preview Card
+                Obx(() {
+                  final ref = controller.referralLookup.value;
+                  if (ref == null) return const SizedBox.shrink();
+                  return Container(
+                    margin: EdgeInsets.only(top: 8.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 14.w,
+                      vertical: 10.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0FDF4),
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(
+                        color: const Color(0xFF86EFAC),
+                        width: 1.2,
                       ),
-                    );
-                  },
-                ),
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 18.r,
+                          backgroundColor: const Color(0xFF16A34A),
+                          backgroundImage: ref.avatarUrl != null &&
+                                  ref.avatarUrl!.isNotEmpty
+                              ? NetworkImage(ref.avatarUrl!)
+                              : null,
+                          child: ref.avatarUrl == null || ref.avatarUrl!.isEmpty
+                              ? Text(
+                                  ref.name.isNotEmpty
+                                      ? ref.name[0].toUpperCase()
+                                      : 'R',
+                                  style: GoogleFonts.lato(
+                                    fontSize: 15.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColor.white,
+                                  ),
+                                )
+                              : null,
+                        ),
+                        SizedBox(width: 10.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    'Referred by',
+                                    style: GoogleFonts.lato(
+                                      fontSize: 10.5.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFF15803D),
+                                    ),
+                                  ),
+                                  SizedBox(width: 4.w),
+                                  Icon(
+                                    Icons.check_circle_rounded,
+                                    size: 13.r,
+                                    color: const Color(0xFF16A34A),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 1.h),
+                              Text(
+                                ref.name,
+                                style: GoogleFonts.lato(
+                                  fontSize: 13.5.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColor.textPrimary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (ref.maskedPhone.isNotEmpty)
+                                Text(
+                                  ref.maskedPhone,
+                                  style: GoogleFonts.lato(
+                                    fontSize: 11.5.sp,
+                                    color: AppColor.textSecondary,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
 
                 SizedBox(height: 24.h),
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -399,9 +400,13 @@ class BagView extends GetView<BagController> {
   Widget _buildCartItemCard(CartItemModel item, int index) {
     final price = item.price;
     final qty = item.quantity;
+    final minQty = item.effectiveMinQty;
+    final cap = item.effectiveCap;
+    final isMinReached = qty <= minQty;
+    final isMaxReached = qty >= cap;
     final hasStockWarning =
         item.maxStock != null && item.maxStock! <= 5 && item.maxStock! > 0;
-    final isMaxReached = item.maxStock != null && qty >= item.maxStock!;
+    String currentText = '$qty';
 
     return Dismissible(
       key: Key('cart_${item.id}_$index'),
@@ -544,6 +549,28 @@ class BagView extends GetView<BagController> {
                       ),
                     ),
                   ],
+                  if (item.hasPurchaseLimits &&
+                      item.purchaseLimitsText != null) ...[
+                    SizedBox(height: 3.h),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8.w,
+                        vertical: 2.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(6.r),
+                      ),
+                      child: Text(
+                        item.purchaseLimitsText!,
+                        style: GoogleFonts.lato(
+                          fontSize: 10.5.sp,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFFB45309),
+                        ),
+                      ),
+                    ),
+                  ],
                   if (hasStockWarning) ...[
                     SizedBox(height: 4.h),
                     Text(
@@ -661,9 +688,11 @@ class BagView extends GetView<BagController> {
                           children: [
                             IconButton(
                               icon: Icon(
-                                qty == 1 ? Iconsax.trash : Icons.remove_rounded,
+                                isMinReached
+                                    ? Iconsax.trash
+                                    : Icons.remove_rounded,
                                 size: 16.r,
-                                color: qty == 1
+                                color: isMinReached
                                     ? AppColor.error
                                     : AppColor.textPrimary,
                               ),
@@ -673,14 +702,45 @@ class BagView extends GetView<BagController> {
                               visualDensity: VisualDensity.compact,
                               padding: EdgeInsets.all(6.r),
                             ),
-                            Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 6.w),
-                              child: Text(
-                                '$qty',
-                                style: GoogleFonts.lato(
-                                  fontSize: 13.5.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColor.textPrimary,
+                            Focus(
+                              onFocusChange: (hasFocus) {
+                                if (!hasFocus) {
+                                  final typed = int.tryParse(currentText);
+                                  if (typed != null && typed != qty) {
+                                    controller.updateQuantity(index, typed);
+                                  }
+                                }
+                              },
+                              child: SizedBox(
+                                width: 36.w,
+                                child: TextFormField(
+                                  key: ValueKey('cart_qty_${item.id}_$qty'),
+                                  initialValue: '$qty',
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly
+                                  ],
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.lato(
+                                    fontSize: 13.5.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColor.textPrimary,
+                                  ),
+                                  decoration: const InputDecoration(
+                                    isDense: true,
+                                    contentPadding:
+                                        EdgeInsets.symmetric(vertical: 4),
+                                    border: InputBorder.none,
+                                  ),
+                                  onChanged: (val) {
+                                    currentText = val;
+                                  },
+                                  onFieldSubmitted: (val) {
+                                    final typed = int.tryParse(val);
+                                    if (typed != null) {
+                                      controller.updateQuantity(index, typed);
+                                    }
+                                  },
                                 ),
                               ),
                             ),
@@ -693,7 +753,7 @@ class BagView extends GetView<BagController> {
                                     : AppColor.textPrimary,
                               ),
                               onPressed: isMaxReached
-                                  ? () => controller.incrementQuantity(index)
+                                  ? null
                                   : () => controller.incrementQuantity(index),
                               constraints: const BoxConstraints(),
                               visualDensity: VisualDensity.compact,

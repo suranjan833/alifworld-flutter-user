@@ -254,6 +254,8 @@ class ProductDetailsModel {
   final int? ratingCount;
   final bool openBoxDelivery;
   final bool isFavorite;
+  final int? minPurchaseQty;
+  final int? maxPurchaseQty;
 
   ProductDetailsModel({
     required this.id,
@@ -274,7 +276,33 @@ class ProductDetailsModel {
     this.ratingCount,
     this.openBoxDelivery = false,
     this.isFavorite = false,
+    this.minPurchaseQty,
+    this.maxPurchaseQty,
   });
+
+  int get effectiveMinQty =>
+      (minPurchaseQty != null && minPurchaseQty! > 0) ? minPurchaseQty! : 1;
+
+  int get effectiveCap {
+    final s = stockQty;
+    final m = maxPurchaseQty;
+    if (s != null && m != null) return s < m ? s : m;
+    return m ?? s ?? 999999;
+  }
+
+  bool get hasPurchaseLimits =>
+      (minPurchaseQty != null && minPurchaseQty! > 1) || maxPurchaseQty != null;
+
+  String? get purchaseLimitsText {
+    if (minPurchaseQty != null && minPurchaseQty! > 1 && maxPurchaseQty != null) {
+      return 'Min: $minPurchaseQty • Max: $maxPurchaseQty';
+    } else if (minPurchaseQty != null && minPurchaseQty! > 1) {
+      return 'Minimum purchase: $minPurchaseQty';
+    } else if (maxPurchaseQty != null) {
+      return 'Maximum purchase: $maxPurchaseQty';
+    }
+    return null;
+  }
 
   /// Base price in BDT
   double get price {
@@ -551,6 +579,16 @@ class ProductDetailsModel {
           : (json['reviews'] is int ? json['reviews'] as int : null),
       openBoxDelivery: json['openBoxDelivery'] == true,
       isFavorite: json['isFavorite'] == true || json['isWishlisted'] == true,
+      minPurchaseQty: json['minPurchaseQty'] is int
+          ? json['minPurchaseQty'] as int
+          : (json['minPurchaseQty'] is num
+              ? (json['minPurchaseQty'] as num).toInt()
+              : null),
+      maxPurchaseQty: json['maxPurchaseQty'] is int
+          ? json['maxPurchaseQty'] as int
+          : (json['maxPurchaseQty'] is num
+              ? (json['maxPurchaseQty'] as num).toInt()
+              : null),
     );
   }
 
@@ -577,6 +615,8 @@ class ProductDetailsModel {
     int? ratingCount,
     bool? openBoxDelivery,
     bool? isFavorite,
+    int? minPurchaseQty,
+    int? maxPurchaseQty,
   }) {
     return ProductDetailsModel(
       id: id ?? this.id,
@@ -597,6 +637,8 @@ class ProductDetailsModel {
       ratingCount: ratingCount ?? this.ratingCount,
       openBoxDelivery: openBoxDelivery ?? this.openBoxDelivery,
       isFavorite: isFavorite ?? this.isFavorite,
+      minPurchaseQty: minPurchaseQty ?? this.minPurchaseQty,
+      maxPurchaseQty: maxPurchaseQty ?? this.maxPurchaseQty,
     );
   }
 
@@ -618,6 +660,8 @@ class ProductDetailsModel {
       'categoryId': categoryId,
       'categoryName': categoryName,
       'brandName': brandName,
+      if (minPurchaseQty != null) 'minPurchaseQty': minPurchaseQty,
+      if (maxPurchaseQty != null) 'maxPurchaseQty': maxPurchaseQty,
       'brand': brandName,
       'ratingAvg': ratingAvg,
       'rating': ratingAvg,

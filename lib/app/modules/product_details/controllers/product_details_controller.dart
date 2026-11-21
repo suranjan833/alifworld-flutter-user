@@ -86,6 +86,8 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
           (model.categoryName != null && model.categoryName!.isNotEmpty)
               ? model.categoryName
               : prev?.categoryName,
+      minPurchaseQty: model.minPurchaseQty ?? prev?.minPurchaseQty,
+      maxPurchaseQty: model.maxPurchaseQty ?? prev?.maxPurchaseQty,
     );
 
     product.value = merged;
@@ -96,6 +98,7 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
     if (selectedVariantIndex.value >= merged.variants.length) {
       selectedVariantIndex.value = 0;
     }
+    selectedQuantity.value = merged.effectiveMinQty;
 
     _recordRecentlyViewed();
     checkWishlistStatus();
@@ -270,10 +273,19 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
   String get displayTitleWithVariant =>
       product.value?.titleWithVariant(selectedVariant) ?? '';
 
+  int get minPurchaseQty => product.value?.effectiveMinQty ?? 1;
+  int? get maxPurchaseQty => product.value?.maxPurchaseQty;
+  int get effectiveCap {
+    final s = activeStock;
+    final m = maxPurchaseQty;
+    if (s != null && m != null) return s < m ? s : m;
+    return m ?? s ?? 999999;
+  }
+
   void selectVariant(int index) {
     if (index >= 0 && index < variants.length) {
       selectedVariantIndex.value = index;
-      selectedQuantity.value = 1;
+      selectedQuantity.value = minPurchaseQty;
       selectedImageIndex.value = 0;
       _recordRecentlyViewed();
       if (Get.isRegistered<WishlistService>()) {
@@ -308,13 +320,16 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
   }
 
   void incrementQuantity() {
-    final maxStock = activeStock ?? 99;
-    if (selectedQuantity.value < maxStock) {
+    final cap = effectiveCap;
+    if (selectedQuantity.value < cap) {
       selectedQuantity.value++;
     } else {
+      final msg = maxPurchaseQty != null && selectedQuantity.value >= maxPurchaseQty!
+          ? 'Maximum purchase for this item is $maxPurchaseQty'
+          : 'Only $cap units available';
       Get.snackbar(
-        'Maximum Stock Reached',
-        'Only $maxStock units available',
+        'Limit Reached',
+        msg,
         snackPosition: SnackPosition.TOP,
         backgroundColor: AppColor.black87,
         colorText: AppColor.white,
@@ -323,8 +338,17 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
   }
 
   void decrementQuantity() {
-    if (selectedQuantity.value > 1) {
+    final minQty = minPurchaseQty;
+    if (selectedQuantity.value > minQty) {
       selectedQuantity.value--;
+    } else if (minQty > 1) {
+      Get.snackbar(
+        'Minimum Purchase',
+        'Minimum purchase for this item is $minQty',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: AppColor.black87,
+        colorText: AppColor.white,
+      );
     }
   }
 
@@ -512,9 +536,14 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
       'image': imagesList.first,
       'slug': p.slug,
       'variants': p.variants.map((v) => v.toJson()).toList(),
+      if (p.minPurchaseQty != null) 'minPurchaseQty': p.minPurchaseQty,
+      if (p.maxPurchaseQty != null) 'maxPurchaseQty': p.maxPurchaseQty,
     };
 
-    await bagCtrl.addItemToBag(itemPayload, quantity: selectedQuantity.value);
+    final effectiveQty = selectedQuantity.value < minPurchaseQty
+        ? minPurchaseQty
+        : selectedQuantity.value;
+    await bagCtrl.addItemToBag(itemPayload, quantity: effectiveQty);
     await bagCtrl.fetchCart(showLoading: false, force: true);
     bagCtrl.cartItems.refresh();
   }
@@ -554,13 +583,19 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
       'image': imagesList.first,
       'slug': p.slug,
       'variants': p.variants.map((v) => v.toJson()).toList(),
+      if (p.minPurchaseQty != null) 'minPurchaseQty': p.minPurchaseQty,
+      if (p.maxPurchaseQty != null) 'maxPurchaseQty': p.maxPurchaseQty,
     };
+
+    final effectiveQty = selectedQuantity.value < minPurchaseQty
+        ? minPurchaseQty
+        : selectedQuantity.value;
 
     isBuyingNow.value = true;
     try {
       final success = await bagCtrl.addItemToBag(
         itemPayload,
-        quantity: selectedQuantity.value,
+        quantity: effectiveQty,
       );
       if (success) {
         await bagCtrl.fetchCart(showLoading: false, force: true);

@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/models/country_model.dart';
+import '../../../data/models/referral_model.dart';
 import '../../../routes/app_pages.dart';
 import '../../../data/config/app_color.dart';
 
@@ -33,6 +36,18 @@ class SignupController extends GetxController {
   final isVerifyingEmailOtp = false.obs;
   final emailToken = ''.obs;
 
+  // Referral lookup state
+  final referralLookup = Rxn<ReferralLookupModel>();
+  final isLookingUpReferral = false.obs;
+  final referralError = RxnString();
+  Timer? _referralDebounce;
+
+  // Resend cooldowns
+  final phoneCooldown = 0.obs;
+  final emailCooldown = 0.obs;
+  Timer? _phoneTimer;
+  Timer? _emailTimer;
+
   // Track whether user has entered phone & email
   final hasEmailInput = false.obs;
   final hasPhoneInput = false.obs;
@@ -50,12 +65,77 @@ class SignupController extends GetxController {
     _handleIncomingArguments();
     emailController.addListener(_onEmailChanged);
     phoneController.addListener(_onPhoneChanged);
+    referralCodeController.addListener(_onReferralCodeChanged);
   }
 
   @override
   void onReady() {
     super.onReady();
     _handleIncomingArguments();
+  }
+
+  void startPhoneCooldown() {
+    phoneCooldown.value = 60;
+    _phoneTimer?.cancel();
+    _phoneTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (phoneCooldown.value > 0) {
+        phoneCooldown.value--;
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
+  void startEmailCooldown() {
+    emailCooldown.value = 60;
+    _emailTimer?.cancel();
+    _emailTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (emailCooldown.value > 0) {
+        emailCooldown.value--;
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
+  void _onReferralCodeChanged() {
+    final code = referralCodeController.text.trim().toUpperCase();
+    _referralDebounce?.cancel();
+    if (code.length < 8) {
+      referralLookup.value = null;
+      referralError.value = null;
+      return;
+    }
+    _referralDebounce = Timer(const Duration(milliseconds: 400), () {
+      lookupReferralCode(code);
+    });
+  }
+
+  Future<void> lookupReferralCode(String code) async {
+    final cleanCode = code.trim().toUpperCase();
+    if (cleanCode.length != 8) return;
+
+    isLookingUpReferral.value = true;
+    referralError.value = null;
+    try {
+      final res = await dioGet('referrals/lookup?code=$cleanCode');
+      final statusCode = res.statusCode ?? 500;
+      final raw = res.data is Map ? res.data : {};
+      final data = raw['data'] ?? raw;
+
+      if (statusCode == 200 && data is Map<String, dynamic>) {
+        referralLookup.value = ReferralLookupModel.fromJson(data);
+        referralError.value = null;
+      } else if (statusCode == 404) {
+        referralLookup.value = null;
+        referralError.value =
+            'This referral code does not match any account.';
+      }
+    } catch (_) {
+      // On network failure or rate limit, leave last state and let complete decide
+    } finally {
+      isLookingUpReferral.value = false;
+    }
   }
 
   void _handleIncomingArguments() {
@@ -119,6 +199,12 @@ class SignupController extends GetxController {
         referralCodeController.text = pendingCode.trim().toUpperCase();
       }
     }
+
+    // 4. Initial lookup for prefilled referral code (8 characters)
+    final initialRef = referralCodeController.text.trim().toUpperCase();
+    if (initialRef.length == 8) {
+      lookupReferralCode(initialRef);
+    }
   }
 
   void _onEmailChanged() {
@@ -158,6 +244,10 @@ class SignupController extends GetxController {
 
   @override
   void onClose() {
+    _referralDebounce?.cancel();
+    _phoneTimer?.cancel();
+    _emailTimer?.cancel();
+    referralCodeController.removeListener(_onReferralCodeChanged);
     emailController.removeListener(_onEmailChanged);
     phoneController.removeListener(_onPhoneChanged);
     nameController.dispose();
@@ -280,6 +370,7 @@ class SignupController extends GetxController {
       isSendingPhoneOtp.value = false;
       if (response.statusCode == 200 || response.statusCode == 201) {
         isPhoneOtpSent.value = true;
+        startPhoneCooldown();
 
         String? devCode;
         if (response.data is Map<String, dynamic>) {
@@ -388,13 +479,17 @@ class SignupController extends GetxController {
     try {
       final response = await dioPost(
         endUrl: 'auth/email-otp/request',
-        data: {'email': email},
+        data: {
+          'email': email,
+          'purpose': 'customer_register',
+        },
         isJson: true,
       );
 
       isSendingEmailOtp.value = false;
       if (response.statusCode == 200 || response.statusCode == 201) {
         isEmailOtpSent.value = true;
+        startEmailCooldown();
 
         String? devCode;
         if (response.data is Map<String, dynamic>) {
@@ -418,7 +513,12 @@ class SignupController extends GetxController {
         );
       } else {
         String msg = 'Failed to send email OTP.';
-        if (response.data is Map && response.data['message'] != null) {
+        if (response.statusCode == 409 ||
+            (response.data is Map &&
+                response.data['error'] is Map &&
+                response.data['error']['code'] == 'EMAIL_TAKEN')) {
+          msg = 'This email address is already registered.';
+        } else if (response.data is Map && response.data['message'] != null) {
           msg = response.data['message'].toString();
         } else if (response.data is Map &&
             response.data['error'] is Map &&
@@ -449,6 +549,7 @@ class SignupController extends GetxController {
         data: {
           'email': email,
           'code': code,
+          'purpose': 'customer_register',
         },
         isJson: true,
       );
@@ -515,6 +616,15 @@ class SignupController extends GetxController {
           nameParts.length > 1 ? nameParts.sublist(1).join(' ') : firstName;
 
       final refCode = referralCodeController.text.trim().toUpperCase();
+
+      if (referralError.value != null && refCode.isNotEmpty) {
+        showSnack(
+          'Invalid Referral Code',
+          'This referral code does not match any account.',
+          bg: AppColor.red,
+        );
+        return;
+      }
 
       try {
         final response = await dioPost(

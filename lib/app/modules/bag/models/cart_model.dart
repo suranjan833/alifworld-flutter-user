@@ -20,6 +20,8 @@ class CartItemModel {
   final int? pointsPerUnit;
   final int? linePoints;
   final int? compareAtPriceMinor;
+  final int? minPurchaseQty;
+  final int? maxPurchaseQty;
 
   CartItemModel({
     required this.id,
@@ -39,7 +41,33 @@ class CartItemModel {
     this.pointsPerUnit,
     this.linePoints,
     this.compareAtPriceMinor,
+    this.minPurchaseQty,
+    this.maxPurchaseQty,
   });
+
+  int get effectiveMinQty =>
+      (minPurchaseQty != null && minPurchaseQty! > 0) ? minPurchaseQty! : 1;
+
+  int get effectiveCap {
+    final s = maxStock;
+    final m = maxPurchaseQty;
+    if (s != null && m != null) return s < m ? s : m;
+    return m ?? s ?? 999999;
+  }
+
+  bool get hasPurchaseLimits =>
+      (minPurchaseQty != null && minPurchaseQty! > 1) || maxPurchaseQty != null;
+
+  String? get purchaseLimitsText {
+    if (minPurchaseQty != null && minPurchaseQty! > 1 && maxPurchaseQty != null) {
+      return 'Min: $minPurchaseQty • Max: $maxPurchaseQty';
+    } else if (minPurchaseQty != null && minPurchaseQty! > 1) {
+      return 'Minimum purchase: $minPurchaseQty';
+    } else if (maxPurchaseQty != null) {
+      return 'Maximum purchase: $maxPurchaseQty';
+    }
+    return null;
+  }
 
   /// Factory constructor to parse cart items from various API response shapes
   factory CartItemModel.fromJson(Map<String, dynamic> json) {
@@ -225,6 +253,16 @@ class CartItemModel {
       }
     }
 
+    final rawMinQty = json['minPurchaseQty'] ??
+        productObj?['minPurchaseQty'] ??
+        variantObj?['minPurchaseQty'];
+    final int? extractedMinQty = rawMinQty is num ? rawMinQty.toInt() : null;
+
+    final rawMaxQty = json['maxPurchaseQty'] ??
+        productObj?['maxPurchaseQty'] ??
+        variantObj?['maxPurchaseQty'];
+    final int? extractedMaxQty = rawMaxQty is num ? rawMaxQty.toInt() : null;
+
     return CartItemModel(
       id: extractedId,
       productId: extractedProductId,
@@ -243,6 +281,8 @@ class CartItemModel {
       pointsPerUnit: extractedPtsPerUnit,
       linePoints: extractedLinePts,
       compareAtPriceMinor: extractedCompareAtPriceMinor,
+      minPurchaseQty: extractedMinQty,
+      maxPurchaseQty: extractedMaxQty,
     );
   }
 
@@ -258,6 +298,8 @@ class CartItemModel {
       if (sellerId != null) 'sellerId': sellerId,
       'price': price,
       'quantity': quantity,
+      if (minPurchaseQty != null) 'minPurchaseQty': minPurchaseQty,
+      if (maxPurchaseQty != null) 'maxPurchaseQty': maxPurchaseQty,
       'image': image,
       if (maxStock != null) 'maxStock': maxStock,
       if (unitPriceMinor != null) 'unitPriceMinor': unitPriceMinor,

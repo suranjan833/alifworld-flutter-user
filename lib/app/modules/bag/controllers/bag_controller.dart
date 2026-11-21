@@ -182,34 +182,34 @@ class BagController extends GetxController with SkeletonLoadingMixin {
     return total;
   }
 
-  /// 2. PATCH /cart/items/{id} - Increment quantity
-  Future<void> incrementQuantity(int index) async {
+  /// 2. PATCH /cart/items/{id} - Update exact quantity
+  Future<void> updateQuantity(int index, int newQty) async {
     if (index < 0 || index >= cartItems.length) return;
     final item = cartItems[index];
+    final minQty = item.effectiveMinQty;
+    final cap = item.effectiveCap;
 
-    // Check stock limit if known
-    if (item.maxStock != null && item.quantity >= item.maxStock!) {
-      Get.snackbar(
-        'Stock Limit Reached',
-        'Only ${item.maxStock} items available in stock',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: const Color(0xFFF59E0B),
-        colorText: AppColor.white,
-        duration: const Duration(seconds: 2),
-      );
+    if (newQty < minQty) {
+      // Stepping down from minimum or entering 0 removes the line
+      await removeItem(index);
+      return;
+    }
+
+    final clampedQty = newQty > cap ? cap : newQty;
+    if (clampedQty == item.quantity) {
+      cartItems.refresh();
       return;
     }
 
     final oldQty = item.quantity;
-    final newQty = oldQty + 1;
-    item.quantity = newQty;
+    item.quantity = clampedQty;
     cartItems.refresh();
 
     if (_hasAuth) {
       try {
         final res = await dioPatch(
           endUrl: 'cart/items/${item.id}',
-          data: {'qty': newQty},
+          data: {'qty': clampedQty},
           isJson: true,
         );
 
@@ -238,7 +238,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
             snackPosition: SnackPosition.TOP,
             backgroundColor: AppColor.error,
             colorText: AppColor.white,
-            duration: const Duration(seconds: 2),
+            duration: const Duration(seconds: 3),
           );
         }
       } catch (_) {
@@ -248,42 +248,41 @@ class BagController extends GetxController with SkeletonLoadingMixin {
     }
   }
 
-  /// 3. PATCH /cart/items/{id} - Decrement quantity
+  /// Increment quantity
+  Future<void> incrementQuantity(int index) async {
+    if (index < 0 || index >= cartItems.length) return;
+    final item = cartItems[index];
+    final cap = item.effectiveCap;
+
+    if (item.quantity >= cap) {
+      final msg = item.maxPurchaseQty != null && item.quantity >= item.maxPurchaseQty!
+          ? 'Maximum purchase for this item is ${item.maxPurchaseQty}'
+          : 'Only ${item.maxStock ?? cap} items available in stock';
+      Get.snackbar(
+        'Limit Reached',
+        msg,
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: const Color(0xFFF59E0B),
+        colorText: AppColor.white,
+        duration: const Duration(seconds: 2),
+      );
+      return;
+    }
+
+    await updateQuantity(index, item.quantity + 1);
+  }
+
+  /// Decrement quantity
   Future<void> decrementQuantity(int index) async {
     if (index < 0 || index >= cartItems.length) return;
     final item = cartItems[index];
-    final currentQty = item.quantity;
+    final minQty = item.effectiveMinQty;
 
-    if (currentQty > 1) {
-      final oldQty = currentQty;
-      final newQty = currentQty - 1;
-      item.quantity = newQty;
-      cartItems.refresh();
-
-      if (_hasAuth) {
-        try {
-          final res = await dioPatch(
-            endUrl: 'cart/items/${item.id}',
-            data: {'qty': newQty},
-            isJson: true,
-          );
-
-          if (res.statusCode == 200 || res.statusCode == 201) {
-            dynamic rawData = res.data;
-            if (rawData is Map && rawData.containsKey('data')) {
-              _updateCartFromData(rawData['data']);
-            }
-          } else {
-            item.quantity = oldQty;
-            cartItems.refresh();
-          }
-        } catch (_) {
-          item.quantity = oldQty;
-          cartItems.refresh();
-        }
-      }
+    if (item.quantity <= minQty) {
+      // Stepping down from minimum removes the line
+      await removeItem(index);
     } else {
-      removeItem(index);
+      await updateQuantity(index, item.quantity - 1);
     }
   }
 
@@ -329,7 +328,14 @@ class BagController extends GetxController with SkeletonLoadingMixin {
       return false;
     }
 
-    final qtyToAdd = quantity > 0 ? quantity : 1;
+    int qtyToAdd = quantity > 0 ? quantity : 1;
+    final rawMin = item['minPurchaseQty'];
+    final minQty = rawMin is num
+        ? rawMin.toInt()
+        : (int.tryParse(rawMin?.toString() ?? '') ?? 1);
+    if (minQty > 1 && qtyToAdd < minQty) {
+      qtyToAdd = minQty;
+    }
     final prodId = item['productId']?.toString() ??
         item['id']?.toString() ??
         '';
