@@ -219,19 +219,30 @@ class BagController extends GetxController with SkeletonLoadingMixin {
             _updateCartFromData(rawData['data']);
           }
         } else {
-          // Revert on failure
-          item.quantity = oldQty;
-          cartItems.refresh();
-
           String errMsg = 'Failed to update quantity';
+          String errCode = '';
           if (res.data is Map) {
             final map = res.data as Map;
-            if (map['error'] is Map && map['error']['message'] != null) {
-              errMsg = map['error']['message'].toString();
+            if (map['error'] is Map) {
+              errCode = map['error']['code']?.toString() ?? '';
+              errMsg = map['error']['message']?.toString() ?? errMsg;
             } else if (map['message'] != null) {
               errMsg = map['message'].toString();
             }
           }
+
+          if (errCode == 'PRODUCT_NOT_AVAILABLE' ||
+              errMsg.toLowerCase().contains('not available')) {
+            errMsg = 'This product is not available right now.';
+            // Line disappeared server-side; refresh cart so it vanishes without re-adding or retrying
+            await fetchCart(showLoading: false, force: true);
+            cartItems.refresh();
+          } else {
+            // Revert on other failure
+            item.quantity = oldQty;
+            cartItems.refresh();
+          }
+
           Get.snackbar(
             'Unable to Update',
             errMsg,
@@ -418,13 +429,19 @@ class BagController extends GetxController with SkeletonLoadingMixin {
         return true;
       } else {
         String errMsg = 'Failed to add item to bag';
+        String errCode = '';
         if (response.data is Map) {
           final map = response.data as Map;
-          if (map['error'] is Map && map['error']['message'] != null) {
-            errMsg = map['error']['message'].toString();
+          if (map['error'] is Map) {
+            errCode = map['error']['code']?.toString() ?? '';
+            errMsg = map['error']['message']?.toString() ?? errMsg;
           } else if (map['message'] != null) {
             errMsg = map['message'].toString();
           }
+        }
+        if (errCode == 'PRODUCT_NOT_AVAILABLE' ||
+            errMsg.toLowerCase().contains('not available')) {
+          errMsg = 'This product is not available right now.';
         }
         Get.snackbar(
           'Unable to Add',

@@ -50,16 +50,21 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
             onPressed: () => controller.shareProduct(),
           ),
           Obx(
-            () => IconButton(
-              icon: Icon(
-                controller.isWishlisted.value ? Iconsax.heart5 : Iconsax.heart,
-                color: controller.isWishlisted.value
-                    ? AppColor.primary
-                    : AppColor.textPrimary,
-                size: 22.r,
-              ),
-              onPressed: () => controller.toggleWishlist(),
-            ),
+            () {
+              if (!controller.isVisible) {
+                return const SizedBox.shrink();
+              }
+              return IconButton(
+                icon: Icon(
+                  controller.isWishlisted.value ? Iconsax.heart5 : Iconsax.heart,
+                  color: controller.isWishlisted.value
+                      ? AppColor.primary
+                      : AppColor.textPrimary,
+                  size: 22.r,
+                ),
+                onPressed: () => controller.toggleWishlist(),
+              );
+            },
           ),
           Obx(() {
             if (!Get.isRegistered<BagController>()) {
@@ -691,10 +696,10 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                 final inStock = v.inStock;
 
                 return InkWell(
-                  onTap: inStock ? () => controller.selectVariant(index) : null,
+                  onTap: () => controller.selectVariant(index),
                   borderRadius: BorderRadius.circular(12.r),
                   child: Opacity(
-                    opacity: inStock ? 1.0 : 0.45,
+                    opacity: inStock ? 1.0 : 0.6,
                     child: Container(
                       padding: EdgeInsets.symmetric(
                         horizontal: 14.w,
@@ -752,96 +757,119 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
   }
 
   Widget _buildQuantityCard() {
-    return Container(
-      width: double.infinity,
-      color: AppColor.white,
-      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Quantity',
-                style: GoogleFonts.lato(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppColor.textPrimary,
+    return Obx(() {
+      // If a product has no active variants left, there is no picker and no buy box — details only.
+      if (controller.variants.isEmpty) {
+        return const SizedBox.shrink();
+      }
+
+      final isVisible = controller.isVisible;
+      final limitsText = controller.product.value?.purchaseLimitsText;
+
+      return Container(
+        width: double.infinity,
+        color: AppColor.white,
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Quantity',
+                  style: GoogleFonts.lato(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.bold,
+                    color: isVisible ? AppColor.textPrimary : AppColor.textHint,
+                  ),
                 ),
-              ),
-              Obx(() {
-                final limitsText = controller.product.value?.purchaseLimitsText;
-                if (limitsText == null) return const SizedBox.shrink();
-                return Padding(
-                  padding: EdgeInsets.only(top: 2.h),
-                  child: Text(
-                    limitsText,
-                    style: GoogleFonts.lato(
-                      fontSize: 11.5.sp,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFFD97706),
+                if (!isVisible)
+                  Padding(
+                    padding: EdgeInsets.only(top: 2.h),
+                    child: Text(
+                      'Not available right now',
+                      style: GoogleFonts.lato(
+                        fontSize: 11.5.sp,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFFDC2626),
+                      ),
+                    ),
+                  )
+                else if (limitsText != null)
+                  Padding(
+                    padding: EdgeInsets.only(top: 2.h),
+                    child: Text(
+                      limitsText,
+                      style: GoogleFonts.lato(
+                        fontSize: 11.5.sp,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFFD97706),
+                      ),
                     ),
                   ),
-                );
-              }),
-            ],
-          ),
-          Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8F9FA),
-              borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: const Color(0xFFE2E8F0), width: 1.r),
+              ],
             ),
-            child: Row(
-              children: [
-                Obx(() {
-                  final isMin = controller.selectedQuantity.value <=
-                      controller.minPurchaseQty;
-                  return IconButton(
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8F9FA),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: const Color(0xFFE2E8F0), width: 1.r),
+              ),
+              child: Row(
+                children: [
+                  IconButton(
                     icon: Icon(
                       Icons.remove,
                       size: 18.r,
-                      color: isMin
+                      color: (!isVisible ||
+                              controller.selectedQuantity.value <=
+                                  controller.minPurchaseQty)
                           ? const Color(0xFF94A3B8)
                           : AppColor.textPrimary,
                     ),
-                    onPressed: isMin ? null : () => controller.decrementQuantity(),
-                  );
-                }),
-                Obx(
-                  () => Container(
+                    onPressed: (isVisible &&
+                            controller.selectedQuantity.value >
+                                controller.minPurchaseQty)
+                        ? () => controller.decrementQuantity()
+                        : null,
+                  ),
+                  Container(
                     padding: EdgeInsets.symmetric(horizontal: 12.w),
                     child: Text(
                       '${controller.selectedQuantity.value}',
                       style: GoogleFonts.lato(
                         fontSize: 15.sp,
                         fontWeight: FontWeight.bold,
-                        color: AppColor.textPrimary,
+                        color: isVisible
+                            ? AppColor.textPrimary
+                            : const Color(0xFF94A3B8),
                       ),
                     ),
                   ),
-                ),
-                Obx(() {
-                  final isMax = controller.selectedQuantity.value >=
-                      controller.effectiveCap;
-                  return IconButton(
+                  IconButton(
                     icon: Icon(
                       Icons.add,
                       size: 18.r,
-                      color: isMax
+                      color: (!isVisible ||
+                              controller.selectedQuantity.value >=
+                                  controller.effectiveCap)
                           ? const Color(0xFF94A3B8)
                           : AppColor.textPrimary,
                     ),
-                    onPressed: isMax ? null : () => controller.incrementQuantity(),
-                  );
-                }),
-              ],
+                    onPressed: (isVisible &&
+                            controller.selectedQuantity.value <
+                                controller.effectiveCap)
+                        ? () => controller.incrementQuantity()
+                        : null,
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildSpecificationsCard() {
@@ -1221,80 +1249,129 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
   }
 
   Widget _buildBottomActionBar() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
-      decoration: BoxDecoration(
-        color: AppColor.white,
-        border: Border(
-          top: BorderSide(color: const Color(0xFFE2E8F0), width: 1.w),
-        ),
-      ),
-      child: SafeArea(
-        child: Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => controller.addToBag(),
-                icon: Icon(
-                  Iconsax.shopping_bag,
-                  size: 18.r,
-                  color: AppColor.textPrimary,
-                ),
-                label: Text(
-                  'Add to Bag',
-                  style: GoogleFonts.lato(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.bold,
-                    color: AppColor.textPrimary,
+    return Obx(() {
+      // If a product has no active variants left, there is no picker and no buy box — details only.
+      if (controller.variants.isEmpty) {
+        return const SizedBox.shrink();
+      }
+
+      final isVisible = controller.isVisible;
+      if (!isVisible) {
+        return Container(
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
+          decoration: BoxDecoration(
+            color: AppColor.white,
+            border: Border(
+              top: BorderSide(color: const Color(0xFFE2E8F0), width: 1.w),
+            ),
+          ),
+          child: SafeArea(
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(14.r),
+                border: Border.all(color: const Color(0xFFFECACA)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Iconsax.info_circle,
+                    size: 18.r,
+                    color: const Color(0xFFDC2626),
                   ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 14.h),
-                  side: const BorderSide(color: AppColor.border, width: 1.5),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14.r),
+                  SizedBox(width: 8.w),
+                  Text(
+                    'This product is not available right now.',
+                    style: GoogleFonts.lato(
+                      fontSize: 13.5.sp,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFFDC2626),
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Obx(
-                () => ElevatedButton(
-                  onPressed: controller.isBuyingNow.value
-                      ? null
-                      : () => controller.buyNow(),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColor.primary,
-                    elevation: 0,
+          ),
+        );
+      }
+
+      return Container(
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          color: AppColor.white,
+          border: Border(
+            top: BorderSide(color: const Color(0xFFE2E8F0), width: 1.w),
+          ),
+        ),
+        child: SafeArea(
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => controller.addToBag(),
+                  icon: Icon(
+                    Iconsax.shopping_bag,
+                    size: 18.r,
+                    color: AppColor.textPrimary,
+                  ),
+                  label: Text(
+                    'Add to Bag',
+                    style: GoogleFonts.lato(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.bold,
+                      color: AppColor.textPrimary,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 14.h),
+                    side: const BorderSide(color: AppColor.border, width: 1.5),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14.r),
                     ),
                   ),
-                  child: controller.isBuyingNow.value
-                      ? SizedBox(
-                          width: 20.r,
-                          height: 20.r,
-                          child: const CircularProgressIndicator(
-                            color: AppColor.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : Text(
-                          'Buy Now',
-                          style: GoogleFonts.lato(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.bold,
-                            color: AppColor.white,
-                          ),
-                        ),
                 ),
               ),
-            ),
-          ],
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Obx(
+                  () => ElevatedButton(
+                    onPressed: controller.isBuyingNow.value
+                        ? null
+                        : () => controller.buyNow(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColor.primary,
+                      elevation: 0,
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14.r),
+                      ),
+                    ),
+                    child: controller.isBuyingNow.value
+                        ? SizedBox(
+                            width: 20.r,
+                            height: 20.r,
+                            child: const CircularProgressIndicator(
+                              color: AppColor.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(
+                            'Buy Now',
+                            style: GoogleFonts.lato(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.bold,
+                              color: AppColor.white,
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 }

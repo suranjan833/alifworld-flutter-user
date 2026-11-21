@@ -43,7 +43,9 @@ class ProductVariantModel {
     if (compareAtPriceMinor != null) {
       return compareAtPriceMinor! / 100.0;
     }
-    if (isCampaignActive && priceMinor != null && priceMinor! > effectivePriceMinor) {
+    if (isCampaignActive &&
+        priceMinor != null &&
+        priceMinor! > effectivePriceMinor) {
       return priceMinor! / 100.0;
     }
     return null;
@@ -61,10 +63,14 @@ class ProductVariantModel {
   }
 
   String get discount {
-    final origMinor = compareAtPriceMinor ??
+    final origMinor =
+        compareAtPriceMinor ??
         (isCampaignActive && priceMinor != null ? priceMinor : null);
-    if (origMinor != null && origMinor > effectivePriceMinor && effectivePriceMinor > 0) {
-      final pct = (((origMinor - effectivePriceMinor) / origMinor) * 100).round();
+    if (origMinor != null &&
+        origMinor > effectivePriceMinor &&
+        effectivePriceMinor > 0) {
+      final pct = (((origMinor - effectivePriceMinor) / origMinor) * 100)
+          .round();
       if (pct > 0) return '$pct% OFF';
     }
     return '';
@@ -91,10 +97,8 @@ class ProductVariantModel {
     if (json['images'] is List) {
       for (var item in json['images'] as List) {
         if (item is Map) {
-          final url = item['fileUrl'] ??
-              item['url'] ??
-              item['image'] ??
-              item['src'];
+          final url =
+              item['fileUrl'] ?? item['url'] ?? item['image'] ?? item['src'];
           if (url != null && url.toString().isNotEmpty) {
             imgs.add(url.toString());
           }
@@ -112,10 +116,10 @@ class ProductVariantModel {
     int? sQty = json['stockQty'] is num
         ? (json['stockQty'] as num).toInt()
         : (json['stock'] is num
-            ? (json['stock'] as num).toInt()
-            : (json['quantity'] is num
-                ? (json['quantity'] as num).toInt()
-                : null));
+              ? (json['stock'] as num).toInt()
+              : (json['quantity'] is num
+                    ? (json['quantity'] as num).toInt()
+                    : null));
 
     List<Map<String, dynamic>> dims = [];
     if (json['dimensions'] is List) {
@@ -128,7 +132,8 @@ class ProductVariantModel {
     return ProductVariantModel(
       id: json['id']?.toString() ?? '',
       sku: json['sku']?.toString() ?? '',
-      label: json['label']?.toString() ??
+      label:
+          json['label']?.toString() ??
           json['title']?.toString() ??
           json['name']?.toString() ??
           'Default',
@@ -191,29 +196,26 @@ class ProductSellerModel {
     this.location = 'Dhaka, Bangladesh',
     this.isVerified = true,
     this.joinedDate = 'Verified Seller',
-    this.bio =
-        'Official retailer on Alif offering 100% authentic products with brand warranty and fast delivery.',
+    this.bio = 'Official retailer on Alif offering 100% authentic products with brand warranty and fast delivery.',
     this.responseRate = '99%',
   });
 
   factory ProductSellerModel.fromJson(Map<String, dynamic> json) {
     return ProductSellerModel(
       id: json['id']?.toString() ?? '',
-      shopName: json['shopName']?.toString() ??
+      shopName:
+          json['shopName']?.toString() ??
           json['storeName']?.toString() ??
           json['name']?.toString() ??
           'Alif Official Store',
       slug: json['slug']?.toString() ?? '',
-      avatar: json['avatar']?.toString() ??
-          json['logoUrl']?.toString() ??
-          'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=200&auto=format&fit=crop',
+      avatar: json['avatar']?.toString() ?? json['logoUrl']?.toString() ?? 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=200&auto=format&fit=crop',
       rating: json['rating'] is num ? (json['rating'] as num).toDouble() : 4.9,
       reviewsCount: json['reviewsCount']?.toString() ?? '1.8k',
       location: json['location']?.toString() ?? 'Dhaka, Bangladesh',
       isVerified: json['isVerified'] == true || json['verified'] == true,
       joinedDate: json['joinedDate']?.toString() ?? 'Verified Seller',
-      bio: json['bio']?.toString() ??
-          'Official retailer on Alif offering 100% authentic products with brand warranty and fast delivery.',
+      bio: json['bio']?.toString() ?? 'Official retailer on Alif offering 100% authentic products with brand warranty and fast delivery.',
       responseRate: json['responseRate']?.toString() ?? '99%',
     );
   }
@@ -256,6 +258,7 @@ class ProductDetailsModel {
   final bool isFavorite;
   final int? minPurchaseQty;
   final int? maxPurchaseQty;
+  final bool isVisible;
 
   ProductDetailsModel({
     required this.id,
@@ -278,6 +281,7 @@ class ProductDetailsModel {
     this.isFavorite = false,
     this.minPurchaseQty,
     this.maxPurchaseQty,
+    this.isVisible = true,
   });
 
   int get effectiveMinQty =>
@@ -294,7 +298,9 @@ class ProductDetailsModel {
       (minPurchaseQty != null && minPurchaseQty! > 1) || maxPurchaseQty != null;
 
   String? get purchaseLimitsText {
-    if (minPurchaseQty != null && minPurchaseQty! > 1 && maxPurchaseQty != null) {
+    if (minPurchaseQty != null &&
+        minPurchaseQty! > 1 &&
+        maxPurchaseQty != null) {
       return 'Min: $minPurchaseQty • Max: $maxPurchaseQty';
     } else if (minPurchaseQty != null && minPurchaseQty! > 1) {
       return 'Minimum purchase: $minPurchaseQty';
@@ -370,8 +376,8 @@ class ProductDetailsModel {
   String get displayImage => images.isNotEmpty
       ? images.first
       : (variants.isNotEmpty && variants.first.images.isNotEmpty
-          ? variants.first.images.first
-          : '');
+            ? variants.first.images.first
+            : '');
 
   bool get inStock =>
       (stockQty != null && stockQty! > 0) ||
@@ -408,7 +414,8 @@ class ProductDetailsModel {
     }
 
     // 1. Resolve Name
-    final resolvedName = json['name']?.toString() ??
+    final resolvedName =
+        json['name']?.toString() ??
         json['title']?.toString() ??
         'Product Details';
 
@@ -417,10 +424,8 @@ class ProductDetailsModel {
     if (json['images'] is List) {
       for (var item in json['images'] as List) {
         if (item is Map) {
-          final url = item['fileUrl'] ??
-              item['url'] ??
-              item['image'] ??
-              item['src'];
+          final url =
+              item['fileUrl'] ?? item['url'] ?? item['image'] ?? item['src'];
           if (url != null && url.toString().isNotEmpty) {
             imgs.add(url.toString());
           }
@@ -582,13 +587,15 @@ class ProductDetailsModel {
       minPurchaseQty: json['minPurchaseQty'] is int
           ? json['minPurchaseQty'] as int
           : (json['minPurchaseQty'] is num
-              ? (json['minPurchaseQty'] as num).toInt()
-              : null),
+                ? (json['minPurchaseQty'] as num).toInt()
+                : null),
       maxPurchaseQty: json['maxPurchaseQty'] is int
           ? json['maxPurchaseQty'] as int
           : (json['maxPurchaseQty'] is num
-              ? (json['maxPurchaseQty'] as num).toInt()
-              : null),
+                ? (json['maxPurchaseQty'] as num).toInt()
+                : null),
+      isVisible:
+          (json['isVisible'] != false) && (rawJson['isVisible'] != false),
     );
   }
 
@@ -617,6 +624,7 @@ class ProductDetailsModel {
     bool? isFavorite,
     int? minPurchaseQty,
     int? maxPurchaseQty,
+    bool? isVisible,
   }) {
     return ProductDetailsModel(
       id: id ?? this.id,
@@ -639,6 +647,7 @@ class ProductDetailsModel {
       isFavorite: isFavorite ?? this.isFavorite,
       minPurchaseQty: minPurchaseQty ?? this.minPurchaseQty,
       maxPurchaseQty: maxPurchaseQty ?? this.maxPurchaseQty,
+      isVisible: isVisible ?? this.isVisible,
     );
   }
 
@@ -669,10 +678,10 @@ class ProductDetailsModel {
       'reviews': ratingCount,
       'openBoxDelivery': openBoxDelivery,
       'isFavorite': isFavorite,
+      'isVisible': isVisible,
       'price': priceFormatted,
       'originalPrice': originalPriceFormatted,
       'discount': discount,
     };
   }
 }
-

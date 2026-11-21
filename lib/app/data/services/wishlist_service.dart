@@ -136,6 +136,26 @@ class WishlistService extends GetxService {
           // Revert on API non-success
           wishlistedVariantIds.remove(variantId);
           if (count.value > 0) count.value--;
+
+          String? errCode;
+          String? errMsg;
+          if (res.data is Map) {
+            final map = res.data as Map;
+            if (map['error'] is Map) {
+              errCode = map['error']['code']?.toString();
+              errMsg = map['error']['message']?.toString();
+            } else if (map['message'] != null) {
+              errMsg = map['message'].toString();
+            }
+          }
+          if (errCode == 'PRODUCT_NOT_AVAILABLE' ||
+              res.statusCode == 400 ||
+              (errMsg != null && errMsg.toLowerCase().contains('not available'))) {
+            showSnack(
+              'Not Available',
+              errMsg ?? 'This product is not available right now.',
+            );
+          }
           return isCurrentlyWish;
         }
       } else {

@@ -126,6 +126,7 @@ class ShowcaseProductModel {
   final int? productPoints;
   final String? description;
   bool isFavorite;
+  final bool isVisible;
 
   ShowcaseProductModel({
     required this.id,
@@ -148,6 +149,7 @@ class ShowcaseProductModel {
     this.productPoints,
     this.description,
     this.isFavorite = false,
+    this.isVisible = true,
   });
 
   String get displayImage {
@@ -274,6 +276,7 @@ class ShowcaseProductModel {
       productPoints: points,
       description: productJson['description']?.toString(),
       isFavorite: productJson['isFavorite'] == true,
+      isVisible: productJson['isVisible'] != false && variantJson['isVisible'] != false,
     );
   }
 
@@ -406,6 +409,7 @@ class ShowcaseProductModel {
       productPoints: parsedPoints,
       description: json['description']?.toString(),
       isFavorite: json['isFavorite'] == true,
+      isVisible: json['isVisible'] != false,
     );
   }
 
@@ -448,6 +452,7 @@ class ShowcaseProductModel {
       'productPoints': productPoints,
       'description': description,
       'isFavorite': isFavorite,
+      'isVisible': isVisible,
     };
   }
 

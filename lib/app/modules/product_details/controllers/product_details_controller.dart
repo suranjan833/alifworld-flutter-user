@@ -88,6 +88,7 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
               : prev?.categoryName,
       minPurchaseQty: model.minPurchaseQty ?? prev?.minPurchaseQty,
       maxPurchaseQty: model.maxPurchaseQty ?? prev?.maxPurchaseQty,
+      isVisible: model.isVisible,
     );
 
     product.value = merged;
@@ -152,6 +153,8 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
       isLoadingDetails.value = false;
     }
   }
+
+  bool get isVisible => product.value?.isVisible ?? true;
 
   ProductVariantModel? get selectedVariant {
     if (variants.isNotEmpty && selectedVariantIndex.value < variants.length) {
@@ -288,7 +291,7 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
       selectedQuantity.value = minPurchaseQty;
       selectedImageIndex.value = 0;
       _recordRecentlyViewed();
-      if (Get.isRegistered<WishlistService>()) {
+      if (isVisible && Get.isRegistered<WishlistService>()) {
         isWishlisted.value =
             WishlistService.to.isWishlisted(selectedVariant?.id);
       }
@@ -353,6 +356,10 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
   }
 
   Future<void> checkWishlistStatus() async {
+    if (!isVisible) {
+      isWishlisted.value = false;
+      return;
+    }
     if (!Get.isRegistered<WishlistService>()) return;
     final wishlistSvc = WishlistService.to;
     if (!wishlistSvc.hasAuth) {
@@ -384,6 +391,17 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
 
   Future<void> toggleWishlist() async {
     final p = product.value;
+    if (!isVisible) {
+      Get.snackbar(
+        'Not Available',
+        'This product is not available right now.',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: AppColor.error,
+        colorText: AppColor.white,
+      );
+      return;
+    }
+
     final sv = selectedVariant;
     final vId = sv?.id ??
         (p?.variants.isNotEmpty == true ? p!.variants.first.id : '');
@@ -406,19 +424,22 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
       return;
     }
 
+    final wasWishlisted = isWishlisted.value;
     final newStatus = await wishlistSvc.toggleWishlist(vId);
     isWishlisted.value = newStatus;
 
-    Get.snackbar(
-      newStatus ? 'Added to Wishlist' : 'Removed from Wishlist',
-      newStatus
-          ? '${p?.name ?? 'Item'} saved to your wishlist'
-          : 'Item removed from wishlist',
-      snackPosition: SnackPosition.TOP,
-      backgroundColor: AppColor.textPrimary,
-      colorText: AppColor.white,
-      duration: const Duration(seconds: 2),
-    );
+    if (newStatus != wasWishlisted) {
+      Get.snackbar(
+        newStatus ? 'Added to Wishlist' : 'Removed from Wishlist',
+        newStatus
+            ? '${p?.name ?? 'Item'} saved to your wishlist'
+            : 'Item removed from wishlist',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: AppColor.textPrimary,
+        colorText: AppColor.white,
+        duration: const Duration(seconds: 2),
+      );
+    }
 
     if (Get.isRegistered<MyWishlistController>()) {
       Get.find<MyWishlistController>().fetchWishlist();
@@ -504,6 +525,17 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
   }
 
   Future<void> addToBag() async {
+    if (!isVisible || variants.isEmpty) {
+      Get.snackbar(
+        'Not Available',
+        'This product is not available right now.',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: AppColor.error,
+        colorText: AppColor.white,
+      );
+      return;
+    }
+
     final token = getBox.read(USER_TOKEN);
     final sessionCookie = getBox.read('SESSION_COOKIE');
     final bool hasAuth = (token != null && token.toString().trim().isNotEmpty) ||
@@ -550,6 +582,17 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
 
   Future<void> buyNow() async {
     if (isBuyingNow.value) return;
+
+    if (!isVisible || variants.isEmpty) {
+      Get.snackbar(
+        'Not Available',
+        'This product is not available right now.',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: AppColor.error,
+        colorText: AppColor.white,
+      );
+      return;
+    }
 
     final token = getBox.read(USER_TOKEN);
     final sessionCookie = getBox.read('SESSION_COOKIE');

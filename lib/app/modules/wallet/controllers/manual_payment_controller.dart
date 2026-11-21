@@ -493,15 +493,28 @@ class ManualPaymentController extends GetxController {
           'Withdrawal Requested',
           'Request submitted and pending admin approval',
         );
-        await fetchWithdrawals(refresh: true);
+        // Refresh Main balance immediately after 201 submit: amount held immediately
         if (Get.isRegistered<WalletController>()) {
-          Get.find<WalletController>().refreshAll();
+          await Get.find<WalletController>().fetchWallets();
+          Get.find<WalletController>().fetchTransactions(refresh: true);
         }
+        await fetchWithdrawals(refresh: true);
         return const WalletPinActionResult.success();
       } else {
-        final errCode = _extractErrorCode(response.data) ?? 'WITHDRAWAL_FAILED';
-        final errMsg =
+        var errCode = _extractErrorCode(response.data) ?? 'WITHDRAWAL_FAILED';
+        var errMsg =
             _extractErrorMessage(response.data) ?? 'Failed to submit withdrawal';
+
+        // 409 INSUFFICIENT_BALANCE error mapping
+        if (response.statusCode == 409 || errCode == 'INSUFFICIENT_BALANCE') {
+          errCode = 'INSUFFICIENT_BALANCE';
+          errMsg = errMsg.isNotEmpty && errMsg != 'Failed to submit withdrawal'
+              ? errMsg
+              : 'Insufficient balance in Main wallet for this withdrawal.';
+          if (Get.isRegistered<WalletController>()) {
+            Get.find<WalletController>().fetchWallets();
+          }
+        }
 
         // Keep PIN sheet open on WALLET_PIN_* errors (§8)
         return WalletPinActionResult.failure(
@@ -552,6 +565,13 @@ class ManualPaymentController extends GetxController {
             withdrawals.addAll(items);
           }
           withdrawalNextCursor.value = rawData['nextCursor']?.toString();
+
+          // When a withdrawal's status becomes rejected, refresh Main balance too — refund has landed
+          if (refresh && items.any((w) => w.isRejected)) {
+            if (Get.isRegistered<WalletController>()) {
+              Get.find<WalletController>().fetchWallets();
+            }
+          }
         }
       }
     } catch (e) {
