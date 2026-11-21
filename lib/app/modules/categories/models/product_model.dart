@@ -21,6 +21,7 @@ class ProductModel {
   final String? categoryName;
   final int? stockQty;
   final int? productPoints;
+  final bool isVisible;
 
   ProductModel({
     this.id,
@@ -41,6 +42,7 @@ class ProductModel {
     this.categoryName,
     this.stockQty,
     this.productPoints,
+    this.isVisible = true,
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
@@ -206,6 +208,7 @@ class ProductModel {
       categoryName: json['categoryName']?.toString(),
       stockQty: json['stockQty'] is int ? json['stockQty'] as int : null,
       productPoints: parsedPoints,
+      isVisible: json['isVisible'] != false,
     );
   }
 
@@ -229,6 +232,7 @@ class ProductModel {
       'categoryName': categoryName,
       'stockQty': stockQty,
       'productPoints': productPoints,
+      'isVisible': isVisible,
     };
   }
 

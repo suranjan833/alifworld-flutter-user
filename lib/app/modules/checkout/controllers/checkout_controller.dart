@@ -505,6 +505,32 @@ class CheckoutController extends GetxController {
             }
           }
         }
+      } else if (response.statusCode == 400) {
+        String errCode = '';
+        String errMsg = 'Failed to fetch quote';
+        if (response.data is Map) {
+          final map = response.data as Map;
+          if (map['error'] is Map) {
+            errCode = map['error']['code']?.toString() ?? '';
+            errMsg = map['error']['message']?.toString() ?? errMsg;
+          } else if (map['message'] != null) {
+            errMsg = map['message'].toString();
+          }
+        }
+        if (errCode == 'PRODUCT_NOT_AVAILABLE' ||
+            errMsg.toLowerCase().contains('not available')) {
+          Get.snackbar(
+            'Product Unavailable',
+            'This product is not available right now.',
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: AppColor.error,
+            colorText: AppColor.white,
+            duration: const Duration(seconds: 4),
+          );
+          if (Get.isRegistered<BagController>()) {
+            Get.find<BagController>().fetchCart(showLoading: false, force: true);
+          }
+        }
       }
     } catch (_) {}
   }
@@ -831,6 +857,23 @@ class CheckoutController extends GetxController {
             snackPosition: SnackPosition.TOP,
             backgroundColor: AppColor.error,
             colorText: AppColor.white,
+          );
+        } else if (errorCode == 'PRODUCT_NOT_AVAILABLE' ||
+            errorMsg.toLowerCase().contains('not available')) {
+          Get.snackbar(
+            'Product Unavailable',
+            'This product is not available right now.',
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: AppColor.error,
+            colorText: AppColor.white,
+            duration: const Duration(seconds: 4),
+          );
+          if (Get.isRegistered<BagController>()) {
+            await Get.find<BagController>().fetchCart(showLoading: false, force: true);
+          }
+          return const WalletPinActionResult.failure(
+            errorCode: 'PRODUCT_NOT_AVAILABLE',
+            errorMessage: 'This product is not available right now.',
           );
         } else if (errorCode == 'MIN_PURCHASE_QTY' ||
             errorCode == 'MAX_PURCHASE_QTY') {

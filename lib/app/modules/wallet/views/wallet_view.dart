@@ -1099,7 +1099,7 @@ class WalletView extends GetView<WalletController> {
             decoration: BoxDecoration(
               color: tx.isCredit
                   ? const Color(0xFFDCFCE7)
-                  : const Color(0xFFF1F5F9),
+                  : const Color(0xFFFEE2E2),
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -1109,7 +1109,7 @@ class WalletView extends GetView<WalletController> {
                     : Icons.arrow_upward_rounded,
                 color: tx.isCredit
                     ? const Color(0xFF16A34A)
-                    : AppColor.textPrimary,
+                    : const Color(0xFFDC2626),
                 size: 20.r,
               ),
             ),
@@ -1132,7 +1132,8 @@ class WalletView extends GetView<WalletController> {
                         color: AppColor.textPrimary,
                       ),
                     ),
-                    if (tx.manual != null) _buildStatusChip(tx.manual!.status),
+                    if (tx.manual != null)
+                      _buildStatusChip(tx.manual!.status, reason: tx.reason),
                   ],
                 ),
                 SizedBox(height: 3.h),
@@ -1191,7 +1192,7 @@ class WalletView extends GetView<WalletController> {
               fontWeight: FontWeight.bold,
               color: tx.isCredit
                   ? const Color(0xFF16A34A)
-                  : AppColor.textPrimary,
+                  : const Color(0xFFDC2626),
             ),
           ),
         ],
@@ -1199,7 +1200,24 @@ class WalletView extends GetView<WalletController> {
     );
   }
 
-  Widget _buildStatusChip(String status) {
+  Widget _buildStatusChip(String status, {String? reason}) {
+    if (reason?.toLowerCase() == 'manual_withdraw_refund') {
+      return Container(
+        padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 2.h),
+        decoration: BoxDecoration(
+          color: const Color(0xFFDCFCE7),
+          borderRadius: BorderRadius.circular(6.r),
+        ),
+        child: Text(
+          'Refund',
+          style: GoogleFonts.lato(
+            fontSize: 10.sp,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF16A34A),
+          ),
+        ),
+      );
+    }
     final s = status.toLowerCase();
     Color bg;
     Color fg;

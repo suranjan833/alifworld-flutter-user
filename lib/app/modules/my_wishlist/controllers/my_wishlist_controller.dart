@@ -100,12 +100,12 @@ class MyWishlistController extends GetxController with SkeletonLoadingMixin {
           wishlistItems.assignAll(items);
           if (Get.isRegistered<WishlistService>()) {
             WishlistService.to.count.value = items.length;
-            for (var it in items) {
-              final vId = it['variantId']?.toString();
-              if (vId != null && vId.isNotEmpty) {
-                WishlistService.to.wishlistedVariantIds.add(vId);
-              }
-            }
+            final currentIds = items
+                .map((it) => it['variantId']?.toString())
+                .where((id) => id != null && id.isNotEmpty)
+                .cast<String>()
+                .toSet();
+            WishlistService.to.wishlistedVariantIds.assignAll(currentIds);
           }
         } else {
           wishlistItems.clear();

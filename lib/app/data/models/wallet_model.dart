@@ -414,6 +414,9 @@ class WalletTransactionModel {
   bool get isManual => manual != null;
 
   bool get isCredit {
+    if (reason.toLowerCase() == 'manual_withdraw_refund') {
+      return true;
+    }
     if (type != null) {
       return type!.toLowerCase().contains('credit');
     }
@@ -440,6 +443,9 @@ class WalletTransactionModel {
   }
 
   String get displayTitle {
+    if (reason.toLowerCase() == 'manual_withdraw_refund') {
+      return 'Withdrawal Refund';
+    }
     if (manual != null) {
       return manual!.isDeposit ? 'Alif Pay Deposit' : 'Alif Pay Withdrawal';
     }
@@ -449,6 +455,8 @@ class WalletTransactionModel {
       case 'manual_withdraw':
       case 'manual_withdrawal':
         return 'Alif Pay Withdrawal';
+      case 'manual_withdraw_refund':
+        return 'Withdrawal Refund';
       case 'wallet_transfer_out':
         return 'Transfer Sent';
       case 'wallet_transfer_in':

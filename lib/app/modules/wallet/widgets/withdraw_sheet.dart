@@ -352,7 +352,40 @@ class WithdrawSheet extends GetView<ManualPaymentController> {
           else
             _buildCardPicker(config),
 
-          SizedBox(height: 18.h),
+          SizedBox(height: 14.h),
+
+          // Informative banner: Held at submit, refunded on reject
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF6FF),
+              borderRadius: BorderRadius.circular(10.r),
+              border: Border.all(color: const Color(0xFFBFDBFE)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Iconsax.info_circle,
+                  size: 16.r,
+                  color: const Color(0xFF1D4ED8),
+                ),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Text(
+                    'The requested amount leaves your Main wallet as soon as you submit and is held while pending. If your request is rejected by the admin, the full amount is refunded to your Main wallet immediately.',
+                    style: GoogleFonts.lato(
+                      fontSize: 11.5.sp,
+                      color: const Color(0xFF1E40AF),
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          SizedBox(height: 14.h),
 
           // Amount Input
           Row(
@@ -529,11 +562,12 @@ class WithdrawSheet extends GetView<ManualPaymentController> {
 
           SizedBox(height: 8.h),
           Text(
-            'Withdrawal requests require your 6-digit Wallet PIN and are verified by an admin before payout.',
+            'Amount is deducted from Main wallet upon submission and refunded in full if rejected. Authorized with your 6-digit PIN and verified by admin.',
             textAlign: TextAlign.center,
             style: GoogleFonts.lato(
-              fontSize: 11.5.sp,
+              fontSize: 11.sp,
               color: const Color(0xFF64748B),
+              height: 1.3,
             ),
           ),
         ],
@@ -921,6 +955,7 @@ class WithdrawSheet extends GetView<ManualPaymentController> {
     if (pin != null && pin.isNotEmpty) {
       controller.withdrawAmountCtrl.clear();
       controller.withdrawTab.value = 1; // switch to history tab
+      walletCtrl.fetchWallets();
     }
   }
 

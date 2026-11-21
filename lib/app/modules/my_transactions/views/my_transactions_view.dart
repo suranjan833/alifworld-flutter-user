@@ -489,7 +489,8 @@ class MyTransactionsView extends GetView<MyTransactionsController> {
                         color: AppColor.textPrimary,
                       ),
                     ),
-                    if (tx.manual != null) _buildStatusChip(tx.manual!.status),
+                    if (tx.manual != null)
+                      _buildStatusChip(tx.manual!.status, reason: tx.reason),
                   ],
                 ),
                 SizedBox(height: 4.h),
@@ -556,7 +557,24 @@ class MyTransactionsView extends GetView<MyTransactionsController> {
     );
   }
 
-  Widget _buildStatusChip(String status) {
+  Widget _buildStatusChip(String status, {String? reason}) {
+    if (reason?.toLowerCase() == 'manual_withdraw_refund') {
+      return Container(
+        padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 2.h),
+        decoration: BoxDecoration(
+          color: const Color(0xFFDCFCE7),
+          borderRadius: BorderRadius.circular(6.r),
+        ),
+        child: Text(
+          'Refund',
+          style: GoogleFonts.lato(
+            fontSize: 10.sp,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF16A34A),
+          ),
+        ),
+      );
+    }
     final s = status.toLowerCase();
     Color bg;
     Color fg;
