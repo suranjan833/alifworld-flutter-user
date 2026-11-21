@@ -293,3 +293,32 @@ class ReferralHistoryResponse {
     );
   }
 }
+
+class ReferralLookupModel {
+  final String name;
+  final String? avatarUrl;
+  final String maskedPhone;
+
+  ReferralLookupModel({
+    required this.name,
+    this.avatarUrl,
+    required this.maskedPhone,
+  });
+
+  factory ReferralLookupModel.fromJson(Map<String, dynamic> json) {
+    String? rawAvatar =
+        json['avatarUrl']?.toString() ?? json['avatar']?.toString();
+    if (rawAvatar != null && rawAvatar.isNotEmpty) {
+      rawAvatar = resolveImageUrl(rawAvatar);
+    }
+    final rawName = json['name']?.toString() ?? '';
+    final rawPhone = json['maskedPhone']?.toString() ?? '';
+    return ReferralLookupModel(
+      name: rawName.isNotEmpty
+          ? rawName
+          : (rawPhone.isNotEmpty ? rawPhone : 'Referrer'),
+      avatarUrl: rawAvatar,
+      maskedPhone: rawPhone,
+    );
+  }
+}

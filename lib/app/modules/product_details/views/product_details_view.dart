@@ -759,13 +759,33 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            'Quantity',
-            style: GoogleFonts.lato(
-              fontSize: 15.sp,
-              fontWeight: FontWeight.bold,
-              color: AppColor.textPrimary,
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Quantity',
+                style: GoogleFonts.lato(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.bold,
+                  color: AppColor.textPrimary,
+                ),
+              ),
+              Obx(() {
+                final limitsText = controller.product.value?.purchaseLimitsText;
+                if (limitsText == null) return const SizedBox.shrink();
+                return Padding(
+                  padding: EdgeInsets.only(top: 2.h),
+                  child: Text(
+                    limitsText,
+                    style: GoogleFonts.lato(
+                      fontSize: 11.5.sp,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFFD97706),
+                    ),
+                  ),
+                );
+              }),
+            ],
           ),
           Container(
             decoration: BoxDecoration(
@@ -775,14 +795,20 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
             ),
             child: Row(
               children: [
-                IconButton(
-                  icon: Icon(
-                    Icons.remove,
-                    size: 18.r,
-                    color: AppColor.textPrimary,
-                  ),
-                  onPressed: () => controller.decrementQuantity(),
-                ),
+                Obx(() {
+                  final isMin = controller.selectedQuantity.value <=
+                      controller.minPurchaseQty;
+                  return IconButton(
+                    icon: Icon(
+                      Icons.remove,
+                      size: 18.r,
+                      color: isMin
+                          ? const Color(0xFF94A3B8)
+                          : AppColor.textPrimary,
+                    ),
+                    onPressed: isMin ? null : () => controller.decrementQuantity(),
+                  );
+                }),
                 Obx(
                   () => Container(
                     padding: EdgeInsets.symmetric(horizontal: 12.w),
@@ -796,14 +822,20 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                     ),
                   ),
                 ),
-                IconButton(
-                  icon: Icon(
-                    Icons.add,
-                    size: 18.r,
-                    color: AppColor.textPrimary,
-                  ),
-                  onPressed: () => controller.incrementQuantity(),
-                ),
+                Obx(() {
+                  final isMax = controller.selectedQuantity.value >=
+                      controller.effectiveCap;
+                  return IconButton(
+                    icon: Icon(
+                      Icons.add,
+                      size: 18.r,
+                      color: isMax
+                          ? const Color(0xFF94A3B8)
+                          : AppColor.textPrimary,
+                    ),
+                    onPressed: isMax ? null : () => controller.incrementQuantity(),
+                  );
+                }),
               ],
             ),
           ),

@@ -221,6 +221,18 @@ class AdvancedShoppingController extends GetxController {
       return false;
     }
 
+    if (!holding.canCancel) {
+      final dateStr = holding.cancelAvailableAt != null
+          ? ' before ${holding.cancelAvailableAt!.toLocal().toString().split(' ')[0]}'
+          : '';
+      showSnack(
+        'Cannot Cancel Yet',
+        'This package cannot be cancelled$dateStr.',
+        bg: AppColor.red,
+      );
+      return false;
+    }
+
     final pin = await WalletPinDialog.promptPin(
       context,
       title: 'Confirm Cancellation',
@@ -256,9 +268,14 @@ class AdvancedShoppingController extends GetxController {
         await refreshAll();
         return true;
       } else {
-        final msg = error?['message']?.toString() ??
+        final code = error?['code']?.toString() ?? '';
+        String msg = error?['message']?.toString() ??
             raw['message']?.toString() ??
             'Cancellation failed';
+        if (code == 'CANCEL_TOO_EARLY') {
+          msg = error?['message']?.toString() ??
+              'This package cannot be cancelled before the minimum holding period.';
+        }
         showSnack('Cancellation Failed', msg, bg: AppColor.red);
         return false;
       }

@@ -832,6 +832,16 @@ class CheckoutController extends GetxController {
             backgroundColor: AppColor.error,
             colorText: AppColor.white,
           );
+        } else if (errorCode == 'MIN_PURCHASE_QTY' ||
+            errorCode == 'MAX_PURCHASE_QTY') {
+          Get.snackbar(
+            'Quantity Limit',
+            errorMsg,
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: AppColor.error,
+            colorText: AppColor.white,
+            duration: const Duration(seconds: 4),
+          );
         } else if (errorCode == 'INVENTORY_FAILED' ||
             errorCode == 'VARIANT_NOT_AVAILABLE') {
           Get.snackbar(

@@ -463,6 +463,25 @@ class AdvancedShoppingView extends GetView<AdvancedShoppingController> {
                     ),
                   ],
                 ),
+                if (pkg.minCancelDays > 0) ...[
+                  SizedBox(height: 4.h),
+                  Row(
+                    children: [
+                      Icon(Iconsax.lock, size: 13.r, color: const Color(0xFFD97706)),
+                      SizedBox(width: 4.w),
+                      Expanded(
+                        child: Text(
+                          'No cancellation for the first ${pkg.minCancelDays} days',
+                          style: GoogleFonts.lato(
+                            fontSize: 11.sp,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFFD97706),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
 
                 SizedBox(height: 16.h),
 
@@ -1019,27 +1038,61 @@ class AdvancedShoppingView extends GetView<AdvancedShoppingController> {
                 )),
           ],
 
-          // Cancel button (Active only)
+          // Cancel button (Active only) - gated by canCancel
           if (holding.isActive) ...[
             SizedBox(height: 10.h),
-            Align(
-              alignment: Alignment.centerRight,
-              child: OutlinedButton(
-                onPressed: () => _showCancelConfirmDialog(context, holding),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFDC2626),
-                  side: const BorderSide(color: Color(0xFFFCA5A5)),
-                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
-                ),
-                child: Text(
-                  'Cancel Package',
-                  style: GoogleFonts.lato(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.bold,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (!holding.canCancel && holding.cancelAvailableAt != null)
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(right: 8.w),
+                      child: Row(
+                        children: [
+                          Icon(Iconsax.lock, size: 13.r, color: const Color(0xFFD97706)),
+                          SizedBox(width: 4.w),
+                          Expanded(
+                            child: Text(
+                              'You can cancel from ${_formatDate(holding.cancelAvailableAt!)}',
+                              style: GoogleFonts.lato(
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFFD97706),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  const Spacer(),
+                OutlinedButton(
+                  onPressed: holding.canCancel
+                      ? () => _showCancelConfirmDialog(context, holding)
+                      : null,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFDC2626),
+                    disabledForegroundColor: const Color(0xFF94A3B8),
+                    side: BorderSide(
+                      color: holding.canCancel
+                          ? const Color(0xFFFCA5A5)
+                          : const Color(0xFFE2E8F0),
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                  ),
+                  child: Text(
+                    'Cancel Package',
+                    style: GoogleFonts.lato(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
           ],
         ],

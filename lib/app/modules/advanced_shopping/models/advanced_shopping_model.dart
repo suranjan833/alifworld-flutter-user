@@ -39,6 +39,7 @@ class AdvancedShoppingPackageModel {
   final String interestWalletKind; // e.g. 'customer_advanced_return'
   final int cancelFlatMinor;
   final num cancelPct;
+  final int minCancelDays;
   final int? maxPerUser;
   final int? maxTotal;
   final int totalPurchases;
@@ -61,6 +62,7 @@ class AdvancedShoppingPackageModel {
     this.interestWalletKind = 'customer_advanced_return',
     this.cancelFlatMinor = 0,
     this.cancelPct = 0,
+    this.minCancelDays = 0,
     this.maxPerUser,
     this.maxTotal,
     this.totalPurchases = 0,
@@ -138,6 +140,7 @@ class AdvancedShoppingPackageModel {
           json['interestWalletKind']?.toString() ?? 'customer_advanced_return',
       cancelFlatMinor: (json['cancelFlatMinor'] as num?)?.toInt() ?? 0,
       cancelPct: (json['cancelPct'] as num?) ?? 0,
+      minCancelDays: (json['minCancelDays'] as num?)?.toInt() ?? 0,
       maxPerUser: (json['maxPerUser'] as num?)?.toInt(),
       maxTotal: (json['maxTotal'] as num?)?.toInt(),
       totalPurchases: (json['totalPurchases'] as num?)?.toInt() ?? 0,
@@ -210,6 +213,9 @@ class AdvancedShoppingHoldingModel {
   final String interestWalletKind;
   final int cancelFlatMinor;
   final num cancelPct;
+  final int minCancelDays;
+  final DateTime? cancelAvailableAt;
+  final bool canCancel;
   final String status; // 'active', 'completed', 'cancelled'
   final DateTime? releasedAt;
   final DateTime? cancelledAt;
@@ -237,6 +243,9 @@ class AdvancedShoppingHoldingModel {
     this.interestWalletKind = 'customer_advanced_return',
     this.cancelFlatMinor = 0,
     this.cancelPct = 0,
+    this.minCancelDays = 0,
+    this.cancelAvailableAt,
+    this.canCancel = false,
     this.status = 'active',
     this.releasedAt,
     this.cancelledAt,
@@ -329,6 +338,9 @@ class AdvancedShoppingHoldingModel {
           json['interestWalletKind']?.toString() ?? 'customer_advanced_return',
       cancelFlatMinor: (json['cancelFlatMinor'] as num?)?.toInt() ?? 0,
       cancelPct: (json['cancelPct'] as num?) ?? 0,
+      minCancelDays: (json['minCancelDays'] as num?)?.toInt() ?? 0,
+      cancelAvailableAt: parseDate(json['cancelAvailableAt']),
+      canCancel: json['canCancel'] == true || json['canCancel'] == 1,
       status: json['status']?.toString() ?? 'active',
       releasedAt: parseDate(json['releasedAt']),
       cancelledAt: parseDate(json['cancelledAt']),
