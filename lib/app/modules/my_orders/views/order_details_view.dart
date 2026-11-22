@@ -145,8 +145,8 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                 _buildOrderHeaderCard(o),
                 SizedBox(height: 14.h),
 
-                // Open Box Delivery & OTP Card (when enabled)
-                _buildOpenBoxOtpCard(o),
+                // Delivery Verification & OTP Card (Open Box & Normal products)
+                _buildDeliveryOtpCard(o),
 
                 // 2. Premium Tracking Timeline Card
                 _buildTimelineCard(o),
@@ -345,11 +345,21 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
     );
   }
 
-  /// Open Box Delivery OTP Card
-  Widget _buildOpenBoxOtpCard(OrderModel o) {
-    if (!o.openBoxDelivery) return const SizedBox.shrink();
+  /// Delivery Verification OTP Card (Open Box & Normal products)
+  Widget _buildDeliveryOtpCard(OrderModel o) {
+    final status = (o.backendStatus.isNotEmpty ? o.backendStatus : o.status).toLowerCase().trim();
+    if (status == 'cancelled' || status == 'refunded' || status == 'delivered') {
+      return const SizedBox.shrink();
+    }
 
     final otp = o.deliveryOtp ?? '';
+    final isOpenBox = o.openBoxDelivery;
+
+    // Show card if openBoxDelivery is enabled OR if deliveryOtp is present
+    // Or for normal pending / in-transit orders requiring delivery verification
+    if (!isOpenBox && otp.isEmpty && status != 'out_for_delivery' && status != 'pending' && status != 'confirmed') {
+      return const SizedBox.shrink();
+    }
 
     return Container(
       width: double.infinity,
@@ -393,7 +403,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'OPEN BOX DELIVERY',
+                      isOpenBox ? 'OPEN BOX DELIVERY' : 'DELIVERY VERIFICATION',
                       style: GoogleFonts.inter(
                         fontSize: 11.sp,
                         fontWeight: FontWeight.w800,
@@ -413,21 +423,38 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                   ],
                 ),
               ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDCFCE7),
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Text(
-                  'Enabled',
-                  style: GoogleFonts.inter(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF16A34A),
+              if (isOpenBox)
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDCFCE7),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Text(
+                    'Open Box',
+                    style: GoogleFonts.inter(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF16A34A),
+                    ),
+                  ),
+                )
+              else
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Text(
+                    'Secure Delivery',
+                    style: GoogleFonts.inter(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF2563EB),
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
           SizedBox(height: 14.h),
@@ -441,30 +468,37 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                 border: Border.all(color: const Color(0xFFFED7AA)),
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Share this OTP with rider:',
-                        style: GoogleFonts.inter(
-                          fontSize: 11.sp,
-                          color: AppColor.textSecondary,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Share this OTP with rider:',
+                          style: GoogleFonts.inter(
+                            fontSize: 11.sp,
+                            color: AppColor.textSecondary,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        otp.split('').join('  '),
-                        style: GoogleFonts.sourceCodePro(
-                          fontSize: 24.sp,
-                          fontWeight: FontWeight.bold,
-                          color: AppColor.primaryDark,
-                          letterSpacing: 2,
+                        SizedBox(height: 4.h),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            otp.split('').join('  '),
+                            style: GoogleFonts.sourceCodePro(
+                              fontSize: 22.sp,
+                              fontWeight: FontWeight.bold,
+                              color: AppColor.primaryDark,
+                              letterSpacing: 2,
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+                  SizedBox(width: 10.w),
                   ElevatedButton.icon(
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: otp));
@@ -489,9 +523,40 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFFEDD5),
                       elevation: 0,
-                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.r),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 10.h),
+          ] else ...[
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFBEB),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: const Color(0xFFFDE68A)),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.access_time_rounded,
+                    size: 18.r,
+                    color: const Color(0xFFD97706),
+                  ),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Text(
+                      'OTP will be generated and shown once order is out for delivery.',
+                      style: GoogleFonts.inter(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF92400E),
                       ),
                     ),
                   ),
@@ -507,7 +572,9 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
               SizedBox(width: 6.w),
               Expanded(
                 child: Text(
-                  'Open and verify all items in presence of the delivery partner before sharing this OTP to complete delivery.',
+                  isOpenBox
+                      ? 'Open and verify all items in presence of the delivery partner before sharing this OTP to complete delivery.'
+                      : 'Verify your package upon receiving and share this OTP with the delivery partner to confirm delivery.',
                   style: GoogleFonts.inter(
                     fontSize: 11.5.sp,
                     color: AppColor.textSecondary,

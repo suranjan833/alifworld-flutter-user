@@ -583,8 +583,23 @@ class OrderModel {
           json['customerName']?.toString(),
       phone: addrObj?['phone']?.toString() ?? json['phone']?.toString(),
       sellerName: sName,
-      openBoxDelivery: json['openBoxDelivery'] == true || json['open_box_delivery'] == true,
-      deliveryOtp: json['deliveryOtp']?.toString() ?? json['delivery_otp']?.toString(),
+      openBoxDelivery: json['openBoxDelivery'] == true ||
+          json['open_box_delivery'] == true ||
+          (json['items'] is List &&
+              (json['items'] as List).any(
+                (it) =>
+                    it is Map &&
+                    (it['openBoxDelivery'] == true ||
+                        it['open_box_delivery'] == true),
+              )),
+      deliveryOtp: json['deliveryOtp']?.toString() ??
+          json['delivery_otp']?.toString() ??
+          json['otp']?.toString() ??
+          json['verificationOtp']?.toString() ??
+          json['deliveryCode']?.toString() ??
+          (json['batch'] is Map
+              ? (json['batch'] as Map)['deliveryOtp']?.toString()
+              : null),
       timeline: parsedTimeline,
       points: orderPoints,
       returnDeadline: retDeadline,

@@ -305,7 +305,7 @@ class MyOrdersView extends GetView<MyOrdersController> {
                       ),
                     ),
                   ),
-                  if (order.openBoxDelivery && order.deliveryOtp != null && order.deliveryOtp!.isNotEmpty) ...[
+                  if (order.deliveryOtp != null && order.deliveryOtp!.isNotEmpty) ...[
                     SizedBox(height: 4.h),
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
