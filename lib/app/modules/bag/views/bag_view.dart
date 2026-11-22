@@ -775,58 +775,107 @@ class BagView extends GetView<BagController> {
 
   void _confirmClearCart(BuildContext context) {
     Get.dialog(
-      AlertDialog(
+      Dialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16.r),
+          borderRadius: BorderRadius.circular(24.r),
         ),
-        title: Text(
-          'Clear Shopping Bag?',
-          style: GoogleFonts.lato(
-            fontSize: 17.sp,
-            fontWeight: FontWeight.bold,
-            color: AppColor.textPrimary,
+        backgroundColor: AppColor.white,
+        elevation: 10,
+        insetPadding: EdgeInsets.symmetric(horizontal: 24.w),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 60.r,
+                height: 60.r,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFEE2E2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Iconsax.trash,
+                  color: const Color(0xFFDC2626),
+                  size: 26.r,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                'Clear Shopping Bag?',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.lato(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.bold,
+                  color: AppColor.textPrimary,
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                'Are you sure you want to remove all items from your shopping bag?',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.lato(
+                  fontSize: 13.5.sp,
+                  color: AppColor.textSecondary,
+                  height: 1.4,
+                ),
+              ),
+              SizedBox(height: 22.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Get.back(),
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        side: const BorderSide(color: Color(0xFFE2E8F0)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        backgroundColor: const Color(0xFFF8FAFC),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: GoogleFonts.lato(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Get.back();
+                        controller.clearCart();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFDC2626),
+                        elevation: 0,
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                      ),
+                      child: Text(
+                        'Clear',
+                        style: GoogleFonts.lato(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColor.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
-        content: Text(
-          'Are you sure you want to remove all items from your shopping bag?',
-          style: GoogleFonts.lato(
-            fontSize: 13.5.sp,
-            color: AppColor.textSecondary,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text(
-              'Cancel',
-              style: GoogleFonts.lato(
-                fontWeight: FontWeight.bold,
-                color: AppColor.textSecondary,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Get.back();
-              controller.clearCart();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColor.error,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-            ),
-            child: Text(
-              'Clear',
-              style: GoogleFonts.lato(
-                fontWeight: FontWeight.bold,
-                color: AppColor.white,
-              ),
-            ),
-          ),
-        ],
       ),
+      barrierDismissible: true,
     );
   }
 

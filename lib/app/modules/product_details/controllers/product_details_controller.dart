@@ -355,6 +355,38 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
     }
   }
 
+  void setQuantity(int newQty) {
+    final minQty = minPurchaseQty;
+    final cap = effectiveCap;
+
+    if (newQty < minQty) {
+      selectedQuantity.value = minQty;
+      if (minQty > 1) {
+        Get.snackbar(
+          'Minimum Purchase',
+          'Minimum purchase for this item is $minQty',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: AppColor.black87,
+          colorText: AppColor.white,
+        );
+      }
+    } else if (newQty > cap) {
+      selectedQuantity.value = cap;
+      final msg = maxPurchaseQty != null && cap >= maxPurchaseQty!
+          ? 'Maximum purchase for this item is $maxPurchaseQty'
+          : 'Only $cap units available';
+      Get.snackbar(
+        'Limit Reached',
+        msg,
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: AppColor.black87,
+        colorText: AppColor.white,
+      );
+    } else {
+      selectedQuantity.value = newQty;
+    }
+  }
+
   Future<void> checkWishlistStatus() async {
     if (!isVisible) {
       isWishlisted.value = false;

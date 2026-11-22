@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -765,6 +766,8 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
 
       final isVisible = controller.isVisible;
       final limitsText = controller.product.value?.purchaseLimitsText;
+      final qty = controller.selectedQuantity.value;
+      String currentText = '$qty';
 
       return Container(
         width: double.infinity,
@@ -834,16 +837,49 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                         ? () => controller.decrementQuantity()
                         : null,
                   ),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w),
-                    child: Text(
-                      '${controller.selectedQuantity.value}',
-                      style: GoogleFonts.lato(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.bold,
-                        color: isVisible
-                            ? AppColor.textPrimary
-                            : const Color(0xFF94A3B8),
+                  Focus(
+                    onFocusChange: (hasFocus) {
+                      if (!hasFocus) {
+                        final typed = int.tryParse(currentText);
+                        if (typed != null && typed != qty) {
+                          controller.setQuantity(typed);
+                        } else if (typed == null) {
+                          controller.setQuantity(qty);
+                        }
+                      }
+                    },
+                    child: SizedBox(
+                      width: 44.w,
+                      child: TextFormField(
+                        key: ValueKey('pdp_qty_$qty'),
+                        initialValue: '$qty',
+                        enabled: isVisible,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.lato(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.bold,
+                          color: isVisible
+                              ? AppColor.textPrimary
+                              : const Color(0xFF94A3B8),
+                        ),
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(vertical: 6),
+                          border: InputBorder.none,
+                        ),
+                        onChanged: (val) {
+                          currentText = val;
+                        },
+                        onFieldSubmitted: (val) {
+                          final typed = int.tryParse(val);
+                          if (typed != null) {
+                            controller.setQuantity(typed);
+                          }
+                        },
                       ),
                     ),
                   ),

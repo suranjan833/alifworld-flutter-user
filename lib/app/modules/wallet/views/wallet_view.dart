@@ -825,7 +825,7 @@ class WalletView extends GetView<WalletController> {
                                 child: Text(
                                   orders.isNotEmpty
                                       ? '${pp!.totalPoints} points pending posting'
-                                      : 'Posts after return window closes',
+                                      : 'Posts after return window',
                                   maxLines: 1,
                                   style: GoogleFonts.lato(
                                     fontSize: 10.5.sp,
