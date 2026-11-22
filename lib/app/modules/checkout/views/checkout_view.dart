@@ -226,6 +226,8 @@ class CheckoutView extends GetView<CheckoutController> {
                                         ),
                                         child: Text(
                                           type,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                           style: GoogleFonts.lato(
                                             fontSize: 11.5.sp,
                                             fontWeight: FontWeight.bold,
@@ -235,53 +237,19 @@ class CheckoutView extends GetView<CheckoutController> {
                                       ),
                                       if (phone.isNotEmpty) ...[
                                         SizedBox(width: 8.w),
-                                        Text(
-                                          phone,
-                                          style: GoogleFonts.lato(
-                                            fontSize: 12.sp,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColor.textSecondary,
+                                        Expanded(
+                                          child: Text(
+                                            phone,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.lato(
+                                              fontSize: 12.sp,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColor.textSecondary,
+                                            ),
                                           ),
                                         ),
                                       ],
-                                      const Spacer(),
-                                      SizedBox(width: 6.w),
-                                      InkWell(
-                                        onTap: () {
-                                          controller.openAddAddressModal(
-                                            context,
-                                            address: addr,
-                                          );
-                                        },
-                                        borderRadius:
-                                            BorderRadius.circular(6.r),
-                                        child: Padding(
-                                          padding: EdgeInsets.all(4.r),
-                                          child: Icon(
-                                            Iconsax.edit_2,
-                                            size: 16.r,
-                                            color: AppColor.primaryDark,
-                                          ),
-                                        ),
-                                      ),
-                                      SizedBox(width: 4.w),
-                                      InkWell(
-                                        onTap: () => controller
-                                            .confirmDeleteAddress(
-                                          context,
-                                          addr['id']?.toString() ?? '',
-                                        ),
-                                        borderRadius:
-                                            BorderRadius.circular(6.r),
-                                        child: Padding(
-                                          padding: EdgeInsets.all(4.r),
-                                          child: Icon(
-                                            Iconsax.trash,
-                                            size: 16.r,
-                                            color: AppColor.error,
-                                          ),
-                                        ),
-                                      ),
                                     ],
                                   ),
                                   if (name.isNotEmpty && name != 'Customer') ...[
@@ -1320,16 +1288,20 @@ class CheckoutView extends GetView<CheckoutController> {
                                       ),
                                       if (phone.isNotEmpty) ...[
                                         SizedBox(width: 8.w),
-                                        Text(
-                                          phone,
-                                          style: GoogleFonts.lato(
-                                            fontSize: 12.sp,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColor.textSecondary,
+                                        Expanded(
+                                          child: Text(
+                                            phone,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.lato(
+                                              fontSize: 12.sp,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColor.textSecondary,
+                                            ),
                                           ),
                                         ),
-                                      ],
-                                      const Spacer(),
+                                      ] else
+                                        const Spacer(),
                                       SizedBox(width: 6.w),
                                       InkWell(
                                         onTap: () {

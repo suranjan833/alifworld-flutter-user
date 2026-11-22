@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:iconsax/iconsax.dart';
 
 import '../../../data/config/app_color.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
@@ -574,27 +575,108 @@ class CheckoutController extends GetxController {
   }
 
   void confirmDeleteAddress(BuildContext context, String addressId) {
-    Get.defaultDialog(
-      title: 'Delete Address',
-      titleStyle: GoogleFonts.lato(
-        fontSize: 18.sp,
-        fontWeight: FontWeight.bold,
-        color: AppColor.textPrimary,
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24.r),
+        ),
+        backgroundColor: AppColor.white,
+        elevation: 10,
+        insetPadding: EdgeInsets.symmetric(horizontal: 24.w),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 60.r,
+                height: 60.r,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFEE2E2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Iconsax.trash,
+                  color: const Color(0xFFDC2626),
+                  size: 26.r,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                'Delete Address?',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.lato(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.bold,
+                  color: AppColor.textPrimary,
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                'Are you sure you want to remove this delivery address?',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.lato(
+                  fontSize: 13.5.sp,
+                  color: AppColor.textSecondary,
+                  height: 1.4,
+                ),
+              ),
+              SizedBox(height: 22.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Get.back(),
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        side: const BorderSide(color: Color(0xFFE2E8F0)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        backgroundColor: const Color(0xFFF8FAFC),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: GoogleFonts.lato(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Get.back();
+                        deleteAddress(addressId);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFDC2626),
+                        elevation: 0,
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                      ),
+                      child: Text(
+                        'Delete',
+                        style: GoogleFonts.lato(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColor.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
-      middleText: 'Are you sure you want to remove this delivery address?',
-      middleTextStyle: GoogleFonts.lato(
-        fontSize: 14.sp,
-        color: AppColor.textSecondary,
-      ),
-      textConfirm: 'Delete',
-      textCancel: 'Cancel',
-      confirmTextColor: AppColor.white,
-      buttonColor: AppColor.error,
-      cancelTextColor: AppColor.textPrimary,
-      onConfirm: () {
-        Get.back();
-        deleteAddress(addressId);
-      },
+      barrierDismissible: true,
     );
   }
 
@@ -671,20 +753,53 @@ class CheckoutController extends GetxController {
 
   Future<void> _startWalletPinCheckout() async {
     if (Get.context == null || isProcessingPayment.value) return;
-    await WalletPinDialog.promptPin(
+
+    Map<String, dynamic>? successOrderData;
+
+    final pin = await WalletPinDialog.promptPin(
       Get.context!,
       title: 'Wallet Payment PIN',
       subtitle: 'Enter your 6-digit wallet PIN to complete payment',
-      onConfirm: (pin) => _executePlaceOrder(walletPin: pin),
+      onConfirm: (pin) async {
+        final result = await _executePlaceOrder(
+          walletPin: pin,
+          deferNavigation: true,
+        );
+        if (result['success'] == true) {
+          successOrderData = result['data'] as Map<String, dynamic>?;
+          return const WalletPinActionResult.success();
+        }
+        return (result['pinResult'] as WalletPinActionResult?) ??
+            const WalletPinActionResult.failure(
+              errorMessage: 'Failed to place order',
+            );
+      },
     );
+
+    // If order was successfully placed and PIN sheet popped cleanly
+    if (pin != null && successOrderData != null) {
+      _processSuccessfulOrder(
+        paymentId: successOrderData!['paymentId'] as String,
+        paymentMethod: successOrderData!['paymentMethod'] as String,
+        customOrderId: successOrderData!['customOrderId'] as String?,
+        batchNumber: successOrderData!['batchNumber'] as String?,
+        paymentStatus: successOrderData!['paymentStatus'] as String?,
+      );
+    }
   }
 
-  Future<WalletPinActionResult> _executePlaceOrder({String? walletPin}) async {
+  Future<Map<String, dynamic>> _executePlaceOrder({
+    String? walletPin,
+    bool deferNavigation = false,
+  }) async {
     if (isProcessingPayment.value) {
-      return const WalletPinActionResult.failure(
-        errorCode: 'ALREADY_PROCESSING',
-        errorMessage: 'Payment is already processing',
-      );
+      return {
+        'success': false,
+        'pinResult': const WalletPinActionResult.failure(
+          errorCode: 'ALREADY_PROCESSING',
+          errorMessage: 'Payment is already processing',
+        ),
+      };
     }
 
     if (selectedAddressId == null || selectedAddressId!.isEmpty) {
@@ -695,10 +810,13 @@ class CheckoutController extends GetxController {
         backgroundColor: AppColor.error,
         colorText: AppColor.white,
       );
-      return const WalletPinActionResult.failure(
-        errorCode: 'ADDRESS_REQUIRED',
-        errorMessage: 'Please select a delivery address',
-      );
+      return {
+        'success': false,
+        'pinResult': const WalletPinActionResult.failure(
+          errorCode: 'ADDRESS_REQUIRED',
+          errorMessage: 'Please select a delivery address',
+        ),
+      };
     }
 
     isProcessingPayment.value = true;
@@ -769,15 +887,29 @@ class CheckoutController extends GetxController {
                   : 'Alif Wallet')
             : 'Cash on Delivery';
 
-        _processSuccessfulOrder(
-          paymentId: isWallet ? 'WALLET_DEBIT' : 'COD_PENDING',
-          paymentMethod: paymentLabel,
-          customOrderId: orderId,
-          batchNumber: batchNumber,
-          paymentStatus: paymentStatus,
-        );
+        final successData = <String, dynamic>{
+          'paymentId': isWallet ? 'WALLET_DEBIT' : 'COD_PENDING',
+          'paymentMethod': paymentLabel,
+          'customOrderId': orderId,
+          'batchNumber': batchNumber,
+          'paymentStatus': paymentStatus,
+        };
 
-        return const WalletPinActionResult.success();
+        if (!deferNavigation) {
+          _processSuccessfulOrder(
+            paymentId: successData['paymentId'] as String,
+            paymentMethod: successData['paymentMethod'] as String,
+            customOrderId: successData['customOrderId'] as String?,
+            batchNumber: successData['batchNumber'] as String?,
+            paymentStatus: successData['paymentStatus'] as String?,
+          );
+        }
+
+        return {
+          'success': true,
+          'data': successData,
+          'pinResult': const WalletPinActionResult.success(),
+        };
       } else {
         String errorCode = '';
         String errorMsg = 'Failed to place order. Please try again.';
@@ -794,10 +926,13 @@ class CheckoutController extends GetxController {
 
         // 1. PIN-related errors (WALLET_PIN_*)
         if (errorCode.startsWith('WALLET_PIN_')) {
-          return WalletPinActionResult.failure(
-            errorCode: errorCode,
-            errorMessage: errorMsg,
-          );
+          return {
+            'success': false,
+            'pinResult': WalletPinActionResult.failure(
+              errorCode: errorCode,
+              errorMessage: errorMsg,
+            ),
+          };
         }
 
         // 2. Cart empty (already processed)
@@ -814,10 +949,13 @@ class CheckoutController extends GetxController {
             Get.find<BagController>().clearLocalCart();
           }
           Get.offNamed(Routes.MY_ORDERS);
-          return WalletPinActionResult.failure(
-            errorCode: errorCode,
-            errorMessage: errorMsg,
-          );
+          return {
+            'success': false,
+            'pinResult': WalletPinActionResult.failure(
+              errorCode: errorCode,
+              errorMessage: errorMsg,
+            ),
+          };
         }
 
         // 3. Other non-PIN errors handled on checkout view
@@ -871,10 +1009,13 @@ class CheckoutController extends GetxController {
           if (Get.isRegistered<BagController>()) {
             await Get.find<BagController>().fetchCart(showLoading: false, force: true);
           }
-          return const WalletPinActionResult.failure(
-            errorCode: 'PRODUCT_NOT_AVAILABLE',
-            errorMessage: 'This product is not available right now.',
-          );
+          return {
+            'success': false,
+            'pinResult': const WalletPinActionResult.failure(
+              errorCode: 'PRODUCT_NOT_AVAILABLE',
+              errorMessage: 'This product is not available right now.',
+            ),
+          };
         } else if (errorCode == 'MIN_PURCHASE_QTY' ||
             errorCode == 'MAX_PURCHASE_QTY') {
           Get.snackbar(
@@ -913,10 +1054,13 @@ class CheckoutController extends GetxController {
           );
         }
 
-        return WalletPinActionResult.failure(
-          errorCode: errorCode,
-          errorMessage: errorMsg,
-        );
+        return {
+          'success': false,
+          'pinResult': WalletPinActionResult.failure(
+            errorCode: errorCode,
+            errorMessage: errorMsg,
+          ),
+        };
       }
     } catch (e) {
       isProcessingPayment.value = false;
@@ -927,10 +1071,13 @@ class CheckoutController extends GetxController {
         backgroundColor: AppColor.error,
         colorText: AppColor.white,
       );
-      return WalletPinActionResult.failure(
-        errorCode: 'NETWORK_ERROR',
-        errorMessage: 'Unable to reach server. Please check your internet connection.',
-      );
+      return {
+        'success': false,
+        'pinResult': const WalletPinActionResult.failure(
+          errorCode: 'NETWORK_ERROR',
+          errorMessage: 'Unable to reach server. Please check your internet connection.',
+        ),
+      };
     }
   }
 
