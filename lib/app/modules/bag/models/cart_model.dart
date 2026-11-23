@@ -1,7 +1,5 @@
 import '../../../data/config/functions/dio_function/app_config.dart';
 
-/// Data models for the Shopping Bag and Cart module.
-/// Represents cart line items, seller groupings, pricing breakdowns, and applied coupons.
 class CartItemModel {
   final String id;
   final String productId;

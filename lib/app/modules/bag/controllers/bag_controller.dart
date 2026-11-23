@@ -20,6 +20,15 @@ class BagController extends GetxController with SkeletonLoadingMixin {
   final hasInternetError = false.obs;
   DateTime? _lastFetchTime;
 
+  static const String _kGuestCartKey = 'GUEST_CART_ITEMS_V1';
+
+  static BagController get to {
+    if (!Get.isRegistered<BagController>()) {
+      return Get.put<BagController>(BagController(), permanent: true);
+    }
+    return Get.find<BagController>();
+  }
+
   bool get _hasAuth {
     final token = getBox.read(USER_TOKEN);
     final sessionCookie = getBox.read('SESSION_COOKIE');
@@ -30,19 +39,134 @@ class BagController extends GetxController with SkeletonLoadingMixin {
   @override
   void onInit() {
     super.onInit();
-    // Wipe any previously saved local cart data completely
-    try {
-      getBox.remove('LOCAL_CART_ITEMS_V1');
-      getBox.remove('LOCAL_CART_ITEMS');
-    } catch (_) {}
-
     if (!_hasAuth) {
       isLoading.value = false;
-      cartItems.clear();
+      _loadGuestCartFromStorage();
     } else {
+      syncGuestCartToServer();
       isLoading.value = true;
       fetchCart(showLoading: true, force: true);
     }
+  }
+
+  void _loadGuestCartFromStorage() {
+    try {
+      final raw = getBox.read(_kGuestCartKey);
+      if (raw is List && raw.isNotEmpty) {
+        final items = raw
+            .whereType<Map>()
+            .map((e) => CartItemModel.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
+        cartItems.assignAll(items);
+        cartItems.refresh();
+      }
+    } catch (_) {}
+  }
+
+  void _saveGuestCartToStorage() {
+    try {
+      final list = cartItems.map((e) => e.toJson()).toList();
+      getBox.write(_kGuestCartKey, list);
+    } catch (_) {}
+  }
+
+  /// Automatically called after user logs in to transfer local guest cart to server
+  Future<void> syncGuestCartToServer() async {
+    if (!_hasAuth) return;
+    try {
+      final raw = getBox.read(_kGuestCartKey);
+      if (raw is List && raw.isNotEmpty) {
+        final guestList = raw
+            .whereType<Map>()
+            .map((e) => CartItemModel.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
+
+        for (final item in guestList) {
+          final vId = item.variantId;
+          if (vId != null && vId.isNotEmpty) {
+            try {
+              await dioPost(
+                endUrl: 'cart',
+                data: {
+                  'variantId': vId,
+                  'qty': item.quantity,
+                },
+                isJson: true,
+              );
+            } catch (_) {}
+          }
+        }
+        getBox.remove(_kGuestCartKey);
+      }
+      await fetchCart(showLoading: false, force: true);
+    } catch (_) {}
+  }
+
+  /// Instant millisecond mutation of cart in memory
+  CartItemModel addOptimisticItem(
+    Map<String, dynamic> item, {
+    int quantity = 1,
+    String? resolvedVariantId,
+  }) {
+    final vId = resolvedVariantId ?? item['variantId']?.toString();
+    final pId = item['productId']?.toString() ?? item['id']?.toString() ?? '';
+
+    final existingIdx = cartItems.indexWhere((c) =>
+        (vId != null && vId.isNotEmpty && c.variantId == vId) ||
+        (c.productId == pId && (vId == null || vId.isEmpty)));
+
+    if (existingIdx != -1) {
+      final existing = cartItems[existingIdx];
+      existing.quantity += quantity;
+      cartItems.refresh();
+      if (!_hasAuth) _saveGuestCartToStorage();
+      return existing;
+    } else {
+      final double price = item['price'] is num
+          ? (item['price'] as num).toDouble()
+          : (double.tryParse(item['price']?.toString() ?? '0') ?? 0.0);
+      final newItem = CartItemModel(
+        id: 'opt_${DateTime.now().millisecondsSinceEpoch}',
+        productId: pId,
+        variantId: vId,
+        variantLabel: item['variantLabel']?.toString(),
+        title: item['title']?.toString() ?? item['name']?.toString() ?? 'Product',
+        brand: item['brand']?.toString() ?? 'Alif',
+        price: price,
+        quantity: quantity,
+        image: item['image']?.toString() ?? '',
+        minPurchaseQty: item['minPurchaseQty'] is num
+            ? (item['minPurchaseQty'] as num).toInt()
+            : null,
+        maxPurchaseQty: item['maxPurchaseQty'] is num
+            ? (item['maxPurchaseQty'] as num).toInt()
+            : null,
+      );
+      cartItems.add(newItem);
+      cartItems.refresh();
+      if (!_hasAuth) _saveGuestCartToStorage();
+      return newItem;
+    }
+  }
+
+  /// Fire-and-forget background server sync without blocking UI
+  void syncItemToServerBackground(String variantId, int quantity) {
+    if (!_hasAuth) return;
+    dioPost(
+      endUrl: 'cart',
+      data: {
+        'variantId': variantId,
+        'qty': quantity,
+      },
+      isJson: true,
+    ).then((response) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        dynamic rawData = response.data;
+        if (rawData is Map && rawData.containsKey('data')) {
+          _updateCartFromData(rawData['data']);
+        }
+      }
+    }).catchError((_) {});
   }
 
   void _updateCartFromData(dynamic rawData) {
@@ -59,7 +183,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
   Future<void> fetchCart({bool showLoading = true, bool force = false}) async {
     if (!_hasAuth) {
       isLoading.value = false;
-      cartItems.clear();
+      _loadGuestCartFromStorage();
       hasInternetError.value = false;
       return;
     }
@@ -205,6 +329,11 @@ class BagController extends GetxController with SkeletonLoadingMixin {
     item.quantity = clampedQty;
     cartItems.refresh();
 
+    if (!_hasAuth) {
+      _saveGuestCartToStorage();
+      return;
+    }
+
     if (_hasAuth) {
       try {
         final res = await dioPatch(
@@ -301,8 +430,11 @@ class BagController extends GetxController with SkeletonLoadingMixin {
   Future<void> removeItem(int index) async {
     if (index < 0 || index >= cartItems.length) return;
     final removed = cartItems.removeAt(index);
+    cartItems.refresh();
 
-    if (_hasAuth) {
+    if (!_hasAuth) {
+      _saveGuestCartToStorage();
+    } else {
       try {
         final res = await dioDelete('cart/items/${removed.id}');
         if (res.statusCode == 200 && res.data != null) {
@@ -331,11 +463,6 @@ class BagController extends GetxController with SkeletonLoadingMixin {
       showNoInternetDialog(
         onRetry: () => addItemToBag(item, quantity: quantity),
       );
-      return false;
-    }
-
-    if (!_hasAuth) {
-      Get.toNamed(Routes.LOGIN);
       return false;
     }
 
@@ -397,6 +524,20 @@ class BagController extends GetxController with SkeletonLoadingMixin {
         colorText: AppColor.white,
       );
       return false;
+    }
+
+    if (!_hasAuth) {
+      addOptimisticItem(item, quantity: qtyToAdd, resolvedVariantId: variantId);
+      _saveGuestCartToStorage();
+      Get.snackbar(
+        'Added to Bag',
+        '${item['title'] ?? item['name'] ?? 'Item'} added to your bag',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: const Color(0xFF16A34A),
+        colorText: AppColor.white,
+        duration: const Duration(seconds: 2),
+      );
+      return true;
     }
 
     isMutating.value = true;
@@ -491,6 +632,22 @@ class BagController extends GetxController with SkeletonLoadingMixin {
     }
 
     cartItems.clear();
+    cartItems.refresh();
+    update();
+
+    if (!_hasAuth) {
+      getBox.remove(_kGuestCartKey);
+      Get.snackbar(
+        'Bag Cleared',
+        'All items removed from your shopping bag',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: AppColor.textPrimary,
+        colorText: AppColor.white,
+        duration: const Duration(seconds: 2),
+      );
+      return;
+    }
+
     if (_hasAuth) {
       try {
         final res = await dioDelete('cart');
@@ -518,6 +675,13 @@ class BagController extends GetxController with SkeletonLoadingMixin {
     }
 
     if (!_hasAuth) {
+      Get.snackbar(
+        'Login Required',
+        'Please login to proceed with checkout',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: AppColor.primary,
+        colorText: AppColor.white,
+      );
       Get.toNamed(Routes.LOGIN);
       return;
     }

@@ -568,23 +568,10 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
       return;
     }
 
-    final token = getBox.read(USER_TOKEN);
-    final sessionCookie = getBox.read('SESSION_COOKIE');
-    final bool hasAuth = (token != null && token.toString().trim().isNotEmpty) ||
-        (sessionCookie != null && sessionCookie.toString().trim().isNotEmpty);
-
-    if (!hasAuth) {
-      Get.toNamed(Routes.LOGIN);
-      return;
-    }
-
     final p = product.value;
     if (p == null) return;
 
-    if (!Get.isRegistered<BagController>()) {
-      Get.put(BagController());
-    }
-    final bagCtrl = Get.find<BagController>();
+    final bagCtrl = BagController.to;
 
     final sv = selectedVariant;
     final fallbackVariantId =
@@ -608,7 +595,6 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
         ? minPurchaseQty
         : selectedQuantity.value;
     await bagCtrl.addItemToBag(itemPayload, quantity: effectiveQty);
-    await bagCtrl.fetchCart(showLoading: false, force: true);
     bagCtrl.cartItems.refresh();
   }
 
@@ -626,23 +612,10 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
       return;
     }
 
-    final token = getBox.read(USER_TOKEN);
-    final sessionCookie = getBox.read('SESSION_COOKIE');
-    final bool hasAuth = (token != null && token.toString().trim().isNotEmpty) ||
-        (sessionCookie != null && sessionCookie.toString().trim().isNotEmpty);
-
-    if (!hasAuth) {
-      Get.toNamed(Routes.LOGIN);
-      return;
-    }
-
     final p = product.value;
     if (p == null) return;
 
-    if (!Get.isRegistered<BagController>()) {
-      Get.put(BagController());
-    }
-    final bagCtrl = Get.find<BagController>();
+    final bagCtrl = BagController.to;
 
     final sv = selectedVariant;
     final fallbackVariantId =
@@ -666,19 +639,20 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
         ? minPurchaseQty
         : selectedQuantity.value;
 
-    isBuyingNow.value = true;
-    try {
-      final success = await bagCtrl.addItemToBag(
-        itemPayload,
-        quantity: effectiveQty,
-      );
-      if (success) {
-        await bagCtrl.fetchCart(showLoading: false, force: true);
-        bagCtrl.cartItems.refresh();
-        Get.toNamed(Routes.BAG);
-      }
-    } finally {
-      isBuyingNow.value = false;
+    final token = getBox.read(USER_TOKEN);
+    final sessionCookie = getBox.read('SESSION_COOKIE');
+    final bool hasAuth = (token != null && token.toString().trim().isNotEmpty) ||
+        (sessionCookie != null && sessionCookie.toString().trim().isNotEmpty);
+
+    // 1. Optimistic millisecond mutation in memory (< 1ms)
+    bagCtrl.addOptimisticItem(itemPayload, quantity: effectiveQty, resolvedVariantId: fallbackVariantId);
+
+    // 2. Instant millisecond navigation to Bag screen
+    Get.toNamed(Routes.BAG);
+
+    // 3. Background server synchronization without blocking UI
+    if (hasAuth && fallbackVariantId != null && fallbackVariantId.isNotEmpty) {
+      bagCtrl.syncItemToServerBackground(fallbackVariantId, effectiveQty);
     }
   }
 

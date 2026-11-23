@@ -174,7 +174,7 @@ class AppUpdateService extends GetxService with WidgetsBindingObserver {
   }
 }
 
-class _ForceUpdateDialogContent extends StatelessWidget {
+class _ForceUpdateDialogContent extends GetView<AppUpdateService> {
   final AppUpdateInfo? info;
   final VoidCallback onUpdatePressed;
   final bool isPreview;

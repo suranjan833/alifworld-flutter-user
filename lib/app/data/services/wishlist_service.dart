@@ -4,7 +4,6 @@ import '../config/functions/dio_function/app_config.dart';
 import '../config/functions/dio_function/my_dio.dart';
 import '../../routes/app_pages.dart';
 
-/// Centralized service for Wishlist status and badge counter per alifworld-flutter-wishlist-status.md
 class WishlistService extends GetxService {
   static WishlistService get to => Get.find<WishlistService>();
 

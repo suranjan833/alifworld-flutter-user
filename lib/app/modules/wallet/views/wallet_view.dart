@@ -2161,7 +2161,7 @@ class WalletView extends GetView<WalletController> {
 
 /// 3D stylized purple wallet illustration with gold ৳ coin and sparkles
 /// Matching the exact visual aesthetic from the reference design.
-class _Wallet3DIllustration extends StatelessWidget {
+class _Wallet3DIllustration extends GetView<WalletController> {
   const _Wallet3DIllustration();
 
   @override

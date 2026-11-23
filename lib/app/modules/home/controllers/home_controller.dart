@@ -5,6 +5,7 @@ import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/mixins/skeleton_loading_mixin.dart';
 import '../../../data/services/wishlist_service.dart';
+import '../../../data/widgets/app_cached_image.dart';
 import '../../bag/controllers/bag_controller.dart';
 import '../models/home_category_model.dart';
 import '../models/showcase_model.dart';
@@ -290,6 +291,32 @@ class HomeController extends GetxController with SkeletonLoadingMixin {
     }
     categories.refresh();
     syncWishlistToProducts();
+
+    // Silently pre-cache top banners and images into disk & RAM
+    _precacheShowcaseImages(model);
+  }
+
+  void _precacheShowcaseImages(ShowcaseModel model) {
+    try {
+      final context = Get.context;
+      if (context == null) return;
+
+      if (model.fullHeaderBgMobileUrl.isNotEmpty) {
+        AppCachedImage.precache(context, model.fullHeaderBgMobileUrl);
+      }
+
+      for (final mb in model.miniBanners.take(4)) {
+        if (mb.fullImageUrl.isNotEmpty) {
+          AppCachedImage.precache(context, mb.fullImageUrl);
+        }
+      }
+
+      for (final b in model.brands.take(6)) {
+        if (b.fullLogoUrl.isNotEmpty) {
+          AppCachedImage.precache(context, b.fullLogoUrl);
+        }
+      }
+    } catch (_) {}
   }
 
   /// 2. GET /catalog/showcase or GET /catalog/showcase?category=`<slug>`
@@ -341,7 +368,6 @@ class HomeController extends GetxController with SkeletonLoadingMixin {
     }
   }
 
-  /// 3. GET /catalog/brands
   Future<void> fetchBrands() async {
     try {
       final response = await dioGet('catalog/brands');
@@ -350,24 +376,15 @@ class HomeController extends GetxController with SkeletonLoadingMixin {
         if (rawData is Map<String, dynamic> && rawData.containsKey('data')) {
           rawData = rawData['data'];
         }
-        List? brandList;
-        if (rawData is Map<String, dynamic> && rawData.containsKey('brands')) {
-          brandList = rawData['brands'] as List?;
-        } else if (rawData is List) {
-          brandList = rawData;
-        }
-
+        final brandList = (rawData is Map && rawData['brands'] is List)
+            ? rawData['brands'] as List
+            : (rawData is List ? rawData : null);
         if (brandList != null) {
           for (var item in brandList) {
             if (item is Map<String, dynamic>) {
               final b = BrandModel.fromJson(item);
-              if (b.name.isNotEmpty) {
-                final logoUrl = resolveImageUrl(b.logoUrl);
-                final alreadyHas =
-                    topBrands.any((element) => element['name'] == b.name);
-                if (!alreadyHas) {
-                  topBrands.add({'name': b.name, 'logo': logoUrl});
-                }
+              if (b.name.isNotEmpty && !topBrands.any((e) => e['name'] == b.name)) {
+                topBrands.add({'name': b.name, 'logo': resolveImageUrl(b.logoUrl)});
               }
             }
           }
@@ -377,9 +394,7 @@ class HomeController extends GetxController with SkeletonLoadingMixin {
   }
 
   @override
-  Future<void> refreshData() async {
-    await loadHomeData(forceRefresh: true);
-  }
+  Future<void> refreshData() async => loadHomeData(forceRefresh: true);
 
   final searchHints = const [
     'Search "Sofa Sets"',
@@ -387,8 +402,6 @@ class HomeController extends GetxController with SkeletonLoadingMixin {
     'Search "Headphones"',
     'Search "Gaming Mouse"',
     'Search "Air Fryers"',
-    'Search "Wireless Earbuds"',
-    'Search "Dining Chairs"',
   ];
 
   final RxList<HomeCategoryModel> categories = <HomeCategoryModel>[
@@ -412,22 +425,25 @@ class HomeController extends GetxController with SkeletonLoadingMixin {
   ].obs;
 
   final RxList<Map<String, String>> topBrands = <Map<String, String>>[].obs;
+  HomeCategoryModel get currentCategory => categories[selectedCategoryIndex.value];
 
-  HomeCategoryModel get currentCategory =>
-      categories[selectedCategoryIndex.value];
-
-  void changeTab(int index) {
-    currentIndex.value = index;
-  }
+  void changeTab(int index) => currentIndex.value = index;
 
   void selectCategory(int index) {
-    if (index < 0 || index >= categories.length) return;
-    if (selectedCategoryIndex.value == index) return;
+    if (index < 0 || index >= categories.length || selectedCategoryIndex.value == index) return;
     selectedCategoryIndex.value = index;
     final cat = categories[index];
     final slug = (cat.slug == 'all' || cat.slug.isEmpty) ? '' : cat.slug;
     currentBannerIndex.value = 0;
     fetchShowcase(slug);
+  }
+
+  String _extractVariantId(Map prod) {
+    if (prod['variants'] is List && (prod['variants'] as List).isNotEmpty) {
+      final fv = (prod['variants'] as List).first;
+      if (fv is Map && fv['id'] != null) return fv['id'].toString();
+    }
+    return prod['variantId']?.toString() ?? '';
   }
 
   Future<void> syncWishlistToProducts() async {
@@ -438,16 +454,8 @@ class HomeController extends GetxController with SkeletonLoadingMixin {
     final visibleVariantIds = <String>[];
     for (var cat in categories) {
       for (var prod in cat.products) {
-        String vId = prod['variantId']?.toString() ?? '';
-        if (vId.isEmpty &&
-            prod['variants'] is List &&
-            (prod['variants'] as List).isNotEmpty) {
-          final fv = (prod['variants'] as List).first;
-          if (fv is Map && fv['id'] != null) vId = fv['id'].toString();
-        }
-        if (vId.isNotEmpty) {
-          visibleVariantIds.add(vId);
-        }
+        final vId = _extractVariantId(prod);
+        if (vId.isNotEmpty) visibleVariantIds.add(vId);
       }
     }
 
@@ -455,13 +463,7 @@ class HomeController extends GetxController with SkeletonLoadingMixin {
       await wishlistSvc.checkStatus(visibleVariantIds);
       for (var cat in categories) {
         for (var prod in cat.products) {
-          String vId = prod['variantId']?.toString() ?? '';
-          if (vId.isEmpty &&
-              prod['variants'] is List &&
-              (prod['variants'] as List).isNotEmpty) {
-            final fv = (prod['variants'] as List).first;
-            if (fv is Map && fv['id'] != null) vId = fv['id'].toString();
-          }
+          final vId = _extractVariantId(prod);
           if (vId.isNotEmpty) {
             prod['isFavorite'] = wishlistSvc.isWishlisted(vId);
           }
@@ -476,22 +478,10 @@ class HomeController extends GetxController with SkeletonLoadingMixin {
     if (productIndex < 0 || productIndex >= products.length) return;
 
     final prod = products[productIndex];
-    String vId = '';
-    if (prod['variants'] is List && (prod['variants'] as List).isNotEmpty) {
-      final fv = (prod['variants'] as List).first;
-      if (fv is Map && fv['id'] != null) {
-        vId = fv['id'].toString();
-      }
-    }
-    if (vId.isEmpty) {
-      vId = prod['variantId']?.toString() ?? '';
-    }
+    final vId = _extractVariantId(prod);
+    if (vId.isEmpty || !Get.isRegistered<WishlistService>()) return;
 
-    if (vId.isEmpty) return;
-
-    if (!Get.isRegistered<WishlistService>()) return;
-    final wishlistSvc = WishlistService.to;
-    final newStatus = await wishlistSvc.toggleWishlist(vId);
+    final newStatus = await WishlistService.to.toggleWishlist(vId);
     prod['isFavorite'] = newStatus;
     selectedCategoryIndex.refresh();
   }

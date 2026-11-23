@@ -7,6 +7,7 @@ import 'package:iconsax/iconsax.dart';
 
 import '../../../data/config/app_color.dart';
 import '../../../data/services/recently_viewed_service.dart';
+import '../../../data/widgets/app_cached_image.dart';
 import '../../../data/widgets/points_badge.dart';
 import '../../../routes/app_pages.dart';
 import '../../bag/controllers/bag_controller.dart';
@@ -287,15 +288,14 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                         return Padding(
                           padding: EdgeInsets.all(12.r),
                           child: Center(
-                            child: Image.network(
-                              imgUrl,
+                            child: AppCachedImage(
+                              imageUrl: imgUrl,
                               fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Icon(
-                                    Iconsax.image,
-                                    size: 60.r,
-                                    color: AppColor.textSecondary,
-                                  ),
+                              errorWidget: Icon(
+                                Iconsax.image,
+                                size: 60.r,
+                                color: AppColor.textSecondary,
+                              ),
                             ),
                           ),
                         );
@@ -1216,11 +1216,10 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10.r),
                   child: item.imageUrl.isNotEmpty
-                      ? Image.network(
-                          item.imageUrl,
+                      ? AppCachedImage(
+                          imageUrl: item.imageUrl,
                           fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(Iconsax.image),
+                          errorWidget: const Icon(Iconsax.image),
                         )
                       : const Icon(Iconsax.image),
                 ),

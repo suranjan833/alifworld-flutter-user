@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../../../data/config/app_color.dart';
+import '../../../data/widgets/app_cached_image.dart';
 import '../../../data/widgets/no_internet_dialog.dart';
 import '../../../data/widgets/skeleton_box.dart';
 import '../../../routes/app_pages.dart';
@@ -453,29 +454,30 @@ class BagView extends GetView<BagController> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8.r),
                 child: item.image.isNotEmpty
-                    ? Image.network(
-                        item.image,
+                    ? AppCachedImage(
+                        imageUrl: item.image,
                         fit: BoxFit.contain,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return const Center(
-                            child: SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) => Icon(
-                          Iconsax.image,
-                          size: 28.r,
-                          color: AppColor.textSecondary,
+                        placeholder: SkeletonShimmer(
+                          child: Container(
+                            width: 76.r,
+                            height: 76.r,
+                            color: const Color(0xFFECEFF3),
+                          ),
+                        ),
+                        errorWidget: SkeletonShimmer(
+                          child: Container(
+                            width: 76.r,
+                            height: 76.r,
+                            color: const Color(0xFFECEFF3),
+                          ),
                         ),
                       )
-                    : Icon(
-                        Iconsax.image,
-                        size: 28.r,
-                        color: AppColor.textSecondary,
+                    : SkeletonShimmer(
+                        child: Container(
+                          width: 76.r,
+                          height: 76.r,
+                          color: const Color(0xFFECEFF3),
+                        ),
                       ),
               ),
             ),

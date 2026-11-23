@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../config/app_color.dart';
 import '../config/functions/dio_function/app_config.dart';
+import '../services/app_image_cache_service.dart';
+import 'app_cached_image.dart';
 
-class BrandLogoWidget extends StatelessWidget {
+class BrandLogoWidget extends GetView<AppImageCacheService> {
   final String logoUrl;
   final String brandName;
   final double? width;
@@ -49,40 +52,19 @@ class BrandLogoWidget extends StatelessWidget {
           width: width,
           height: height,
           fit: fit,
-          placeholderBuilder: (context) => Center(
-            child: SizedBox(
-              width: 18.r,
-              height: 18.r,
-              child: CircularProgressIndicator(
-                strokeWidth: 2.w,
-                color: AppColor.primary,
-              ),
-            ),
-          ),
+          placeholderBuilder: (context) => _buildFallback(),
           errorBuilder: (context, error, stackTrace) => _buildFallback(),
         ),
       );
     }
 
-    return Image.network(
-      url,
+    return AppCachedImage(
+      imageUrl: url,
       width: width,
       height: height,
       fit: fit,
-      errorBuilder: (context, error, stackTrace) => _buildFallback(),
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) return child;
-        return Center(
-          child: SizedBox(
-            width: 18.r,
-            height: 18.r,
-            child: CircularProgressIndicator(
-              strokeWidth: 2.w,
-              color: AppColor.primary,
-            ),
-          ),
-        );
-      },
+      placeholder: _buildFallback(),
+      errorWidget: _buildFallback(),
     );
   }
 

@@ -3,11 +3,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
-/// Mixin that gives any GetxController a one-line simulated initial load.
-///
-/// While [isLoading] is true, views show their shimmer skeleton. Swap the
-/// body of [fetchData] for a real API call later — the skeleton flow and
-/// [refreshData] keep working unchanged.
 mixin SkeletonLoadingMixin on GetxController {
   /// Whether the initial load has finished. Starts true so the shimmer
   /// shows from the very first frame.

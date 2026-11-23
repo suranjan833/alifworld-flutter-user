@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'app/data/config/app_color.dart';
 import 'app/data/config/functions/dio_function/app_config.dart';
+import 'app/data/services/app_image_cache_service.dart';
 import 'app/data/services/app_translations.dart';
 import 'app/data/services/app_update_service.dart';
 import 'app/data/services/deep_link_service.dart';
@@ -52,6 +53,14 @@ void main() async {
 
   initAppConfig();
   await GetStorage.init();
+
+  // Configure high-performance in-memory image cache (200MB / 1000 images)
+  PaintingBinding.instance.imageCache.maximumSize = 1000;
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 200 * 1024 * 1024;
+
+  final imageCacheService = Get.put(AppImageCacheService(), permanent: true);
+  await imageCacheService.initStorage();
+
   Get.put(RewardsService(), permanent: true);
   Get.put(RecentlyViewedService(), permanent: true);
   Get.put(WalletPinService(), permanent: true);

@@ -2,10 +2,12 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 
 import '../../../data/config/app_color.dart';
+import '../controllers/onboarding_controller.dart';
 
-class TrackOrdersIllustration extends StatelessWidget {
+class TrackOrdersIllustration extends GetView<OnboardingController> {
   const TrackOrdersIllustration({super.key});
 
   @override

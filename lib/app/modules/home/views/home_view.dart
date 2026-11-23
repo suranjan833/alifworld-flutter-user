@@ -10,6 +10,7 @@ import '../../../data/config/app_image.dart';
 import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/services/app_translations.dart';
 import '../../../data/services/wishlist_service.dart';
+import '../../../data/widgets/app_cached_image.dart';
 import '../../../data/widgets/brand_logo_widget.dart';
 import '../../../data/widgets/points_badge.dart';
 import '../../../data/widgets/skeleton_box.dart';
@@ -505,34 +506,31 @@ class HomeView extends GetView<HomeController> {
                     children: [
                       // Product Image
                       Center(
-                        child: Image.network(
-                          product['image'] as String,
+                        child: AppCachedImage(
+                          imageUrl: product['image']?.toString(),
                           height: 90.h,
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return SkeletonShimmer(
-                              child: Container(
-                                height: 90.h,
-                                width: 90.w,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFECEFF3),
-                                  borderRadius: BorderRadius.circular(8.r),
-                                ),
+                          placeholder: SkeletonShimmer(
+                            child: Container(
+                              height: 90.h,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFECEFF3),
+                                borderRadius: BorderRadius.circular(8.r),
                               ),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) =>
-                              Container(
-                                height: 90.h,
-                                color: AppColor.grey.shade100,
-                                child: Icon(
-                                  Iconsax.image,
-                                  size: 32.r,
-                                  color: AppColor.textSecondary,
-                                ),
+                            ),
+                          ),
+                          errorWidget: SkeletonShimmer(
+                            child: Container(
+                              height: 90.h,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFECEFF3),
+                                borderRadius: BorderRadius.circular(8.r),
                               ),
+                            ),
+                          ),
                         ),
                       ),
                       // Favorite Button top right
@@ -944,6 +942,17 @@ class HomeView extends GetView<HomeController> {
         headerUrl = resolveImageUrl(headerUrl);
       }
 
+      final skeletonBanner = SkeletonShimmer(
+        child: Container(
+          width: double.infinity,
+          height: 220.h,
+          decoration: BoxDecoration(
+            color: const Color(0xFFECEFF3),
+            borderRadius: BorderRadius.circular(20.r),
+          ),
+        ),
+      );
+
       return Padding(
         padding: EdgeInsets.symmetric(horizontal: 16.w),
         child: GestureDetector(
@@ -972,32 +981,16 @@ class HomeView extends GetView<HomeController> {
                 decoration: BoxDecoration(
                   color: controller.currentCategory.bgColor,
                 ),
-                child: Image.network(
-                  headerUrl,
-                  width: double.infinity,
-                  height: 220.h,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return SkeletonShimmer(
-                      child: Container(
+                child: headerUrl.isNotEmpty
+                    ? AppCachedImage(
+                        imageUrl: headerUrl,
                         width: double.infinity,
                         height: 220.h,
-                        color: const Color(0xFFECEFF3),
-                      ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    color: const Color(0xFFF1F5F9),
-                    child: Center(
-                      child: Icon(
-                        Iconsax.image,
-                        size: 40.r,
-                        color: AppColor.textSecondary,
-                      ),
-                    ),
-                  ),
-                ),
+                        fit: BoxFit.cover,
+                        placeholder: skeletonBanner,
+                        errorWidget: skeletonBanner,
+                      )
+                    : skeletonBanner,
               ),
             ),
           ),
@@ -1104,13 +1097,10 @@ class HomeView extends GetView<HomeController> {
             isSelected ? activeColor : idleColor,
             BlendMode.srcIn,
           ),
-          placeholderBuilder: (context) => SizedBox(
-            width: 14.r,
-            height: 14.r,
-            child: CircularProgressIndicator(
-              strokeWidth: 1.5,
-              color: isSelected ? activeColor : idleColor,
-            ),
+          placeholderBuilder: (context) => Icon(
+            _getCategoryFallbackIcon(category.icon),
+            size: 22.r,
+            color: isSelected ? activeColor : idleColor,
           ),
           errorBuilder: (context, error, stackTrace) => Icon(
             _getCategoryFallbackIcon(category.icon),
@@ -1119,12 +1109,17 @@ class HomeView extends GetView<HomeController> {
           ),
         );
       } else {
-        return Image.network(
-          iconUrl,
+        return AppCachedImage(
+          imageUrl: iconUrl,
           width: 24.r,
           height: 24.r,
           fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) => Icon(
+          placeholder: Icon(
+            _getCategoryFallbackIcon(category.icon),
+            size: 22.r,
+            color: isSelected ? activeColor : idleColor,
+          ),
+          errorWidget: Icon(
             _getCategoryFallbackIcon(category.icon),
             size: 22.r,
             color: isSelected ? activeColor : idleColor,

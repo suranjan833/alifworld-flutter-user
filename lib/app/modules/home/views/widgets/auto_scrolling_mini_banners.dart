@@ -1,14 +1,15 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:iconsax/iconsax.dart';
 
 import '../../../../data/config/app_color.dart';
+import '../../../../data/widgets/app_cached_image.dart';
+import '../../../../data/widgets/skeleton_box.dart';
 import '../../../../routes/app_pages.dart';
+import '../../controllers/mini_banners_controller.dart';
 import '../../models/showcase_model.dart';
 
-class AutoScrollingMiniBanners extends StatefulWidget {
+class AutoScrollingMiniBanners extends GetView<MiniBannersController> {
   final List<ShowcaseMiniBannerModel> miniBanners;
 
   const AutoScrollingMiniBanners({
@@ -16,149 +17,36 @@ class AutoScrollingMiniBanners extends StatefulWidget {
     required this.miniBanners,
   });
 
-  @override
-  State<AutoScrollingMiniBanners> createState() =>
-      _AutoScrollingMiniBannersState();
-}
-
-class _AutoScrollingMiniBannersState extends State<AutoScrollingMiniBanners> {
-  late PageController _pageController;
-  Timer? _autoScrollTimer;
-  int _currentIndex = 0;
-  bool _isUserInteracting = false;
-
-  // Fallback banners when API miniBanners is empty
-  static final List<ShowcaseMiniBannerModel> _fallbackBanners = [
-    ShowcaseMiniBannerModel(
-      id: 'fb-1',
-      name: 'Audio & Headphones',
-      slug: 'audio-headphones',
-      imageUrl: '/minibanners/audio-minibanner.png',
-    ),
-    ShowcaseMiniBannerModel(
-      id: 'fb-2',
-      name: 'Footwear',
-      slug: 'footwear',
-      imageUrl: '/minibanners/footwear-minibanner.png',
-    ),
-    ShowcaseMiniBannerModel(
-      id: 'fb-3',
-      name: 'Furniture',
-      slug: 'furniture',
-      imageUrl: '/minibanners/furniture-minibanner.png',
-    ),
-    ShowcaseMiniBannerModel(
-      id: 'fb-4',
-      name: 'Laptops & Computers',
-      slug: 'laptops-computers',
-      imageUrl: '/minibanners/laptop-minibanner.png',
-    ),
-    ShowcaseMiniBannerModel(
-      id: 'fb-5',
-      name: "Men's Fashion",
-      slug: 'mens-fashion',
-      imageUrl: '/minibanners/mens-fashion-minibanner.png',
-    ),
-    ShowcaseMiniBannerModel(
-      id: 'fb-6',
-      name: 'Mobile Phones',
-      slug: 'mobile-phones',
-      imageUrl: '/minibanners/mobile-minibanner.png',
-    ),
-    ShowcaseMiniBannerModel(
-      id: 'fb-7',
-      name: 'Skincare',
-      slug: 'skincare',
-      imageUrl: '/minibanners/skincare-minibanner.png',
-    ),
-    ShowcaseMiniBannerModel(
-      id: 'fb-8',
-      name: 'TVs & Home Theater',
-      slug: 'tvs-home-theater',
-      imageUrl: '/minibanners/tv-minibanner.png',
-    ),
-  ];
-
   List<ShowcaseMiniBannerModel> get _banners =>
-      widget.miniBanners.isNotEmpty ? widget.miniBanners : _fallbackBanners;
-
-  @override
-  void initState() {
-    super.initState();
-    final count = _banners.length;
-    // Set initial page in the middle of a large multiple for infinite circular scrolling
-    final initialPage = count > 1 ? count * 500 : 0;
-    _currentIndex = 0;
-    _pageController = PageController(
-      initialPage: initialPage,
-      viewportFraction: 0.84,
-    );
-    _startAutoScroll();
-  }
-
-  @override
-  void didUpdateWidget(covariant AutoScrollingMiniBanners oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.miniBanners.length != widget.miniBanners.length) {
-      _startAutoScroll();
-    }
-  }
-
-  void _startAutoScroll() {
-    _autoScrollTimer?.cancel();
-    if (_banners.length <= 1) return;
-
-    _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 3500), (_) {
-      if (_isUserInteracting || !mounted) return;
-      if (_pageController.hasClients) {
-        final nextPage = _pageController.page!.round() + 1;
-        _pageController.animateToPage(
-          nextPage,
-          duration: const Duration(milliseconds: 650),
-          curve: Curves.easeInOutCubic,
-        );
-      }
-    });
-  }
-
-  void _onUserTouchDown() {
-    _isUserInteracting = true;
-    _autoScrollTimer?.cancel();
-  }
-
-  void _onUserTouchUp() {
-    _isUserInteracting = false;
-    _startAutoScroll();
-  }
-
-  @override
-  void dispose() {
-    _autoScrollTimer?.cancel();
-    _pageController.dispose();
-    super.dispose();
-  }
+      miniBanners.isNotEmpty ? miniBanners : MiniBannersController.fallbackBanners;
 
   @override
   Widget build(BuildContext context) {
+    if (!Get.isRegistered<MiniBannersController>()) {
+      Get.put(MiniBannersController());
+    }
+
     final banners = _banners;
     if (banners.isEmpty) return const SizedBox.shrink();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.updateBannerCount(banners.length);
+    });
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Listener(
-          onPointerDown: (_) => _onUserTouchDown(),
-          onPointerUp: (_) => _onUserTouchUp(),
-          onPointerCancel: (_) => _onUserTouchUp(),
+          onPointerDown: (_) => controller.onUserTouchDown(),
+          onPointerUp: (_) => controller.onUserTouchUp(),
+          onPointerCancel: (_) => controller.onUserTouchUp(),
           child: SizedBox(
             height: 185.h,
             child: PageView.builder(
-              controller: _pageController,
+              controller: controller.pageController,
               physics: const BouncingScrollPhysics(),
               onPageChanged: (pageIndex) {
-                setState(() {
-                  _currentIndex = pageIndex % banners.length;
-                });
+                controller.onPageChanged(pageIndex, banners.length);
               },
               itemBuilder: (context, index) {
                 final mb = banners[index % banners.length];
@@ -169,23 +57,25 @@ class _AutoScrollingMiniBannersState extends State<AutoScrollingMiniBanners> {
         ),
         if (banners.length > 1) ...[
           SizedBox(height: 10.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(banners.length, (dotIndex) {
-              final isSelected = dotIndex == _currentIndex;
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                margin: EdgeInsets.symmetric(horizontal: 2.5.w),
-                width: isSelected ? 16.w : 5.w,
-                height: 5.h,
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppColor.primary
-                      : const Color(0xFFCBD5E1),
-                  borderRadius: BorderRadius.circular(3.r),
-                ),
-              );
-            }),
+          Obx(
+            () => Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(banners.length, (dotIndex) {
+                final isSelected = dotIndex == controller.currentIndex.value;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  margin: EdgeInsets.symmetric(horizontal: 2.5.w),
+                  width: isSelected ? 16.w : 5.w,
+                  height: 5.h,
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColor.primary
+                        : const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(3.r),
+                  ),
+                );
+              }),
+            ),
           ),
         ],
       ],
@@ -193,6 +83,15 @@ class _AutoScrollingMiniBannersState extends State<AutoScrollingMiniBanners> {
   }
 
   Widget _buildBannerItem(ShowcaseMiniBannerModel mb) {
+    final skeleton = SkeletonShimmer(
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFECEFF3),
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+      ),
+    );
+
     return GestureDetector(
       onTap: () {
         Get.toNamed(
@@ -221,34 +120,16 @@ class _AutoScrollingMiniBannersState extends State<AutoScrollingMiniBanners> {
           child: AspectRatio(
             aspectRatio: 1.46, // matches 1515 x 1038 minibanner aspect ratio
             child: mb.fullImageUrl.isNotEmpty
-                ? Image.network(
-                    mb.fullImageUrl,
+                ? AppCachedImage(
+                    imageUrl: mb.fullImageUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: const Color(0xFFF1F5F9),
-                      child: Center(
-                        child: Icon(
-                          Iconsax.image,
-                          size: 40.r,
-                          color: AppColor.textSecondary,
-                        ),
-                      ),
-                    ),
+                    placeholder: skeleton,
+                    errorWidget: skeleton,
                   )
-                : Container(
-                    color: const Color(0xFFF1F5F9),
-                    child: Center(
-                      child: Icon(
-                        Iconsax.image,
-                        size: 40.r,
-                        color: AppColor.textSecondary,
-                      ),
-                    ),
-                  ),
+                : skeleton,
           ),
         ),
       ),
     );
   }
 }
-

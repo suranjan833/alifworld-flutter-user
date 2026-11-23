@@ -8,6 +8,7 @@ import '../../../data/models/country_model.dart';
 import '../../../data/services/wishlist_service.dart';
 import '../../../routes/app_pages.dart';
 import '../../account/controllers/account_controller.dart';
+import '../../bag/controllers/bag_controller.dart';
 import '../../home/controllers/home_controller.dart';
 import '../../main_navigation/controllers/main_navigation_controller.dart';
 
@@ -420,6 +421,8 @@ class LoginController extends GetxController {
     if (Get.isRegistered<WishlistService>()) {
       WishlistService.to.refreshCount();
     }
+    // Sync any guest cart items to the user's account on server
+    BagController.to.syncGuestCartToServer();
 
     // 4. Navigate to MAIN_NAVIGATION cleanly
     Get.offAllNamed(Routes.MAIN_NAVIGATION);

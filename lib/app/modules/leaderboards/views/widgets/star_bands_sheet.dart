@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../../../../data/config/app_color.dart';
 import '../../../../data/models/rewards_info_model.dart';
+import '../../controllers/leaderboard_controller.dart';
 
-class StarBandsSheet extends StatelessWidget {
+class StarBandsSheet extends GetView<LeaderboardController> {
   final List<StarBandModel> bands;
 
   const StarBandsSheet({super.key, required this.bands});

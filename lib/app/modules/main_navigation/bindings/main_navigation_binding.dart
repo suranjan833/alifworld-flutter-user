@@ -16,7 +16,9 @@ class MainNavigationBinding extends Bindings {
         permanent: true,
       );
     }
-    Get.lazyPut<HomeController>(() => HomeController(), fenix: true);
+    if (!Get.isRegistered<HomeController>()) {
+      Get.put<HomeController>(HomeController(), permanent: true);
+    }
     Get.lazyPut<CategoriesController>(
       () => CategoriesController(),
       fenix: true,

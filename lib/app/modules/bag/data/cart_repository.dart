@@ -2,9 +2,6 @@ import 'dart:developer' as developer;
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../models/cart_model.dart';
 
-/// Data Repository for handling shopping cart network operations.
-/// Interacts directly with the backend REST endpoints to fetch, add, update,
-/// delete, and quote items without relying on local cache storage.
 class CartRepository {
   static final CartRepository _instance = CartRepository._internal();
   factory CartRepository() => _instance;

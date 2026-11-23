@@ -8,7 +8,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../config/app_color.dart';
 
-/// Checks if device currently has active internet connectivity
 Future<bool> hasInternetConnection() async {
   try {
     final result = await InternetAddress.lookup('google.com')
@@ -177,8 +176,7 @@ void showNoInternetDialog({
   );
 }
 
-/// Standalone Full-screen or Container Widget for No Internet State
-class NoInternetWidget extends StatelessWidget {
+class NoInternetWidget extends GetWidget {
   final Future<void> Function()? onRetry;
   final String? message;
 

@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/services/app_update_service.dart';
 import '../../../routes/app_pages.dart';
+import '../../bag/controllers/bag_controller.dart';
+import '../../home/controllers/home_controller.dart';
 
 class SplashController extends GetxController
     with GetSingleTickerProviderStateMixin {
@@ -20,7 +22,24 @@ class SplashController extends GetxController
   void onInit() {
     super.onInit();
     _initAnimations();
+    _prewarmAppData();
     _startAnimationAndNavigate();
+  }
+
+  /// Pre-warms Home and Bag data during splash animation for instant 0ms load
+  void _prewarmAppData() {
+    try {
+      if (!Get.isRegistered<BagController>()) {
+        Get.put<BagController>(BagController(), permanent: true);
+      }
+
+      if (!Get.isRegistered<HomeController>()) {
+        final homeCtrl = Get.put<HomeController>(HomeController(), permanent: true);
+        homeCtrl.loadHomeData();
+      } else {
+        Get.find<HomeController>().loadHomeData();
+      }
+    } catch (_) {}
   }
 
   void _initAnimations() {

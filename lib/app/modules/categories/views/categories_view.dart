@@ -248,31 +248,27 @@ class CategoriesView extends GetView<CategoriesController> {
 }
 
 /// A card that scales down slightly while pressed for a tactile premium feel.
-class _PressableCard extends StatefulWidget {
+class _PressableCard extends GetView<CategoriesController> {
   const _PressableCard({required this.onTap, required this.child});
 
   final VoidCallback onTap;
   final Widget child;
 
   @override
-  State<_PressableCard> createState() => _PressableCardState();
-}
-
-class _PressableCardState extends State<_PressableCard> {
-  bool _pressed = false;
-
-  @override
   Widget build(BuildContext context) {
+    final pressed = false.obs;
     return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapCancel: () => setState(() => _pressed = false),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTap: widget.onTap,
-      child: AnimatedScale(
-        scale: _pressed ? 0.96 : 1.0,
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeOut,
-        child: widget.child,
+      onTapDown: (_) => pressed.value = true,
+      onTapCancel: () => pressed.value = false,
+      onTapUp: (_) => pressed.value = false,
+      onTap: onTap,
+      child: Obx(
+        () => AnimatedScale(
+          scale: pressed.value ? 0.96 : 1.0,
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.easeOut,
+          child: child,
+        ),
       ),
     );
   }
