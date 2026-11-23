@@ -3,8 +3,6 @@ import 'package:get/get.dart';
 
 import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
-import '../../../data/models/rewards_info_model.dart';
-import '../../../data/services/rewards_service.dart';
 import '../models/leaderboard_model.dart';
 import '../views/widgets/star_bands_sheet.dart';
 
@@ -129,17 +127,6 @@ class LeaderboardController extends GetxController {
   }
 
   void showConditionsSheet(BuildContext context) {
-    final bands = (leaderboard.value?.bands.isNotEmpty ?? false)
-        ? leaderboard.value!.bands
-        : (Get.isRegistered<RewardsService>()
-            ? RewardsService.to.customerStarBands
-            : <StarBandModel>[]);
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => StarBandsSheet(bands: bands),
-    );
+    StarBandsSheet.show(context, period: selectedPeriod.value);
   }
 }

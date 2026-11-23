@@ -1,241 +1,9 @@
 import '../../home/models/showcase_model.dart';
+import 'product_seller_model.dart';
+import 'product_variant_model.dart';
 
-class ProductVariantModel {
-  final String id;
-  final String sku;
-  final String label;
-  final int? priceMinor;
-  final int? compareAtPriceMinor;
-  final int? productPoints;
-  final int? stockQty;
-  final int? campaignSaleMinor;
-  final int? campaignDiscountMinor;
-  final String? campaignName;
-  final List<String> images;
-  final Map<String, dynamic>? attributes;
-  final List<Map<String, dynamic>> dimensions;
-
-  ProductVariantModel({
-    required this.id,
-    required this.sku,
-    required this.label,
-    this.priceMinor,
-    this.compareAtPriceMinor,
-    this.productPoints,
-    this.stockQty,
-    this.campaignSaleMinor,
-    this.campaignDiscountMinor,
-    this.campaignName,
-    this.images = const [],
-    this.attributes,
-    this.dimensions = const [],
-  });
-
-  bool get isCampaignActive =>
-      campaignSaleMinor != null && campaignSaleMinor! > 0;
-
-  int get effectivePriceMinor =>
-      isCampaignActive ? campaignSaleMinor! : (priceMinor ?? 0);
-
-  double get price => effectivePriceMinor / 100.0;
-
-  double? get originalPrice {
-    if (compareAtPriceMinor != null) {
-      return compareAtPriceMinor! / 100.0;
-    }
-    if (isCampaignActive &&
-        priceMinor != null &&
-        priceMinor! > effectivePriceMinor) {
-      return priceMinor! / 100.0;
-    }
-    return null;
-  }
-
-  String get priceFormatted =>
-      '৳${price.toStringAsFixed(price.truncateToDouble() == price ? 0 : 2)}';
-
-  String? get originalPriceFormatted {
-    final orig = originalPrice;
-    if (orig != null && orig > price) {
-      return '৳${orig.toStringAsFixed(orig.truncateToDouble() == orig ? 0 : 2)}';
-    }
-    return null;
-  }
-
-  String get discount {
-    final origMinor =
-        compareAtPriceMinor ??
-        (isCampaignActive && priceMinor != null ? priceMinor : null);
-    if (origMinor != null &&
-        origMinor > effectivePriceMinor &&
-        effectivePriceMinor > 0) {
-      final pct = (((origMinor - effectivePriceMinor) / origMinor) * 100)
-          .round();
-      if (pct > 0) return '$pct% OFF';
-    }
-    return '';
-  }
-
-  bool get inStock => stockQty == null || stockQty! > 0;
-
-  factory ProductVariantModel.fromJson(Map<String, dynamic> json) {
-    int? pMinor = json['priceMinor'] is num
-        ? (json['priceMinor'] as num).toInt()
-        : null;
-    if (pMinor == null && json['price'] is num) {
-      pMinor = ((json['price'] as num) * 100).toInt();
-    }
-
-    int? cMinor = json['compareAtPriceMinor'] is num
-        ? (json['compareAtPriceMinor'] as num).toInt()
-        : null;
-    if (cMinor == null && json['originalPrice'] is num) {
-      cMinor = ((json['originalPrice'] as num) * 100).toInt();
-    }
-
-    List<String> imgs = [];
-    if (json['images'] is List) {
-      for (var item in json['images'] as List) {
-        if (item is Map) {
-          final url =
-              item['fileUrl'] ?? item['url'] ?? item['image'] ?? item['src'];
-          if (url != null && url.toString().isNotEmpty) {
-            imgs.add(url.toString());
-          }
-        } else if (item != null && item.toString().isNotEmpty) {
-          imgs.add(item.toString());
-        }
-      }
-    } else if (json['imageUrl'] != null &&
-        json['imageUrl'].toString().isNotEmpty) {
-      imgs = [json['imageUrl'].toString()];
-    } else if (json['image'] != null && json['image'].toString().isNotEmpty) {
-      imgs = [json['image'].toString()];
-    }
-
-    int? sQty = json['stockQty'] is num
-        ? (json['stockQty'] as num).toInt()
-        : (json['stock'] is num
-              ? (json['stock'] as num).toInt()
-              : (json['quantity'] is num
-                    ? (json['quantity'] as num).toInt()
-                    : null));
-
-    List<Map<String, dynamic>> dims = [];
-    if (json['dimensions'] is List) {
-      dims = (json['dimensions'] as List)
-          .whereType<Map>()
-          .map((d) => Map<String, dynamic>.from(d))
-          .toList();
-    }
-
-    return ProductVariantModel(
-      id: json['id']?.toString() ?? '',
-      sku: json['sku']?.toString() ?? '',
-      label:
-          json['label']?.toString() ??
-          json['title']?.toString() ??
-          json['name']?.toString() ??
-          'Default',
-      priceMinor: pMinor,
-      compareAtPriceMinor: cMinor,
-      productPoints: json['productPoints'] is num
-          ? (json['productPoints'] as num).toInt()
-          : null,
-      stockQty: sQty,
-      campaignSaleMinor: (json['campaignSaleMinor'] as num?)?.toInt(),
-      campaignDiscountMinor: (json['campaignDiscountMinor'] as num?)?.toInt(),
-      campaignName: json['campaignName']?.toString(),
-      images: imgs,
-      attributes: json['attributes'] is Map
-          ? Map<String, dynamic>.from(json['attributes'] as Map)
-          : null,
-      dimensions: dims,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'sku': sku,
-      'label': label,
-      'priceMinor': priceMinor,
-      'compareAtPriceMinor': compareAtPriceMinor,
-      'productPoints': productPoints,
-      'stockQty': stockQty,
-      'campaignSaleMinor': campaignSaleMinor,
-      'campaignDiscountMinor': campaignDiscountMinor,
-      'campaignName': campaignName,
-      'images': images,
-      'attributes': attributes,
-      'dimensions': dimensions,
-    };
-  }
-}
-
-class ProductSellerModel {
-  final String id;
-  final String shopName;
-  final String slug;
-  final String avatar;
-  final double rating;
-  final String reviewsCount;
-  final String location;
-  final bool isVerified;
-  final String joinedDate;
-  final String bio;
-  final String responseRate;
-
-  ProductSellerModel({
-    this.id = '',
-    required this.shopName,
-    this.slug = '',
-    this.avatar = '',
-    this.rating = 4.9,
-    this.reviewsCount = '1.8k',
-    this.location = 'Dhaka, Bangladesh',
-    this.isVerified = true,
-    this.joinedDate = 'Verified Seller',
-    this.bio = 'Official retailer on Alif offering 100% authentic products with brand warranty and fast delivery.',
-    this.responseRate = '99%',
-  });
-
-  factory ProductSellerModel.fromJson(Map<String, dynamic> json) {
-    return ProductSellerModel(
-      id: json['id']?.toString() ?? '',
-      shopName:
-          json['shopName']?.toString() ??
-          json['storeName']?.toString() ??
-          json['name']?.toString() ??
-          'Alif Official Store',
-      slug: json['slug']?.toString() ?? '',
-      avatar: json['avatar']?.toString() ?? json['logoUrl']?.toString() ?? 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=200&auto=format&fit=crop',
-      rating: json['rating'] is num ? (json['rating'] as num).toDouble() : 4.9,
-      reviewsCount: json['reviewsCount']?.toString() ?? '1.8k',
-      location: json['location']?.toString() ?? 'Dhaka, Bangladesh',
-      isVerified: json['isVerified'] == true || json['verified'] == true,
-      joinedDate: json['joinedDate']?.toString() ?? 'Verified Seller',
-      bio: json['bio']?.toString() ?? 'Official retailer on Alif offering 100% authentic products with brand warranty and fast delivery.',
-      responseRate: json['responseRate']?.toString() ?? '99%',
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'shopName': shopName,
-      'slug': slug,
-      'avatar': avatar,
-      'rating': rating,
-      'reviewsCount': reviewsCount,
-      'location': location,
-      'isVerified': isVerified,
-      'joinedDate': joinedDate,
-      'bio': bio,
-      'responseRate': responseRate,
-    };
-  }
-}
+export 'product_seller_model.dart';
+export 'product_variant_model.dart';
 
 class ProductDetailsModel {
   final String id;
@@ -284,33 +52,40 @@ class ProductDetailsModel {
     this.isVisible = true,
   });
 
-  int get effectiveMinQty =>
-      (minPurchaseQty != null && minPurchaseQty! > 0) ? minPurchaseQty! : 1;
+  int get effectiveMinQty {
+    final vMin = variants.isNotEmpty ? variants.first.minPurchaseQty : null;
+    final m = minPurchaseQty ?? vMin;
+    return (m != null && m > 0) ? m : 1;
+  }
+
+  int? get effectiveMaxQty {
+    final vMax = variants.isNotEmpty ? variants.first.maxPurchaseQty : null;
+    return maxPurchaseQty ?? vMax;
+  }
 
   int get effectiveCap {
     final s = stockQty;
-    final m = maxPurchaseQty;
+    final m = effectiveMaxQty;
     if (s != null && m != null) return s < m ? s : m;
     return m ?? s ?? 999999;
   }
 
   bool get hasPurchaseLimits =>
-      (minPurchaseQty != null && minPurchaseQty! > 1) || maxPurchaseQty != null;
+      (effectiveMinQty > 1) || effectiveMaxQty != null;
 
   String? get purchaseLimitsText {
-    if (minPurchaseQty != null &&
-        minPurchaseQty! > 1 &&
-        maxPurchaseQty != null) {
-      return 'Min: $minPurchaseQty • Max: $maxPurchaseQty';
-    } else if (minPurchaseQty != null && minPurchaseQty! > 1) {
-      return 'Minimum purchase: $minPurchaseQty';
-    } else if (maxPurchaseQty != null) {
-      return 'Maximum purchase: $maxPurchaseQty';
+    final minQ = effectiveMinQty;
+    final maxQ = effectiveMaxQty;
+    if (minQ > 1 && maxQ != null) {
+      return 'Min: $minQ • Max: $maxQ';
+    } else if (minQ > 1) {
+      return 'Minimum purchase: $minQ';
+    } else if (maxQ != null) {
+      return 'Maximum purchase: $maxQ';
     }
     return null;
   }
 
-  /// Base price in BDT
   double get price {
     if (priceMinor != null && priceMinor! > 0) {
       return priceMinor! / 100.0;
@@ -321,7 +96,6 @@ class ProductDetailsModel {
     return 0.0;
   }
 
-  /// Base original/compare price in BDT
   double? get originalPrice {
     if (compareAtPriceMinor != null && compareAtPriceMinor! > 0) {
       return compareAtPriceMinor! / 100.0;
@@ -413,13 +187,11 @@ class ProductDetailsModel {
       }
     }
 
-    // 1. Resolve Name
     final resolvedName =
         json['name']?.toString() ??
         json['title']?.toString() ??
         'Product Details';
 
-    // 2. Resolve Images
     List<String> imgs = [];
     if (json['images'] is List) {
       for (var item in json['images'] as List) {
@@ -440,7 +212,6 @@ class ProductDetailsModel {
       imgs = [json['image'].toString()];
     }
 
-    // 3. Resolve Variants
     List<ProductVariantModel> parsedVariants = [];
     if (json['variants'] is List) {
       for (var v in json['variants'] as List) {
@@ -452,7 +223,6 @@ class ProductDetailsModel {
       }
     }
 
-    // 4. Resolve Price Minor
     int? pMinor = json['priceMinor'] is num
         ? (json['priceMinor'] as num).toInt()
         : null;
@@ -471,14 +241,12 @@ class ProductDetailsModel {
         if (parsed != null) pMinor = (parsed * 100).toInt();
       }
     }
-    // Fallback to variant price
     if (pMinor == null &&
         parsedVariants.isNotEmpty &&
         parsedVariants.first.priceMinor != null) {
       pMinor = parsedVariants.first.priceMinor;
     }
 
-    // 5. Resolve Compare Price Minor
     int? cMinor = json['compareAtPriceMinor'] is num
         ? (json['compareAtPriceMinor'] as num).toInt()
         : null;
@@ -497,14 +265,12 @@ class ProductDetailsModel {
         if (parsed != null) cMinor = (parsed * 100).toInt();
       }
     }
-    // Fallback to variant compare price
     if (cMinor == null &&
         parsedVariants.isNotEmpty &&
         parsedVariants.first.compareAtPriceMinor != null) {
       cMinor = parsedVariants.first.compareAtPriceMinor;
     }
 
-    // 6. Resolve Seller
     ProductSellerModel parsedSeller;
     if (json['seller'] is Map) {
       parsedSeller = ProductSellerModel.fromJson(
@@ -516,14 +282,12 @@ class ProductDetailsModel {
       );
     }
 
-    // 7. Resolve Description
     String desc = json['description']?.toString() ?? '';
     if (desc.isEmpty) {
       desc =
           'Experience genuine quality with $resolvedName. Certified authentic product directly from ${parsedSeller.shopName} on Alif with fast and secure shipping.';
     }
 
-    // 8. Resolve Brand
     String? bName;
     if (json['brand'] is Map) {
       bName = (json['brand'] as Map)['name']?.toString();
@@ -547,7 +311,6 @@ class ProductDetailsModel {
       }
     }
 
-    // 9. Resolve Category
     String? cName;
     if (json['category'] is Map) {
       cName = (json['category'] as Map)['name']?.toString();
@@ -556,6 +319,14 @@ class ProductDetailsModel {
     } else if (json['categoryName'] != null) {
       cName = json['categoryName'].toString();
     }
+
+    int? minQty = json['minPurchaseQty'] is num
+        ? (json['minPurchaseQty'] as num).toInt()
+        : (parsedVariants.isNotEmpty ? parsedVariants.first.minPurchaseQty : null);
+
+    int? maxQty = json['maxPurchaseQty'] is num
+        ? (json['maxPurchaseQty'] as num).toInt()
+        : (parsedVariants.isNotEmpty ? parsedVariants.first.maxPurchaseQty : null);
 
     return ProductDetailsModel(
       id: json['id']?.toString() ?? '',
@@ -584,16 +355,8 @@ class ProductDetailsModel {
           : (json['reviews'] is int ? json['reviews'] as int : null),
       openBoxDelivery: json['openBoxDelivery'] == true,
       isFavorite: json['isFavorite'] == true || json['isWishlisted'] == true,
-      minPurchaseQty: json['minPurchaseQty'] is int
-          ? json['minPurchaseQty'] as int
-          : (json['minPurchaseQty'] is num
-                ? (json['minPurchaseQty'] as num).toInt()
-                : null),
-      maxPurchaseQty: json['maxPurchaseQty'] is int
-          ? json['maxPurchaseQty'] as int
-          : (json['maxPurchaseQty'] is num
-                ? (json['maxPurchaseQty'] as num).toInt()
-                : null),
+      minPurchaseQty: minQty,
+      maxPurchaseQty: maxQty,
       isVisible:
           (json['isVisible'] != false) && (rawJson['isVisible'] != false),
     );

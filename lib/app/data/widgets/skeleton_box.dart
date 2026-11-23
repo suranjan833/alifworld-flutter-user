@@ -60,19 +60,19 @@ class SkeletonShimmer extends GetView<SkeletonShimmerController> {
 
   @override
   Widget build(BuildContext context) {
-    if (!Get.isRegistered<SkeletonShimmerController>()) {
-      Get.put(SkeletonShimmerController());
-    }
+    final shimmerCtrl = Get.isRegistered<SkeletonShimmerController>()
+        ? Get.find<SkeletonShimmerController>()
+        : Get.put(SkeletonShimmerController(), permanent: true);
 
     return AnimatedBuilder(
-      animation: controller.animController,
+      animation: shimmerCtrl.animController,
       builder: (context, child) {
         return ShaderMask(
           shaderCallback: (bounds) {
             final dx = bounds.width;
             final dy = bounds.height;
             final rect = Rect.fromLTWH(
-              -dx + (dx * 2 + dy) * controller.animController.value,
+              -dx + (dx * 2 + dy) * shimmerCtrl.animController.value,
               -dy,
               dx + dy,
               dx + dy,

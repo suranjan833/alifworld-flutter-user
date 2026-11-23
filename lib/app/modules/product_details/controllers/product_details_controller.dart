@@ -1,26 +1,28 @@
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../../data/config/app_color.dart';
 import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/mixins/skeleton_loading_mixin.dart';
-import '../../../data/services/recently_viewed_service.dart';
 import '../../../data/services/wishlist_service.dart';
 import '../../../routes/app_pages.dart';
 import '../../bag/controllers/bag_controller.dart';
 import '../../home/models/showcase_model.dart';
-import '../../my_wishlist/controllers/my_wishlist_controller.dart';
 import '../models/product_details_model.dart';
+import 'product_wishlist_share_mixin.dart';
 
-class ProductDetailsController extends GetxController with SkeletonLoadingMixin {
+class ProductDetailsController extends GetxController
+    with SkeletonLoadingMixin, ProductWishlistShareMixin {
+  @override
   final product = Rxn<ProductDetailsModel>();
+  @override
   final variants = <ProductVariantModel>[].obs;
+  @override
   final seller = Rxn<ProductSellerModel>();
 
   final selectedVariantIndex = 0.obs;
   final selectedImageIndex = 0.obs;
+  @override
   final isWishlisted = false.obs;
   final selectedQuantity = 1.obs;
   final isLoadingDetails = false.obs;
@@ -99,16 +101,16 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
     if (selectedVariantIndex.value >= merged.variants.length) {
       selectedVariantIndex.value = 0;
     }
-    selectedQuantity.value = merged.effectiveMinQty;
+    final minQ = minPurchaseQty;
+    selectedQuantity.value = minQ;
 
-    _recordRecentlyViewed();
+    recordRecentlyViewed();
     checkWishlistStatus();
   }
 
   Future<void> fetchProductBySlug(String slug) async {
     try {
       isLoadingDetails.value = true;
-      // 1. Try GET /catalog/products/{slug}
       final response = await dioGet('catalog/products/$slug');
       if (response.statusCode == 200 && response.data != null) {
         dynamic rawData = response.data;
@@ -126,147 +128,140 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
         }
       }
 
-      // 2. Fallback to GET /catalog/search if slug route is unreachable
       final searchResponse = await dioGet('catalog/search');
       if (searchResponse.statusCode == 200 && searchResponse.data != null) {
-        dynamic rawData = searchResponse.data;
-        if (rawData is Map && rawData.containsKey('data')) {
-          rawData = rawData['data'];
+        dynamic rawSearch = searchResponse.data;
+        if (rawSearch is Map && rawSearch.containsKey('data')) {
+          rawSearch = rawSearch['data'];
         }
-        List? prods;
-        if (rawData is Map && rawData.containsKey('products')) {
-          prods = rawData['products'] as List?;
+        List items = [];
+        if (rawSearch is Map && rawSearch.containsKey('products')) {
+          items = rawSearch['products'] as List;
+        } else if (rawSearch is List) {
+          items = rawSearch;
         }
-        if (prods != null) {
-          final found = prods.firstWhereOrNull(
-            (p) => p is Map && (p['slug'] == slug || p['id'] == slug),
-          );
-          if (found != null && found is Map) {
+
+        for (var item in items) {
+          if (item is Map &&
+              (item['slug']?.toString() == slug ||
+                  item['id']?.toString() == slug)) {
             _setProduct(
-              ProductDetailsModel.fromJson(Map<String, dynamic>.from(found)),
+              ProductDetailsModel.fromJson(Map<String, dynamic>.from(item)),
             );
+            return;
           }
         }
       }
-    } catch (_) {
+    } catch (e) {
+      // Keep existing product if fetch fails
     } finally {
       isLoadingDetails.value = false;
     }
   }
 
+  @override
+  ProductVariantModel? get selectedVariant {
+    if (variants.isEmpty) return null;
+    if (selectedVariantIndex.value >= variants.length) {
+      return variants.first;
+    }
+    return variants[selectedVariantIndex.value];
+  }
+
+  @override
   bool get isVisible => product.value?.isVisible ?? true;
 
-  ProductVariantModel? get selectedVariant {
-    if (variants.isNotEmpty && selectedVariantIndex.value < variants.length) {
-      return variants[selectedVariantIndex.value];
+  bool get isOpenBoxDelivery => product.value?.openBoxDelivery ?? false;
+
+  String? get activeSku => selectedVariant?.sku ?? product.value?.slug;
+
+  int? get activeStock {
+    final sv = selectedVariant;
+    if (sv != null && sv.stockQty != null) return sv.stockQty;
+    return product.value?.stockQty;
+  }
+
+  bool get activeInStock {
+    final s = activeStock;
+    if (s != null) return s > 0;
+    return product.value?.inStock ?? true;
+  }
+
+  @override
+  int get activePriceMinor =>
+      selectedVariant?.effectivePriceMinor ?? product.value?.priceMinor ?? 0;
+
+  @override
+  int? get activeCompareAtPriceMinor =>
+      selectedVariant?.compareAtPriceMinor ??
+      product.value?.compareAtPriceMinor;
+
+  @override
+  int get activeProductPoints =>
+      selectedVariant?.productPoints ?? product.value?.productPoints ?? 0;
+
+  @override
+  bool get isCampaignActive => selectedVariant?.isCampaignActive ?? false;
+  String? get campaignName => selectedVariant?.campaignName;
+
+  double get activePriceValue {
+    final minor = activePriceMinor;
+    if (minor > 0) return minor / 100.0;
+    return product.value?.price ?? 0.0;
+  }
+
+  double? get activeOriginalPriceValue {
+    final minor = activeCompareAtPriceMinor;
+    if (minor != null && minor > 0) return minor / 100.0;
+    return product.value?.originalPrice;
+  }
+
+  bool get hasMrpSaving =>
+      activeOriginalPriceValue != null &&
+      activeOriginalPriceValue! > activePriceValue;
+
+  double get mrpSavingAmount => hasMrpSaving
+      ? (activeOriginalPriceValue! - activePriceValue)
+      : 0.0;
+
+  int get mrpSavingPct => hasMrpSaving && activeOriginalPriceValue! > 0
+      ? ((mrpSavingAmount / activeOriginalPriceValue!) * 100).round()
+      : 0;
+
+  String get activePriceFormatted {
+    final price = activePriceValue;
+    return '৳${price.toStringAsFixed(price.truncateToDouble() == price ? 0 : 2)}';
+  }
+
+  String? get activeOriginalPriceFormatted {
+    final orig = activeOriginalPriceValue;
+    if (orig != null && orig > activePriceValue) {
+      return '৳${orig.toStringAsFixed(orig.truncateToDouble() == orig ? 0 : 2)}';
     }
     return null;
   }
 
+  String get activeDiscount {
+    final orig = activeOriginalPriceValue;
+    final price = activePriceValue;
+    if (orig != null && orig > price && price > 0) {
+      final pct = (((orig - price) / orig) * 100).round();
+      if (pct > 0) return '$pct% OFF';
+    }
+    return '';
+  }
+
   List<String> get imagesList {
     final sv = selectedVariant;
-    if (sv != null && sv.images.isNotEmpty) {
-      return sv.images;
-    }
-    final p = product.value;
-    if (p != null && p.images.isNotEmpty) {
-      return p.images;
-    }
-    if (p != null && p.displayImage.isNotEmpty) {
-      return [p.displayImage];
-    }
-    return const [];
+    if (sv != null && sv.images.isNotEmpty) return sv.images;
+    final pImages = product.value?.images;
+    if (pImages != null && pImages.isNotEmpty) return pImages;
+    return [''];
   }
 
-  double get activePriceValue {
-    final sv = selectedVariant;
-    if (sv != null && sv.price > 0) {
-      return sv.price;
-    }
-    return product.value?.price ?? 0.0;
-  }
-
-  String get activePriceFormatted {
-    final sv = selectedVariant;
-    if (sv != null && sv.price > 0) {
-      return sv.priceFormatted;
-    }
-    return product.value?.priceFormatted ?? '৳0.00';
-  }
-
-  String? get activeOriginalPriceFormatted {
-    final sv = selectedVariant;
-    if (sv != null && sv.originalPriceFormatted != null) {
-      return sv.originalPriceFormatted;
-    }
-    return product.value?.originalPriceFormatted;
-  }
-
-  String get activeDiscount {
-    final sv = selectedVariant;
-    if (sv != null && sv.discount.isNotEmpty) {
-      return sv.discount;
-    }
-    return product.value?.discount ?? '';
-  }
-
-  int? get activeStock {
-    final sv = selectedVariant;
-    if (sv != null && sv.stockQty != null) {
-      return sv.stockQty;
-    }
-    return product.value?.stockQty;
-  }
-
-  String? get activeSku => selectedVariant?.sku;
-
-  bool get isOpenBoxDelivery => product.value?.openBoxDelivery ?? false;
-
-  int get activeProductPoints {
-    final sv = selectedVariant;
-    if (sv != null && sv.productPoints != null) {
-      return sv.productPoints!;
-    }
-    return product.value?.productPoints ?? 0;
-  }
-
-  int get activePriceMinor {
-    final sv = selectedVariant;
-    if (sv != null) {
-      return sv.effectivePriceMinor;
-    }
-    return product.value?.priceMinor ?? 0;
-  }
-
-  int? get activeCompareAtPriceMinor {
-    final sv = selectedVariant;
-    if (sv != null && sv.compareAtPriceMinor != null) {
-      return sv.compareAtPriceMinor;
-    }
-    return product.value?.compareAtPriceMinor;
-  }
-
-  bool get isCampaignActive => selectedVariant?.isCampaignActive ?? false;
-
-  bool get hasMrpSaving {
-    if (isCampaignActive) return false;
-    final comp = activeCompareAtPriceMinor;
-    final price = activePriceMinor;
-    return comp != null && comp > price && price > 0;
-  }
-
-  double get mrpSavingAmount {
-    final comp = activeCompareAtPriceMinor ?? 0;
-    final price = activePriceMinor;
-    if (comp > price) {
-      return (comp - price) / 100.0;
-    }
-    return 0.0;
-  }
-
-  int get mrpSavingPct {
-    final comp = activeCompareAtPriceMinor ?? 0;
-    final price = activePriceMinor;
+  int get savingsPercentage {
+    final comp = activeOriginalPriceValue ?? 0;
+    final price = activePriceValue;
     if (comp > price && comp > 0) {
       return (((comp - price) / comp) * 100).round();
     }
@@ -276,8 +271,15 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
   String get displayTitleWithVariant =>
       product.value?.titleWithVariant(selectedVariant) ?? '';
 
-  int get minPurchaseQty => product.value?.effectiveMinQty ?? 1;
-  int? get maxPurchaseQty => product.value?.maxPurchaseQty;
+  int get minPurchaseQty {
+    final svMin = selectedVariant?.minPurchaseQty;
+    if (svMin != null && svMin > 0) return svMin;
+    return product.value?.effectiveMinQty ?? 1;
+  }
+
+  int? get maxPurchaseQty =>
+      selectedVariant?.maxPurchaseQty ?? product.value?.effectiveMaxQty;
+
   int get effectiveCap {
     final s = activeStock;
     final m = maxPurchaseQty;
@@ -288,37 +290,19 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
   void selectVariant(int index) {
     if (index >= 0 && index < variants.length) {
       selectedVariantIndex.value = index;
-      selectedQuantity.value = minPurchaseQty;
+      final minQty = minPurchaseQty;
+      final cap = effectiveCap;
+      if (selectedQuantity.value < minQty) {
+        selectedQuantity.value = minQty;
+      } else if (selectedQuantity.value > cap) {
+        selectedQuantity.value = cap;
+      }
       selectedImageIndex.value = 0;
-      _recordRecentlyViewed();
+      recordRecentlyViewed();
       if (isVisible && Get.isRegistered<WishlistService>()) {
         isWishlisted.value =
             WishlistService.to.isWishlisted(selectedVariant?.id);
       }
-    }
-  }
-
-  void _recordRecentlyViewed() {
-    final p = product.value;
-    if (p == null || p.slug.isEmpty) return;
-    final sv = selectedVariant;
-    if (Get.isRegistered<RecentlyViewedService>()) {
-      RecentlyViewedService.to.recordView(
-        slug: p.slug,
-        productId: p.id,
-        name: p.name,
-        brandName: p.brandName,
-        variantId: sv?.id,
-        variantLabel: sv?.label,
-        imageUrl: (sv != null && sv.images.isNotEmpty)
-            ? sv.images.first
-            : (p.images.isNotEmpty ? p.images.first : p.displayImage),
-        priceMinor: activePriceMinor,
-        compareAtPriceMinor: activeCompareAtPriceMinor,
-        campaignActive: isCampaignActive,
-        productPoints: activeProductPoints,
-        sellerName: seller.value?.shopName,
-      );
     }
   }
 
@@ -370,9 +354,12 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
           colorText: AppColor.white,
         );
       }
-    } else if (newQty > cap) {
+      return;
+    }
+
+    if (newQty > cap) {
       selectedQuantity.value = cap;
-      final msg = maxPurchaseQty != null && cap >= maxPurchaseQty!
+      final msg = maxPurchaseQty != null && newQty > maxPurchaseQty!
           ? 'Maximum purchase for this item is $maxPurchaseQty'
           : 'Only $cap units available';
       Get.snackbar(
@@ -382,178 +369,10 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
         backgroundColor: AppColor.black87,
         colorText: AppColor.white,
       );
-    } else {
-      selectedQuantity.value = newQty;
-    }
-  }
-
-  Future<void> checkWishlistStatus() async {
-    if (!isVisible) {
-      isWishlisted.value = false;
-      return;
-    }
-    if (!Get.isRegistered<WishlistService>()) return;
-    final wishlistSvc = WishlistService.to;
-    if (!wishlistSvc.hasAuth) {
-      isWishlisted.value = false;
       return;
     }
 
-    final p = product.value;
-    if (p == null) return;
-
-    final targetVariantIds = <String>[];
-    for (var v in variants) {
-      if (v.id.isNotEmpty) targetVariantIds.add(v.id);
-    }
-    if (targetVariantIds.isEmpty && p.variants.isNotEmpty) {
-      for (var v in p.variants) {
-        if (v.id.isNotEmpty) targetVariantIds.add(v.id);
-      }
-    }
-
-    if (targetVariantIds.isEmpty) return;
-
-    await wishlistSvc.checkStatus(targetVariantIds);
-    final sv = selectedVariant;
-    final activeVId = sv?.id ??
-        (targetVariantIds.isNotEmpty ? targetVariantIds.first : '');
-    isWishlisted.value = wishlistSvc.isWishlisted(activeVId);
-  }
-
-  Future<void> toggleWishlist() async {
-    final p = product.value;
-    if (!isVisible) {
-      Get.snackbar(
-        'Not Available',
-        'This product is not available right now.',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: AppColor.error,
-        colorText: AppColor.white,
-      );
-      return;
-    }
-
-    final sv = selectedVariant;
-    final vId = sv?.id ??
-        (p?.variants.isNotEmpty == true ? p!.variants.first.id : '');
-
-    if (vId.isEmpty) {
-      Get.snackbar(
-        'Error',
-        'Could not find product variant',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: AppColor.error,
-        colorText: AppColor.white,
-      );
-      return;
-    }
-
-    if (!Get.isRegistered<WishlistService>()) return;
-    final wishlistSvc = WishlistService.to;
-    if (!wishlistSvc.hasAuth) {
-      Get.toNamed(Routes.LOGIN);
-      return;
-    }
-
-    final wasWishlisted = isWishlisted.value;
-    final newStatus = await wishlistSvc.toggleWishlist(vId);
-    isWishlisted.value = newStatus;
-
-    if (newStatus != wasWishlisted) {
-      Get.snackbar(
-        newStatus ? 'Added to Wishlist' : 'Removed from Wishlist',
-        newStatus
-            ? '${p?.name ?? 'Item'} saved to your wishlist'
-            : 'Item removed from wishlist',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: AppColor.textPrimary,
-        colorText: AppColor.white,
-        duration: const Duration(seconds: 2),
-      );
-    }
-
-    if (Get.isRegistered<MyWishlistController>()) {
-      Get.find<MyWishlistController>().fetchWishlist();
-    }
-  }
-
-  /// GET /catalog/products/{slug}/share?variant={variantId}
-  Future<void> shareProduct() async {
-    final p = product.value;
-    if (p == null || p.slug.isEmpty) return;
-
-    try {
-      final sv = selectedVariant;
-      final vId =
-          sv?.id ?? (p.variants.isNotEmpty ? p.variants.first.id : null);
-      final query =
-          (vId != null && vId.isNotEmpty) ? '?variant=$vId' : '';
-      final response =
-          await dioGet('catalog/products/${p.slug}/share$query');
-
-      String shareText = '';
-      String shareUrl = '';
-
-      if (response.statusCode == 200 && response.data != null) {
-        dynamic data = response.data;
-        if (data is Map && data.containsKey('data')) {
-          data = data['data'];
-        }
-        if (data is Map) {
-          shareText = data['text']?.toString() ?? '';
-          shareUrl = data['url']?.toString() ?? '';
-        }
-      }
-
-      if (shareText.isEmpty) {
-        final fallbackUrl = shareUrl.isNotEmpty
-            ? shareUrl
-            : 'https://dev.alifworld.com.bd/product/${p.slug}${vId != null ? '?variant=$vId' : ''}';
-        shareText =
-            'Check out ${p.name} on Alifworld!\n\nShop now: $fallbackUrl';
-      }
-
-      try {
-        final result = await SharePlus.instance.share(
-          ShareParams(
-            text: shareText,
-            subject: p.name,
-          ),
-        );
-        if (result.status == ShareResultStatus.unavailable) {
-          final copyText = shareUrl.isNotEmpty ? shareUrl : shareText;
-          await Clipboard.setData(ClipboardData(text: copyText));
-          Get.snackbar(
-            'Link Copied',
-            'Product link copied to clipboard',
-            snackPosition: SnackPosition.TOP,
-            backgroundColor: AppColor.textPrimary,
-            colorText: AppColor.white,
-            duration: const Duration(seconds: 2),
-          );
-        }
-      } catch (_) {
-        final copyText = shareUrl.isNotEmpty ? shareUrl : shareText;
-        await Clipboard.setData(ClipboardData(text: copyText));
-        Get.snackbar(
-          'Link Copied',
-          'Product link copied to clipboard',
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: AppColor.textPrimary,
-          colorText: AppColor.white,
-          duration: const Duration(seconds: 2),
-        );
-      }
-    } catch (_) {
-      Get.snackbar(
-        'Share Failed',
-        'Could not generate share link',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: AppColor.error,
-        colorText: AppColor.white,
-      );
-    }
+    selectedQuantity.value = newQty;
   }
 
   Future<void> addToBag() async {
@@ -572,7 +391,6 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
     if (p == null) return;
 
     final bagCtrl = BagController.to;
-
     final sv = selectedVariant;
     final fallbackVariantId =
         sv?.id ?? (p.variants.isNotEmpty ? p.variants.first.id : null);
@@ -580,15 +398,16 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
       'id': p.id,
       'productId': p.id,
       'variantId': fallbackVariantId,
-      'variantLabel': sv?.label ?? (p.variants.isNotEmpty ? p.variants.first.label : null),
+      'variantLabel':
+          sv?.label ?? (p.variants.isNotEmpty ? p.variants.first.label : null),
       'brand': p.displayBrand,
       'title': p.name,
       'price': activePriceValue,
       'image': imagesList.first,
       'slug': p.slug,
       'variants': p.variants.map((v) => v.toJson()).toList(),
-      if (p.minPurchaseQty != null) 'minPurchaseQty': p.minPurchaseQty,
-      if (p.maxPurchaseQty != null) 'maxPurchaseQty': p.maxPurchaseQty,
+      if (minPurchaseQty > 1) 'minPurchaseQty': minPurchaseQty,
+      if (maxPurchaseQty != null) 'maxPurchaseQty': maxPurchaseQty,
     };
 
     final effectiveQty = selectedQuantity.value < minPurchaseQty
@@ -616,7 +435,6 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
     if (p == null) return;
 
     final bagCtrl = BagController.to;
-
     final sv = selectedVariant;
     final fallbackVariantId =
         sv?.id ?? (p.variants.isNotEmpty ? p.variants.first.id : null);
@@ -624,15 +442,16 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
       'id': p.id,
       'productId': p.id,
       'variantId': fallbackVariantId,
-      'variantLabel': sv?.label ?? (p.variants.isNotEmpty ? p.variants.first.label : null),
+      'variantLabel':
+          sv?.label ?? (p.variants.isNotEmpty ? p.variants.first.label : null),
       'brand': p.displayBrand,
       'title': p.name,
       'price': activePriceValue,
       'image': imagesList.first,
       'slug': p.slug,
       'variants': p.variants.map((v) => v.toJson()).toList(),
-      if (p.minPurchaseQty != null) 'minPurchaseQty': p.minPurchaseQty,
-      if (p.maxPurchaseQty != null) 'maxPurchaseQty': p.maxPurchaseQty,
+      if (minPurchaseQty > 1) 'minPurchaseQty': minPurchaseQty,
+      if (maxPurchaseQty != null) 'maxPurchaseQty': maxPurchaseQty,
     };
 
     final effectiveQty = selectedQuantity.value < minPurchaseQty
@@ -644,29 +463,16 @@ class ProductDetailsController extends GetxController with SkeletonLoadingMixin 
     final bool hasAuth = (token != null && token.toString().trim().isNotEmpty) ||
         (sessionCookie != null && sessionCookie.toString().trim().isNotEmpty);
 
-    // 1. Optimistic millisecond mutation in memory (< 1ms)
-    bagCtrl.addOptimisticItem(itemPayload, quantity: effectiveQty, resolvedVariantId: fallbackVariantId);
+    bagCtrl.addOptimisticItem(
+      itemPayload,
+      quantity: effectiveQty,
+      resolvedVariantId: fallbackVariantId,
+    );
 
-    // 2. Instant millisecond navigation to Bag screen
     Get.toNamed(Routes.BAG);
 
-    // 3. Background server synchronization without blocking UI
     if (hasAuth && fallbackVariantId != null && fallbackVariantId.isNotEmpty) {
       bagCtrl.syncItemToServerBackground(fallbackVariantId, effectiveQty);
     }
   }
-
-  void openSellerDetails() {
-    final s = seller.value;
-    if (s != null) {
-      final map = s.toJson();
-      if (s.slug.isNotEmpty) {
-        map['slug'] = s.slug;
-      }
-      Get.toNamed(Routes.SELLER_DETAILS, arguments: map);
-    } else {
-      Get.toNamed(Routes.SELLER_DETAILS);
-    }
-  }
 }
-
