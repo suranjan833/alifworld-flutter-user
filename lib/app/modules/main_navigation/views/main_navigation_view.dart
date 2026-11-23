@@ -58,31 +58,31 @@ class MainNavigationView extends GetView<MainNavigationController> {
               children: [
                 _buildNavItem(
                   index: 0,
-                  label: 'Home',
+                  labelKey: 'nav_home',
                   activeIcon: Iconsax.home_15,
                   inactiveIcon: Iconsax.home,
                 ),
                 _buildNavItem(
                   index: 1,
-                  label: 'Categories',
+                  labelKey: 'nav_categories',
                   activeIcon: Iconsax.box_1,
                   inactiveIcon: Iconsax.box_1,
                 ),
                 _buildNavItem(
                   index: 2,
-                  label: 'Discover',
+                  labelKey: 'nav_discover',
                   activeIcon: Iconsax.video_square,
                   inactiveIcon: Iconsax.video_square,
                 ),
                 _buildNavItem(
                   index: 3,
-                  label: 'Bag',
+                  labelKey: 'nav_bag',
                   activeIcon: Iconsax.shopping_bag,
                   inactiveIcon: Iconsax.shopping_bag,
                 ),
                 _buildNavItem(
                   index: 4,
-                  label: 'Account',
+                  labelKey: 'nav_account',
                   activeIcon: Iconsax.user,
                   inactiveIcon: Iconsax.user,
                 ),
@@ -96,7 +96,7 @@ class MainNavigationView extends GetView<MainNavigationController> {
 
   Widget _buildNavItem({
     required int index,
-    required String label,
+    required String labelKey,
     required IconData activeIcon,
     required IconData inactiveIcon,
   }) {
@@ -104,6 +104,7 @@ class MainNavigationView extends GetView<MainNavigationController> {
       final isSelected = controller.currentIndex.value == index;
       final activeColor = AppColor.textPrimary;
       final inactiveColor = AppColor.textSecondary;
+      final label = labelKey.tr;
 
       Widget iconWidget = Icon(
         isSelected ? activeIcon : inactiveIcon,

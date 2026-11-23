@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../../../data/config/app_color.dart';
+import '../../../data/services/app_translations.dart';
 import '../../../data/widgets/country_picker_dialog.dart';
 import '../controllers/login_controller.dart';
 
@@ -27,30 +28,67 @@ class LoginView extends GetView<LoginController> {
                 children: [
                   SizedBox(height: 20.h),
     
-                // Brand Header Badge / Icon
-                Container(
-                  width: 48.w,
-                  height: 48.h,
-                  decoration: BoxDecoration(
-                    color: AppColor.primaryLight,
-                    borderRadius: BorderRadius.circular(14.r),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      controller.isOtpLogin.value
-                          ? Icons.phone_android_rounded
-                          : Icons.lock_outline_rounded,
-                      color: AppColor.primary,
-                      size: 24.r,
+                // Top Row: Brand Header Badge / Icon + Language Switcher
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      width: 48.w,
+                      height: 48.h,
+                      decoration: BoxDecoration(
+                        color: AppColor.primaryLight,
+                        borderRadius: BorderRadius.circular(14.r),
+                      ),
+                      child: Center(
+                        child: Icon(
+                          controller.isOtpLogin.value
+                              ? Icons.phone_android_rounded
+                              : Icons.lock_outline_rounded,
+                          color: AppColor.primary,
+                          size: 24.r,
+                        ),
+                      ),
                     ),
-                  ),
+                    GestureDetector(
+                      onTap: () => AppTranslations.openLanguageSelectionSheet(),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(10.r),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Iconsax.translate, size: 16.r, color: AppColor.primaryDark),
+                            SizedBox(width: 6.w),
+                            Text(
+                              AppTranslations.currentLanguageCode == 'bn' ? 'বাংলা' : 'English',
+                              style: GoogleFonts.lato(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.bold,
+                                color: AppColor.textPrimary,
+                              ),
+                            ),
+                            SizedBox(width: 2.w),
+                            Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              size: 16.r,
+                              color: AppColor.textPrimary,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
     
                 SizedBox(height: 20.h),
     
                 // Header Titles
                 Text(
-                  'Welcome Back!',
+                  'welcome_back'.tr,
                   style: GoogleFonts.lato(
                     fontSize: 24.sp,
                     fontWeight: FontWeight.w800,
@@ -61,8 +99,8 @@ class LoginView extends GetView<LoginController> {
                 SizedBox(height: 6.h),
                 Text(
                   controller.isOtpLogin.value
-                      ? 'Enter your phone number to receive an OTP.'
-                      : 'Sign in with your phone number and password.',
+                      ? 'login_otp_subtitle'.tr
+                      : 'login_password_subtitle'.tr,
                   style: GoogleFonts.lato(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.normal,
@@ -77,7 +115,7 @@ class LoginView extends GetView<LoginController> {
                 if (!controller.isOtpLogin.value) ...[
                   // --- PASSWORD LOGIN MODE ---
                   Text(
-                    'Phone Number',
+                    'phone_number'.tr,
                     style: GoogleFonts.lato(
                       fontSize: 13.sp,
                       fontWeight: FontWeight.bold,
@@ -91,16 +129,16 @@ class LoginView extends GetView<LoginController> {
                     inputFormatters: [_PhoneOrEmailInputFormatter()],
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) {
-                        return 'Please enter your phone number';
+                        return 'please_enter_phone'.tr;
                       }
                       final trimmed = v.trim();
                       if (!trimmed.contains('@')) {
                         final digits = trimmed.replaceAll(RegExp(r'\D'), '');
                         if (digits.length > 11) {
-                          return 'Phone number cannot exceed 11 digits';
+                          return 'phone_max_length'.tr;
                         }
                         if (digits.length < 10) {
-                          return 'Please enter a valid 11-digit phone number';
+                          return 'please_enter_valid_phone'.tr;
                         }
                       }
                       return null;
@@ -111,7 +149,7 @@ class LoginView extends GetView<LoginController> {
                       color: AppColor.textPrimary,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'Enter phone number (e.g. 01XXXXXXXXX)',
+                      hintText: 'enter_phone_hint'.tr,
                       hintStyle: GoogleFonts.lato(
                         fontSize: 14.sp,
                         color: AppColor.textHint,
@@ -144,7 +182,7 @@ class LoginView extends GetView<LoginController> {
                   SizedBox(height: 16.h),
     
                   Text(
-                    'Password',
+                    'password'.tr,
                     style: GoogleFonts.lato(
                       fontSize: 13.sp,
                       fontWeight: FontWeight.bold,
@@ -157,7 +195,7 @@ class LoginView extends GetView<LoginController> {
                     obscureText: !controller.isPasswordVisible.value,
                     validator: (v) {
                       if (v == null || v.isEmpty) {
-                        return 'Please enter your password';
+                        return 'please_enter_password'.tr;
                       }
                       return null;
                     },
@@ -167,7 +205,7 @@ class LoginView extends GetView<LoginController> {
                       color: AppColor.textPrimary,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'Enter password',
+                      hintText: 'enter_password_hint'.tr,
                       hintStyle: GoogleFonts.lato(
                         fontSize: 14.sp,
                         color: AppColor.textHint,
@@ -211,7 +249,7 @@ class LoginView extends GetView<LoginController> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Phone Number',
+                        'phone_number'.tr,
                         style: GoogleFonts.lato(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.bold,
@@ -237,7 +275,7 @@ class LoginView extends GetView<LoginController> {
                                 ),
                                 SizedBox(width: 4.w),
                                 Text(
-                                  'Edit Number',
+                                  'edit_number'.tr,
                                   style: GoogleFonts.lato(
                                     fontSize: 12.sp,
                                     fontWeight: FontWeight.bold,
@@ -356,7 +394,7 @@ class LoginView extends GetView<LoginController> {
                   if (controller.isOtpSent.value) ...[
                     SizedBox(height: 16.h),
                     Text(
-                      'OTP Code',
+                      'otp_code'.tr,
                       style: GoogleFonts.lato(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.bold,
@@ -378,7 +416,7 @@ class LoginView extends GetView<LoginController> {
                         color: AppColor.textPrimary,
                       ),
                       decoration: InputDecoration(
-                        hintText: 'Enter OTP code',
+                        hintText: 'enter_otp_hint'.tr,
                         hintStyle: GoogleFonts.lato(
                           fontSize: 14.sp,
                           letterSpacing: 0,
@@ -413,7 +451,7 @@ class LoginView extends GetView<LoginController> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Enter 6-digit verification code',
+                          'enter_6_digit_otp'.tr,
                           style: GoogleFonts.lato(
                             fontSize: 11.5.sp,
                             color: AppColor.textSecondary,
@@ -424,7 +462,7 @@ class LoginView extends GetView<LoginController> {
                               ? null
                               : controller.requestOtp,
                           child: Text(
-                            'Resend OTP',
+                            'resend_otp'.tr,
                             style: GoogleFonts.lato(
                               fontSize: 12.sp,
                               fontWeight: FontWeight.bold,
@@ -473,10 +511,10 @@ class LoginView extends GetView<LoginController> {
                           )
                         : Text(
                             !controller.isOtpLogin.value
-                                ? 'Sign In'
+                                ? 'sign_in'.tr
                                 : (controller.isOtpSent.value
-                                      ? 'Verify & Sign In'
-                                      : 'Verify Phone'),
+                                      ? 'verify_and_sign_in'.tr
+                                      : 'verify_phone'.tr),
                             style: GoogleFonts.lato(
                               fontSize: 15.sp,
                               fontWeight: FontWeight.bold,
@@ -501,8 +539,8 @@ class LoginView extends GetView<LoginController> {
                     ),
                     label: Text(
                       controller.isOtpLogin.value
-                          ? 'Login with Password instead'
-                          : 'Login with OTP',
+                          ? 'login_with_password'.tr
+                          : 'login_with_otp'.tr,
                       style: GoogleFonts.lato(
                         fontSize: 13.5.sp,
                         fontWeight: FontWeight.w700,
@@ -519,7 +557,7 @@ class LoginView extends GetView<LoginController> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      "Don't have an account? ",
+                      "dont_have_account".tr,
                       style: GoogleFonts.lato(
                         fontSize: 13.sp,
                         color: AppColor.textSecondary,
@@ -528,7 +566,7 @@ class LoginView extends GetView<LoginController> {
                     GestureDetector(
                       onTap: controller.goToSignup,
                       child: Text(
-                        'Sign Up',
+                        'sign_up'.tr,
                         style: GoogleFonts.lato(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.bold,

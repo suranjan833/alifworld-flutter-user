@@ -107,11 +107,11 @@ class LoginController extends GetxController {
 
   String? validatePhoneInput(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Please enter your phone number';
+      return 'please_enter_phone'.tr;
     }
     final cleanDigits = value.replaceAll(RegExp(r'\D'), '');
     if (cleanDigits.length < 10 || cleanDigits.length > 11) {
-      return 'Please enter a valid 11-digit phone number';
+      return 'please_enter_valid_phone'.tr;
     }
     return null;
   }
@@ -181,13 +181,13 @@ class LoginController extends GetxController {
               response.data['error']['message'] != null) {
             msg = response.data['error']['message'].toString();
           }
-          showSnack('Login Failed', msg, bg: AppColor.red);
+          showSnack('login_failed'.tr, msg, bg: AppColor.red);
         }
       } catch (e) {
         isLoading.value = false;
         showSnack(
-          'Login Error',
-          'Something went wrong. Please try again.',
+          'login_error'.tr,
+          'something_went_wrong'.tr,
           bg: AppColor.red,
         );
       }
@@ -199,7 +199,7 @@ class LoginController extends GetxController {
     final error = validatePhoneInput(phoneController.text);
     phoneError.value = error;
     if (error != null) {
-      showSnack('Invalid Phone', error, bg: AppColor.red);
+      showSnack('invalid_phone'.tr, error, bg: AppColor.red);
       return;
     }
 
@@ -237,10 +237,10 @@ class LoginController extends GetxController {
         }
 
         showSnack(
-          'OTP Sent',
+          'otp_sent'.tr,
           devCode != null
               ? 'Verification code ($devCode) copied to OTP section.'
-              : 'An OTP has been sent to ${phoneController.text.trim()}',
+              : '${"otp_sent".tr}: ${phoneController.text.trim()}',
           bg: AppColor.black87,
         );
       } else {
@@ -252,13 +252,13 @@ class LoginController extends GetxController {
             response.data['error']['message'] != null) {
           msg = response.data['error']['message'].toString();
         }
-        showSnack('OTP Error', msg, bg: AppColor.red);
+        showSnack('otp_error'.tr, msg, bg: AppColor.red);
       }
     } catch (e) {
       isLoading.value = false;
       showSnack(
-        'OTP Error',
-        'Something went wrong. Please try again.',
+        'otp_error'.tr,
+        'something_went_wrong'.tr,
         bg: AppColor.red,
       );
     }
@@ -267,7 +267,7 @@ class LoginController extends GetxController {
   /// 3. Verify OTP (POST /auth/otp/verify)
   Future<void> verifyOtp() async {
     if (otpController.text.trim().length < 4) {
-      showSnack('Invalid OTP', 'Please enter a valid OTP code', bg: AppColor.red);
+      showSnack('invalid_otp'.tr, 'enter_valid_otp'.tr, bg: AppColor.red);
       return;
     }
 

@@ -46,8 +46,11 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
   final userEmail = ''.obs;
   final userPhone = ''.obs;
   final memberSince = ''.obs;
-  final currentLanguage = 'English'.obs;
-  final currentLangCode = 'en'.obs;
+  final currentLanguage = (AppTranslations.currentLanguageCode == 'bn'
+          ? 'Bangla (বাংলা)'
+          : 'English')
+      .obs;
+  final currentLangCode = AppTranslations.currentLanguageCode.obs;
   final totalBalance = 0.0.obs;
   final myProgress = Rxn<MyProgressResponseModel>();
   final selectedClubPeriod =
@@ -278,7 +281,7 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
           onTap: () => requireLogin(() => Get.toNamed(Routes.ADVANCED_SHOPPING)),
         ),
         AccountMenuItem(
-          title: 'Wallet PIN Settings',
+          title: 'wallet_pin_settings'.tr,
           icon: Iconsax.shield_security,
           onTap: () => requireLogin(() {
             if (Get.context != null) {
@@ -396,111 +399,7 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
   }
 
   void openLanguageSelectionSheet() {
-    Get.bottomSheet(
-      Container(
-        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
-        decoration: BoxDecoration(
-          color: AppColor.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40.w,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE2E8F0),
-                  borderRadius: BorderRadius.circular(2.r),
-                ),
-              ),
-            ),
-            SizedBox(height: 16.h),
-            Text(
-              'select_language'.tr,
-              style: GoogleFonts.lato(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.bold,
-                color: AppColor.textPrimary,
-              ),
-            ),
-            SizedBox(height: 16.h),
-            Obx(
-              () => Column(
-                children: [
-                  _buildLanguageOption(
-                    code: 'en',
-                    title: 'english'.tr,
-                    isSelected: currentLangCode.value == 'en',
-                    onTap: () {
-                      currentLangCode.value = 'en';
-                      currentLanguage.value = 'English';
-                      AppTranslations.changeLanguage('en');
-                      update();
-                      Get.back();
-                    },
-                  ),
-                  SizedBox(height: 10.h),
-                  _buildLanguageOption(
-                    code: 'bn',
-                    title: 'bangla'.tr,
-                    isSelected: currentLangCode.value == 'bn',
-                    onTap: () {
-                      currentLangCode.value = 'bn';
-                      currentLanguage.value = 'Bangla (বাংলা)';
-                      AppTranslations.changeLanguage('bn');
-                      update();
-                      Get.back();
-                    },
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 16.h),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLanguageOption({
-    required String code,
-    required String title,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12.r),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFFFF7E6) : const Color(0xFFF8F9FA),
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(
-            color: isSelected ? AppColor.primary : const Color(0xFFE2E8F0),
-            width: isSelected ? 1.5 : 1.0,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              title,
-              style: GoogleFonts.lato(
-                fontSize: 15.sp,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected ? AppColor.primaryDark : AppColor.textPrimary,
-              ),
-            ),
-            if (isSelected)
-              Icon(Icons.check_circle, color: AppColor.primaryDark, size: 20.r),
-          ],
-        ),
-      ),
-    );
+    AppTranslations.openLanguageSelectionSheet();
   }
 
   void openMyProfileSheet() {

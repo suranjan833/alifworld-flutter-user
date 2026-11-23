@@ -8,6 +8,7 @@ import 'package:iconsax/iconsax.dart';
 import '../../../data/config/app_color.dart';
 import '../../../data/config/app_image.dart';
 import '../../../data/config/functions/dio_function/app_config.dart';
+import '../../../data/services/app_translations.dart';
 import '../../../data/services/wishlist_service.dart';
 import '../../../data/widgets/brand_logo_widget.dart';
 import '../../../data/widgets/points_badge.dart';
@@ -840,30 +841,33 @@ class HomeView extends GetView<HomeController> {
                 ),
               ),
               // Language Selector
-              Container(
-                margin: EdgeInsets.only(left: 4.w),
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'EN',
-                      style: GoogleFonts.lato(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.bold,
+              GestureDetector(
+                onTap: () => AppTranslations.openLanguageSelectionSheet(),
+                child: Container(
+                  margin: EdgeInsets.only(left: 4.w),
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        AppTranslations.currentLanguageCode == 'bn' ? 'বাং' : 'EN',
+                        style: GoogleFonts.lato(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColor.textPrimary,
+                        ),
+                      ),
+                      Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: 16.r,
                         color: AppColor.textPrimary,
                       ),
-                    ),
-                    Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      size: 16.r,
-                      color: AppColor.textPrimary,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],

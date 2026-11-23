@@ -65,7 +65,7 @@ class SignupView extends GetView<SignupController> {
 
                 // Header Title
                 Text(
-                  'Create Account',
+                  'create_account'.tr,
                   style: GoogleFonts.lato(
                     fontSize: 24.sp,
                     fontWeight: FontWeight.w800,
@@ -75,7 +75,7 @@ class SignupView extends GetView<SignupController> {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  'Sign up now to get started with your account.',
+                  'signup_subtitle'.tr,
                   style: GoogleFonts.lato(
                     fontSize: 13.sp,
                     color: AppColor.textSecondary,
@@ -85,7 +85,7 @@ class SignupView extends GetView<SignupController> {
                 SizedBox(height: 20.h),
 
                 // 1. Full Name
-                _buildFieldLabel('Full Name'),
+                _buildFieldLabel('full_name'.tr),
                 SizedBox(height: 4.h),
                 TextFormField(
                   controller: controller.nameController,
@@ -93,7 +93,7 @@ class SignupView extends GetView<SignupController> {
                   textCapitalization: TextCapitalization.words,
                   style: _inputTextStyle,
                   decoration: _buildInputDecoration(
-                    hintText: 'Enter your full name',
+                    hintText: 'enter_full_name'.tr,
                     prefixIcon: Iconsax.user,
                   ),
                 ),
@@ -647,7 +647,7 @@ class SignupView extends GetView<SignupController> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Already have an account? ',
+                      'already_have_account'.tr,
                       style: GoogleFonts.lato(
                         fontSize: 13.sp,
                         color: AppColor.textSecondary,
@@ -656,7 +656,7 @@ class SignupView extends GetView<SignupController> {
                     GestureDetector(
                       onTap: controller.goToLogin,
                       child: Text(
-                        'Log In',
+                        'sign_in'.tr,
                         style: GoogleFonts.lato(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.bold,

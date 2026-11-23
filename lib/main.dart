@@ -80,7 +80,7 @@ void main() async {
           debugShowCheckedModeBanner: false,
           title: "ALIF",
           translations: AppTranslations(),
-          locale: const Locale('en', 'US'),
+          locale: AppTranslations.currentLocale,
           fallbackLocale: const Locale('en', 'US'),
           theme: ThemeData(
             useMaterial3: true,
