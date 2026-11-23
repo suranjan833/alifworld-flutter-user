@@ -229,6 +229,7 @@ class _SkeletonCartItem extends GetView<SkeletonShimmerController> {
         border: Border.all(color: const Color(0xFFF1F3F7), width: 1.r),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             width: 72.w,
@@ -239,13 +240,15 @@ class _SkeletonCartItem extends GetView<SkeletonShimmerController> {
             ),
           ),
           SizedBox(width: 12.w),
-          Expanded(
+          Flexible(
+            fit: FlexFit.loose,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 SkeletonBox(width: 120.w, height: 13.h, radius: 6),
                 SizedBox(height: 8.h),
-                SkeletonBox(width: double.infinity, height: 10.h, radius: 5),
+                SkeletonBox(width: 200.w, height: 10.h, radius: 5),
                 SizedBox(height: 8.h),
                 SkeletonBox(width: 80.w, height: 14.h, radius: 7),
               ],

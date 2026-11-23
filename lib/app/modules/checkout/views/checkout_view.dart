@@ -6,6 +6,7 @@ import 'package:iconsax/iconsax.dart';
 
 import '../../../data/config/app_color.dart';
 import '../../../data/config/functions/dio_function/app_config.dart';
+import '../../../data/widgets/skeleton_box.dart';
 import '../controllers/checkout_controller.dart';
 
 class CheckoutView extends GetView<CheckoutController> {
@@ -66,15 +67,52 @@ class CheckoutView extends GetView<CheckoutController> {
                   ),
                   SizedBox(height: 8.h),
                   Obx(() {
-                    if (controller.isLoadingAddresses.value) {
-                      return Container(
-                        padding: EdgeInsets.all(20.r),
-                        decoration: BoxDecoration(
-                          color: AppColor.white,
-                          borderRadius: BorderRadius.circular(16.r),
-                        ),
-                        child: const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                    if (controller.isLoadingAddresses.value &&
+                        controller.addresses.isEmpty) {
+                      return SkeletonShimmer(
+                        child: Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.all(16.r),
+                          decoration: BoxDecoration(
+                            color: AppColor.white,
+                            borderRadius: BorderRadius.circular(16.r),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                          child: Row(
+                            children: [
+                              SkeletonBox(
+                                width: 44.r,
+                                height: 44.r,
+                                circle: true,
+                              ),
+                              SizedBox(width: 14.w),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SkeletonBox(
+                                      width: 130.w,
+                                      height: 14.h,
+                                      radius: 6,
+                                    ),
+                                    SizedBox(height: 8.h),
+                                    SkeletonBox(
+                                      width: double.infinity,
+                                      height: 12.h,
+                                      radius: 5,
+                                    ),
+                                    SizedBox(height: 6.h),
+                                    SkeletonBox(
+                                      width: 100.w,
+                                      height: 11.h,
+                                      radius: 5,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     }

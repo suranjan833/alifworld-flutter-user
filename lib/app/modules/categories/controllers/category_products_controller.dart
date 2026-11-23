@@ -8,6 +8,34 @@ import '../../bag/controllers/bag_controller.dart';
 import '../models/product_model.dart';
 
 class CategoryProductsController extends GetxController {
+  static const String _kCatProductsPrefix = 'cached_cat_products_v2_';
+  static const String _kCatSubCatsPrefix = 'cached_cat_subcats_v2_';
+
+  static final Map<String, List<ProductModel>> _memoryProductsCache = {};
+  static final Map<String, List<Map<String, dynamic>>> _memorySubCategoriesCache = {};
+
+  static const Map<String, String> _subCatIcons = {
+    'mobile-phones': 'https://cdn-icons-png.flaticon.com/512/644/644458.png',
+    'mobile': 'https://cdn-icons-png.flaticon.com/512/644/644458.png',
+    'laptops-computers': 'https://cdn-icons-png.flaticon.com/512/3067/3067257.png',
+    'computers': 'https://cdn-icons-png.flaticon.com/512/3067/3067257.png',
+    'tablets': 'https://cdn-icons-png.flaticon.com/512/3067/3067257.png',
+    'cameras-drones': 'https://cdn-icons-png.flaticon.com/512/2950/2950711.png',
+    'cameras': 'https://cdn-icons-png.flaticon.com/512/2950/2950711.png',
+    'audio-headphones': 'https://cdn-icons-png.flaticon.com/512/3067/3067257.png',
+    'audio': 'https://cdn-icons-png.flaticon.com/512/3067/3067257.png',
+    'wearables': 'https://cdn-icons-png.flaticon.com/512/2933/2933245.png',
+    'home-appliances': 'https://cdn-icons-png.flaticon.com/512/3076/3076042.png',
+    'small-appliances': 'https://cdn-icons-png.flaticon.com/512/3076/3076042.png',
+    'gaming': 'https://cdn-icons-png.flaticon.com/512/1410/1410332.png',
+    'video-games': 'https://cdn-icons-png.flaticon.com/512/1410/1410332.png',
+    'footwear': 'https://cdn-icons-png.flaticon.com/512/5499/5499206.png',
+    'shoes': 'https://cdn-icons-png.flaticon.com/512/5499/5499206.png',
+    'mens-fashion': 'https://cdn-icons-png.flaticon.com/512/3531/3531744.png',
+    'clothing': 'https://cdn-icons-png.flaticon.com/512/3531/3531744.png',
+    'womens-fashion': 'https://cdn-icons-png.flaticon.com/512/3531/3531804.png',
+  };
+
   final categoryName = 'All Categories'.obs;
   final categoryImage = ''.obs;
   final categorySlug = ''.obs;
@@ -34,6 +62,8 @@ class CategoryProductsController extends GetxController {
   void onInit() {
     super.onInit();
     final args = Get.arguments;
+    List<ProductModel>? initialPassedProducts;
+
     if (args != null && args is Map) {
       if (args.containsKey('name') && args['name'] != null) {
         categoryName.value = args['name'].toString();
@@ -52,29 +82,109 @@ class CategoryProductsController extends GetxController {
       } else if (args.containsKey('brand')) {
         brandSlug.value = args['brand'].toString().toLowerCase();
       }
+
       if (args.containsKey('children') && args['children'] is List) {
         final childrenList = args['children'] as List;
         if (childrenList.isNotEmpty) {
           _populateSubCategories(childrenList);
         }
       }
+
+      if (args.containsKey('initialProducts') && args['initialProducts'] is List) {
+        try {
+          final rawInit = args['initialProducts'] as List;
+          initialPassedProducts = rawInit
+              .whereType<Map>()
+              .map((e) => ProductModel.fromJson(Map<String, dynamic>.from(e)))
+              .toList();
+        } catch (_) {}
+      }
     }
 
-    _initialize();
+    _loadFromCache(initialPassedProducts: initialPassedProducts);
+    _initialize(isSilent: allProducts.isNotEmpty);
   }
 
   bool get isBrandView => brandSlug.value.isNotEmpty;
   bool get showSubCategorySidebar => !isBrandView && subCategories.length > 1;
 
-  Future<void> _initialize() async {
-    isLoading.value = true;
+  String _getCacheKey(String slugOrCategory) {
+    if (isBrandView) return 'brand_${brandSlug.value.toLowerCase().trim()}';
+    final s = slugOrCategory.toLowerCase().trim();
+    return s.isNotEmpty ? s : 'all';
+  }
+
+  List<ProductModel>? _getStoredProducts(String cacheKey) {
+    if (_memoryProductsCache.containsKey(cacheKey) &&
+        _memoryProductsCache[cacheKey]!.isNotEmpty) {
+      return _memoryProductsCache[cacheKey];
+    }
     try {
-      // If viewing a category (not a brand) and no subcategories were passed, fetch from /catalog/categories
+      final stored = getBox.read('$_kCatProductsPrefix$cacheKey');
+      if (stored is List && stored.isNotEmpty) {
+        final list = stored
+            .whereType<Map>()
+            .map((e) => ProductModel.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
+        if (list.isNotEmpty) {
+          _memoryProductsCache[cacheKey] = list;
+          return list;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  void _loadFromCache({List<ProductModel>? initialPassedProducts}) {
+    final rootSlug = categorySlug.value.toLowerCase().trim();
+
+    if (!isBrandView && subCategories.length <= 1 && rootSlug.isNotEmpty) {
+      if (_memorySubCategoriesCache.containsKey(rootSlug) &&
+          _memorySubCategoriesCache[rootSlug]!.isNotEmpty) {
+        subCategories.assignAll(_memorySubCategoriesCache[rootSlug]!);
+      } else {
+        try {
+          final storedSub = getBox.read('$_kCatSubCatsPrefix$rootSlug');
+          if (storedSub is List && storedSub.isNotEmpty) {
+            final parsedSub = storedSub
+                .whereType<Map>()
+                .map((e) => Map<String, dynamic>.from(e))
+                .toList();
+            if (parsedSub.isNotEmpty) {
+              _memorySubCategoriesCache[rootSlug] = parsedSub;
+              subCategories.assignAll(parsedSub);
+            }
+          }
+        } catch (_) {}
+      }
+    }
+
+    final cacheKey = _getCacheKey(rootSlug);
+    if (initialPassedProducts != null && initialPassedProducts.isNotEmpty) {
+      allProducts.assignAll(initialPassedProducts);
+      _memoryProductsCache[cacheKey] = initialPassedProducts;
+      isLoading.value = false;
+      return;
+    }
+
+    final cached = _getStoredProducts(cacheKey);
+    if (cached != null && cached.isNotEmpty) {
+      allProducts.assignAll(cached);
+      isLoading.value = false;
+      return;
+    }
+
+    isLoading.value = true;
+  }
+
+  Future<void> _initialize({bool isSilent = false}) async {
+    if (!isSilent) isLoading.value = true;
+    try {
       if (!isBrandView && subCategories.length <= 1 && categorySlug.value.isNotEmpty) {
         await _fetchSubCategoriesFromApi();
       }
       await _syncWishlistFromApi();
-      await _loadProductsForSelected();
+      await _loadProductsForSelected(isSilent: isSilent);
     } finally {
       isLoading.value = false;
       _hasLoadedOnce = true;
@@ -94,55 +204,30 @@ class CategoryProductsController extends GetxController {
     for (var c in childrenList) {
       if (c is Map) {
         final slug = c['slug']?.toString() ?? '';
-        final name = c['name']?.toString() ?? '';
         dynSubCats.add({
           'id': c['id']?.toString() ?? slug,
-          'name': name,
+          'name': c['name']?.toString() ?? '',
           'slug': slug,
           'icon': _getIconForSubcategory(slug, c['imageUrl']?.toString() ?? c['image']?.toString()),
         });
       }
     }
     subCategories.assignAll(dynSubCats);
+
+    final cacheSubKey = rootSlug.toLowerCase().trim();
+    if (cacheSubKey.isNotEmpty) {
+      _memorySubCategoriesCache[cacheSubKey] = dynSubCats;
+      try {
+        getBox.write('$_kCatSubCatsPrefix$cacheSubKey', dynSubCats);
+      } catch (_) {}
+    }
   }
 
   String _getIconForSubcategory(String slug, String? existingIcon) {
     if (existingIcon != null && existingIcon.isNotEmpty) {
       return resolveImageUrl(existingIcon);
     }
-    switch (slug.toLowerCase()) {
-      case 'mobile-phones':
-      case 'mobile':
-        return 'https://cdn-icons-png.flaticon.com/512/644/644458.png';
-      case 'laptops-computers':
-      case 'computers':
-      case 'tablets':
-        return 'https://cdn-icons-png.flaticon.com/512/3067/3067257.png';
-      case 'cameras-drones':
-      case 'cameras':
-        return 'https://cdn-icons-png.flaticon.com/512/2950/2950711.png';
-      case 'audio-headphones':
-      case 'audio':
-        return 'https://cdn-icons-png.flaticon.com/512/3067/3067257.png';
-      case 'wearables':
-        return 'https://cdn-icons-png.flaticon.com/512/2933/2933245.png';
-      case 'home-appliances':
-      case 'small-appliances':
-        return 'https://cdn-icons-png.flaticon.com/512/3076/3076042.png';
-      case 'gaming':
-      case 'video-games':
-        return 'https://cdn-icons-png.flaticon.com/512/1410/1410332.png';
-      case 'footwear':
-      case 'shoes':
-        return 'https://cdn-icons-png.flaticon.com/512/5499/5499206.png';
-      case 'mens-fashion':
-      case 'clothing':
-        return 'https://cdn-icons-png.flaticon.com/512/3531/3531744.png';
-      case 'womens-fashion':
-        return 'https://cdn-icons-png.flaticon.com/512/3531/3531804.png';
-      default:
-        return 'https://cdn-icons-png.flaticon.com/512/3081/3081986.png';
-    }
+    return _subCatIcons[slug.toLowerCase()] ?? 'https://cdn-icons-png.flaticon.com/512/3081/3081986.png';
   }
 
   Future<void> _fetchSubCategoriesFromApi() async {
@@ -153,12 +238,9 @@ class CategoryProductsController extends GetxController {
         if (rawData is Map<String, dynamic> && rawData.containsKey('data')) {
           rawData = rawData['data'];
         }
-        List? catList;
-        if (rawData is Map<String, dynamic> && rawData.containsKey('categories')) {
-          catList = rawData['categories'] as List?;
-        } else if (rawData is List) {
-          catList = rawData;
-        }
+        List? catList = rawData is Map<String, dynamic> && rawData.containsKey('categories')
+            ? rawData['categories'] as List?
+            : (rawData is List ? rawData : null);
 
         if (catList != null) {
           final currentSlug = categorySlug.value.toLowerCase();
@@ -183,7 +265,6 @@ class CategoryProductsController extends GetxController {
                 }
               }
 
-              // Check if requested category is a subcategory
               if (children != null && children.isNotEmpty) {
                 final matchedChild = children.firstWhere(
                   (c) =>
@@ -213,26 +294,27 @@ class CategoryProductsController extends GetxController {
     } catch (_) {}
   }
 
-  /// Load live products strictly from GET /catalog/search
-  Future<void> _loadProductsForSelected() async {
-    isProductsLoading.value = true;
-    try {
-      String endpoint;
-      if (brandSlug.value.isNotEmpty) {
-        endpoint = 'catalog/search?brand=${brandSlug.value}';
-      } else {
-        String targetCategory = categorySlug.value;
-        if (selectedSubCategoryIndex.value > 0 &&
-            selectedSubCategoryIndex.value < subCategories.length) {
-          final subSlug = subCategories[selectedSubCategoryIndex.value]['slug']?.toString();
-          if (subSlug != null && subSlug.isNotEmpty) {
-            targetCategory = subSlug;
-          }
-        }
-        endpoint = targetCategory.isNotEmpty
-            ? 'catalog/search?category=$targetCategory'
-            : 'catalog/search';
+  Future<void> _loadProductsForSelected({bool isSilent = false}) async {
+    String targetCategory = categorySlug.value;
+    if (selectedSubCategoryIndex.value > 0 &&
+        selectedSubCategoryIndex.value < subCategories.length) {
+      final subSlug = subCategories[selectedSubCategoryIndex.value]['slug']?.toString();
+      if (subSlug != null && subSlug.isNotEmpty) {
+        targetCategory = subSlug;
       }
+    }
+
+    final cacheKey = _getCacheKey(targetCategory);
+    if (!isSilent && allProducts.isEmpty) {
+      isProductsLoading.value = true;
+    }
+
+    try {
+      final endpoint = brandSlug.value.isNotEmpty
+          ? 'catalog/search?brand=${brandSlug.value}'
+          : (targetCategory.isNotEmpty
+              ? 'catalog/search?category=$targetCategory'
+              : 'catalog/search');
 
       final response = await dioGet(endpoint);
       if (response.statusCode == 200 && response.data != null) {
@@ -240,47 +322,78 @@ class CategoryProductsController extends GetxController {
         if (rawData is Map<String, dynamic> && rawData.containsKey('data')) {
           rawData = rawData['data'];
         }
-        List? productList;
-        if (rawData is Map<String, dynamic> && rawData.containsKey('products')) {
-          productList = rawData['products'] as List?;
-        } else if (rawData is List) {
-          productList = rawData;
-        }
+        List? productList = rawData is Map<String, dynamic> && rawData.containsKey('products')
+            ? rawData['products'] as List?
+            : (rawData is List ? rawData : null);
 
         if (productList != null) {
-          allProducts.value = productList
+          final freshList = productList
               .whereType<Map<String, dynamic>>()
               .map((item) => ProductModel.fromJson(item))
               .toList();
-        } else {
+
+          if (!_areProductListsEqual(allProducts, freshList)) {
+            allProducts.assignAll(freshList);
+            _memoryProductsCache[cacheKey] = freshList;
+            try {
+              getBox.write('$_kCatProductsPrefix$cacheKey', productList);
+            } catch (_) {}
+          } else {
+            _memoryProductsCache[cacheKey] = freshList;
+          }
+        } else if (allProducts.isEmpty) {
           allProducts.clear();
         }
-      } else {
-        allProducts.clear();
       }
     } catch (_) {
-      allProducts.clear();
     } finally {
       isProductsLoading.value = false;
     }
   }
 
+  bool _areProductListsEqual(List<ProductModel> a, List<ProductModel> b) {
+    if (identical(a, b)) return true;
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i].id != b[i].id ||
+          a[i].price != b[i].price ||
+          a[i].originalPrice != b[i].originalPrice ||
+          a[i].stockQty != b[i].stockQty ||
+          a[i].productPoints != b[i].productPoints ||
+          a[i].title != b[i].title) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   Future<void> refreshProducts() async {
-    await _loadProductsForSelected();
+    await _loadProductsForSelected(isSilent: false);
   }
 
   bool get hasLoadedOnce => _hasLoadedOnce;
-
   List<ProductModel> get filteredProducts => allProducts;
-
   int get visibleItemCount => allProducts.length;
-
   int get totalItemCount => allProducts.length;
 
   void selectSubCategory(int index) {
     if (index >= 0 && index < subCategories.length && index != selectedSubCategoryIndex.value) {
       selectedSubCategoryIndex.value = index;
-      _loadProductsForSelected();
+
+      final subSlug = subCategories[index]['slug']?.toString() ?? '';
+      final targetCat = subSlug.isNotEmpty ? subSlug : categorySlug.value;
+      final cacheKey = _getCacheKey(targetCat);
+
+      final cached = _getStoredProducts(cacheKey);
+      if (cached != null && cached.isNotEmpty) {
+        allProducts.assignAll(cached);
+        isProductsLoading.value = false;
+        _loadProductsForSelected(isSilent: true);
+      } else {
+        allProducts.clear();
+        isProductsLoading.value = true;
+        _loadProductsForSelected(isSilent: false);
+      }
     }
   }
 

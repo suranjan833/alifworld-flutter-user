@@ -260,6 +260,8 @@ class HomeView extends GetView<HomeController> {
                     arguments: {
                       'name': rail.categoryName,
                       'slug': rail.categorySlug,
+                      'initialProducts':
+                          rail.products.map((p) => p.toJson()).toList(),
                     },
                   );
                 },

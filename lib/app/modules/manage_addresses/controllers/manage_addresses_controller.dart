@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../../../data/config/app_color.dart';
+import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/mixins/skeleton_loading_mixin.dart';
 import '../../../data/models/address_model.dart';
@@ -14,18 +15,40 @@ export '../../../data/models/address_model.dart';
 
 class ManageAddressesController extends GetxController
     with SkeletonLoadingMixin {
+  static const String _kCachedUserAddresses = 'cached_user_addresses';
   final addresses = <AddressModel>[].obs;
 
   @override
   void onInit() {
     super.onInit();
     initSkeletonLoading();
+    _loadCachedAddresses();
     fetchAddresses();
+  }
+
+  void _loadCachedAddresses() {
+    try {
+      final cached = getBox.read<List>(_kCachedUserAddresses);
+      if (cached != null && cached.isNotEmpty) {
+        final list = <AddressModel>[];
+        for (var item in cached) {
+          if (item is Map) {
+            list.add(AddressModel.fromJson(Map<String, dynamic>.from(item)));
+          }
+        }
+        if (list.isNotEmpty) {
+          addresses.assignAll(list);
+          isLoading.value = false;
+        }
+      }
+    } catch (_) {}
   }
 
   /// 1. GET /addresses - List customer's saved addresses
   Future<void> fetchAddresses() async {
-    isLoading.value = true;
+    if (addresses.isEmpty) {
+      isLoading.value = true;
+    }
     try {
       final response = await dioGet('addresses');
       if (response.statusCode == 200 && response.data != null) {
@@ -49,6 +72,8 @@ class ManageAddressesController extends GetxController
             }
           }
           addresses.assignAll(list);
+          final rawMaps = list.map((a) => a.toJson()).toList();
+          getBox.write(_kCachedUserAddresses, rawMaps);
         }
       }
     } catch (_) {
@@ -70,6 +95,8 @@ class ManageAddressesController extends GetxController
           addr.isDefault = (addr.id == addressId);
         }
         addresses.refresh();
+        final rawMaps = addresses.map((a) => a.toJson()).toList();
+        getBox.write(_kCachedUserAddresses, rawMaps);
         Get.snackbar(
           'Default Address',
           'Default delivery address updated',
@@ -88,6 +115,8 @@ class ManageAddressesController extends GetxController
       final res = await dioDelete('addresses/$addressId');
       if (res.statusCode == 200 || res.statusCode == 204) {
         addresses.removeWhere((addr) => addr.id == addressId);
+        final rawMaps = addresses.map((a) => a.toJson()).toList();
+        getBox.write(_kCachedUserAddresses, rawMaps);
         fetchAddresses(); // Re-fetch to ensure the promoted default is updated
         Get.snackbar(
           'Address Removed',

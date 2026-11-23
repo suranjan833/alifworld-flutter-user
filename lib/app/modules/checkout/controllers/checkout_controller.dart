@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../../../data/config/app_color.dart';
+import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/models/address_model.dart';
 import '../../../data/models/redeem_model.dart';
@@ -17,6 +18,10 @@ import '../../bag/controllers/bag_controller.dart';
 import '../models/checkout_quote_model.dart';
 
 class CheckoutController extends GetxController {
+  static const String _kCachedUserAddresses = 'cached_user_addresses';
+  static const String _kCachedSelectedAddressIndex = 'cached_selected_address_idx';
+  static const String _kCachedUserWallets = 'cached_user_wallets';
+
   final items = <Map<String, dynamic>>[].obs;
   final subtotal = 0.0.obs;
   final deliveryFee = 0.0.obs;
@@ -262,9 +267,55 @@ class CheckoutController extends GetxController {
         isDirectBuy.value = false;
       }
     }
+    _loadCachedAddresses();
+    _loadCachedWallets();
     fetchUserAddresses();
     fetchUserWallets();
     fetchQuote();
+  }
+
+  void _loadCachedAddresses() {
+    try {
+      final cached = getBox.read<List>(_kCachedUserAddresses);
+      if (cached != null && cached.isNotEmpty) {
+        final parsed = <Map<String, dynamic>>[];
+        for (var item in cached) {
+          if (item is Map) {
+            parsed.add(Map<String, dynamic>.from(item));
+          }
+        }
+        if (parsed.isNotEmpty) {
+          addresses.assignAll(parsed);
+          final savedIdx = getBox.read<int>(_kCachedSelectedAddressIndex);
+          if (savedIdx != null && savedIdx >= 0 && savedIdx < addresses.length) {
+            selectedAddressIndex.value = savedIdx;
+          } else {
+            final defaultIdx = parsed.indexWhere((a) => a['isDefault'] == true);
+            selectedAddressIndex.value = defaultIdx != -1 ? defaultIdx : 0;
+          }
+          isLoadingAddresses.value = false;
+        }
+      }
+    } catch (_) {}
+  }
+
+  void _loadCachedWallets() {
+    try {
+      final cached = getBox.read<List>(_kCachedUserWallets);
+      if (cached != null && cached.isNotEmpty) {
+        final list = <Map<String, dynamic>>[];
+        for (var item in cached) {
+          if (item is Map) {
+            list.add(Map<String, dynamic>.from(item));
+          }
+        }
+        if (list.isNotEmpty) {
+          userWallets.assignAll(list);
+          isLoadingWallets.value = false;
+          _ensureValidWalletSelection();
+        }
+      }
+    } catch (_) {}
   }
 
   @override
@@ -275,6 +326,7 @@ class CheckoutController extends GetxController {
 
   void selectAddress(int index) {
     selectedAddressIndex.value = index;
+    getBox.write(_kCachedSelectedAddressIndex, index);
     fetchQuote();
   }
 
@@ -300,7 +352,9 @@ class CheckoutController extends GetxController {
 
   /// GET /wallets - (§4 of checkout_flow.txt)
   Future<void> fetchUserWallets() async {
-    isLoadingWallets.value = true;
+    if (userWallets.isEmpty) {
+      isLoadingWallets.value = true;
+    }
     try {
       final res = await dioGet('wallets');
       if (res.statusCode == 200 && res.data != null) {
@@ -314,6 +368,7 @@ class CheckoutController extends GetxController {
                 .map((e) => Map<String, dynamic>.from(e as Map))
                 .toList();
             userWallets.assignAll(list);
+            getBox.write(_kCachedUserWallets, list);
           }
           if (rawData['walletCaps'] is Map) {
             final caps = rawData['walletCaps'] as Map;
@@ -355,7 +410,9 @@ class CheckoutController extends GetxController {
 
   /// 1. GET /addresses - Fetch saved addresses for user
   Future<void> fetchUserAddresses() async {
-    isLoadingAddresses.value = true;
+    if (addresses.isEmpty) {
+      isLoadingAddresses.value = true;
+    }
     try {
       final response = await dioGet('addresses');
       if (response.statusCode == 200 && response.data != null) {
@@ -397,11 +454,17 @@ class CheckoutController extends GetxController {
           }
           if (parsed.isNotEmpty) {
             addresses.assignAll(parsed);
-            final defaultIdx = parsed.indexWhere((a) => a['isDefault'] == true);
-            if (defaultIdx != -1) {
-              selectedAddressIndex.value = defaultIdx;
-            } else if (selectedAddressIndex.value >= addresses.length) {
-              selectedAddressIndex.value = 0;
+            getBox.write(_kCachedUserAddresses, parsed);
+            final savedIdx = getBox.read<int>(_kCachedSelectedAddressIndex);
+            if (savedIdx != null && savedIdx >= 0 && savedIdx < addresses.length) {
+              selectedAddressIndex.value = savedIdx;
+            } else {
+              final defaultIdx = parsed.indexWhere((a) => a['isDefault'] == true);
+              if (defaultIdx != -1) {
+                selectedAddressIndex.value = defaultIdx;
+              } else if (selectedAddressIndex.value >= addresses.length) {
+                selectedAddressIndex.value = 0;
+              }
             }
             fetchQuote();
           }
@@ -541,9 +604,11 @@ class CheckoutController extends GetxController {
       final res = await dioDelete('addresses/$addressId');
       if (res.statusCode == 200 || res.statusCode == 204) {
         addresses.removeWhere((addr) => addr['id'] == addressId);
+        getBox.write(_kCachedUserAddresses, addresses.toList());
         if (selectedAddressIndex.value >= addresses.length) {
           selectedAddressIndex.value = addresses.isNotEmpty ? 0 : 0;
         }
+        getBox.write(_kCachedSelectedAddressIndex, selectedAddressIndex.value);
         await fetchUserAddresses();
         fetchQuote();
         Get.snackbar(
