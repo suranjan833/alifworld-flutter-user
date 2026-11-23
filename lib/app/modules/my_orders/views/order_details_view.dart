@@ -6,73 +6,24 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../../../data/config/app_color.dart';
-import '../controllers/my_orders_controller.dart';
+import '../controllers/order_details_controller.dart';
 import '../models/order_model.dart';
 
-class OrderDetailsView extends StatefulWidget {
+class OrderDetailsView extends GetView<OrderDetailsController> {
   final OrderModel? order;
 
   const OrderDetailsView({super.key, this.order});
 
   @override
-  State<OrderDetailsView> createState() => _OrderDetailsViewState();
-}
-
-class _OrderDetailsViewState extends State<OrderDetailsView> {
-  late final Rx<OrderModel> orderRx;
-  final isLoading = false.obs;
-  final isCancelling = false.obs;
-
-  @override
-  void initState() {
-    super.initState();
-    OrderModel initialOrder;
-    if (widget.order != null) {
-      initialOrder = widget.order!;
-    } else if (Get.arguments is OrderModel) {
-      initialOrder = Get.arguments as OrderModel;
-    } else if (Get.arguments is Map<String, dynamic>) {
-      initialOrder = OrderModel.fromJson(Get.arguments as Map<String, dynamic>);
-    } else if (Get.arguments is String) {
-      initialOrder = OrderModel.placeholder(id: Get.arguments as String);
-    } else if (Get.parameters['id'] != null) {
-      initialOrder = OrderModel.placeholder(id: Get.parameters['id']!);
-    } else {
-      initialOrder = OrderModel.placeholder();
+  OrderDetailsController get controller {
+    if (!Get.isRegistered<OrderDetailsController>()) {
+      Get.put(OrderDetailsController());
     }
-
-    orderRx = initialOrder.obs;
-
-    // Background sync with GET /account/orders/{id}
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _syncLatestOrderDetails();
-    });
-  }
-
-  Future<void> _syncLatestOrderDetails() async {
-    final cur = orderRx.value;
-    final lookupId = cur.id.isNotEmpty ? cur.id : cur.orderId;
-    if (lookupId.isEmpty || lookupId == '#ALF-PENDING') return;
-
-    if (cur.items.isEmpty) {
-      isLoading.value = true;
+    final c = Get.find<OrderDetailsController>();
+    if (order != null && c.orderRx.value.id != order!.id) {
+      c.initOrder(explicitOrder: order);
     }
-
-    if (!Get.isRegistered<MyOrdersController>()) {
-      Get.put(MyOrdersController());
-    }
-
-    try {
-      final fresh =
-          await Get.find<MyOrdersController>().fetchOrderDetails(lookupId);
-      if (fresh != null && mounted) {
-        orderRx.value = fresh;
-      }
-    } finally {
-      if (mounted) {
-        isLoading.value = false;
-      }
-    }
+    return c;
   }
 
   @override
@@ -104,7 +55,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
             icon: Icon(Iconsax.copy, color: AppColor.textPrimary, size: 20.r),
             tooltip: 'Copy Order ID',
             onPressed: () {
-              Clipboard.setData(ClipboardData(text: orderRx.value.orderId));
+              Clipboard.setData(ClipboardData(text: controller.orderRx.value.orderId));
               Get.snackbar(
                 'Copied',
                 'Order ID copied to clipboard',
@@ -119,9 +70,9 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
         ],
       ),
       body: Obx(() {
-        final o = orderRx.value;
+        final o = controller.orderRx.value;
 
-        if (isLoading.value && o.items.isEmpty) {
+        if (controller.isLoading.value && o.items.isEmpty) {
           return const Center(
             child: CircularProgressIndicator(
               color: AppColor.primary,
@@ -130,7 +81,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
         }
 
         return RefreshIndicator(
-          onRefresh: _syncLatestOrderDetails,
+          onRefresh: controller.syncLatestOrderDetails,
           color: AppColor.primary,
           backgroundColor: AppColor.white,
           child: SingleChildScrollView(
@@ -1505,7 +1456,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
             width: double.infinity,
             height: 48.h,
             child: OutlinedButton.icon(
-              onPressed: isCancelling.value
+              onPressed: controller.isCancelling.value
                   ? null
                   : () => _showCancelOrderModal(context, o),
               icon: Icon(
@@ -1730,10 +1681,9 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                   Expanded(
                     child: Obx(
                       () => ElevatedButton(
-                        onPressed: isCancelling.value
+                        onPressed: controller.isCancelling.value
                             ? null
                             : () async {
-                                isCancelling.value = true;
                                 final reasonText =
                                     selectedReason.value == 'Other reason' &&
                                             otherReasonController.text.trim().isNotEmpty
@@ -1742,35 +1692,10 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
 
                                 final lookupId = o.id.isNotEmpty ? o.id : o.orderId;
 
-                                if (!Get.isRegistered<MyOrdersController>()) {
-                                  Get.put(MyOrdersController());
-                                }
-
-                                final success = await Get.find<MyOrdersController>()
-                                    .cancelOrder(lookupId, reason: reasonText);
-
-                                isCancelling.value = false;
+                                final success = await controller.cancelOrder(lookupId, reason: reasonText);
 
                                 if (success) {
                                   Get.back(); // Close bottomsheet
-                                  // Update local status to Cancelled immediately
-                                  orderRx.value = OrderModel(
-                                    id: o.id,
-                                    orderId: o.orderId,
-                                    date: o.date,
-                                    status: 'Cancelled',
-                                    totalAmount: o.totalAmount,
-                                    subtotal: o.subtotal,
-                                    shippingFee: o.shippingFee,
-                                    discount: o.discount,
-                                    itemCount: o.itemCount,
-                                    items: o.items,
-                                    paymentMethod: o.paymentMethod,
-                                    paymentStatus: o.paymentStatus,
-                                    address: o.address,
-                                    recipientName: o.recipientName,
-                                    phone: o.phone,
-                                  );
                                 }
                               },
                         style: ElevatedButton.styleFrom(
@@ -1781,7 +1706,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                             borderRadius: BorderRadius.circular(12.r),
                           ),
                         ),
-                        child: isCancelling.value
+                        child: controller.isCancelling.value
                             ? SizedBox(
                                 width: 20.r,
                                 height: 20.r,

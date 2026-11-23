@@ -10,26 +10,16 @@ import '../../../routes/app_pages.dart';
 import '../controllers/lottery_controller.dart';
 import '../models/lottery_model.dart';
 
-class MyLotteryTicketsView extends StatefulWidget {
+class MyLotteryTicketsView extends GetView<LotteryController> {
   const MyLotteryTicketsView({super.key});
 
   @override
-  State<MyLotteryTicketsView> createState() => _MyLotteryTicketsViewState();
-}
-
-class _MyLotteryTicketsViewState extends State<MyLotteryTicketsView> {
-  final controller = Get.find<LotteryController>();
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.fetchMyTickets(refresh: true);
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
+    if (controller.myTickets.isEmpty && !controller.isMyTicketsLoading.value) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        controller.fetchMyTickets(refresh: true);
+      });
+    }
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(

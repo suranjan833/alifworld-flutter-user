@@ -10,30 +10,22 @@ import '../../../routes/app_pages.dart';
 import '../controllers/lottery_controller.dart';
 import '../models/lottery_model.dart';
 
-class LotteryDetailView extends StatefulWidget {
+class LotteryDetailView extends GetView<LotteryController> {
   const LotteryDetailView({super.key});
 
-  @override
-  State<LotteryDetailView> createState() => _LotteryDetailViewState();
-}
-
-class _LotteryDetailViewState extends State<LotteryDetailView> {
-  final controller = Get.find<LotteryController>();
-  late String _lotteryId;
-
-  @override
-  void initState() {
-    super.initState();
-    _lotteryId = Get.arguments?.toString() ?? '';
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_lotteryId.isNotEmpty) {
-        controller.fetchLotteryDetail(_lotteryId);
-      }
-    });
-  }
+  String get _lotteryId =>
+      Get.arguments?.toString() ??
+      controller.activeLotteryDetail.value?.lottery.id ??
+      '';
 
   @override
   Widget build(BuildContext context) {
+    if (_lotteryId.isNotEmpty &&
+        controller.activeLotteryDetail.value?.lottery.id != _lotteryId) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        controller.fetchLotteryDetail(_lotteryId);
+      });
+    }
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
@@ -144,7 +136,7 @@ class _LotteryDetailViewState extends State<LotteryDetailView> {
               if (lottery.status.toLowerCase() == 'active')
                 lottery.isSeller
                     ? _buildSellerLotteryNotice()
-                    : _buildBuyTicketSection(detail),
+                    : _buildBuyTicketSection(context, detail),
 
               SizedBox(height: 18.h),
 
@@ -536,7 +528,7 @@ class _LotteryDetailViewState extends State<LotteryDetailView> {
     );
   }
 
-  Widget _buildBuyTicketSection(LotteryDetailResponseModel detail) {
+  Widget _buildBuyTicketSection(BuildContext context, LotteryDetailResponseModel detail) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w),
       padding: EdgeInsets.all(16.r),

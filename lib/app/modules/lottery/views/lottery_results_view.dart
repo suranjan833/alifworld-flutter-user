@@ -9,30 +9,22 @@ import '../../../data/widgets/skeleton_box.dart';
 import '../controllers/lottery_controller.dart';
 import '../models/lottery_model.dart';
 
-class LotteryResultsView extends StatefulWidget {
+class LotteryResultsView extends GetView<LotteryController> {
   const LotteryResultsView({super.key});
 
-  @override
-  State<LotteryResultsView> createState() => _LotteryResultsViewState();
-}
-
-class _LotteryResultsViewState extends State<LotteryResultsView> {
-  final controller = Get.find<LotteryController>();
-  late String _lotteryId;
-
-  @override
-  void initState() {
-    super.initState();
-    _lotteryId = Get.arguments?.toString() ?? '';
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_lotteryId.isNotEmpty) {
-        controller.fetchLotteryResults(_lotteryId);
-      }
-    });
-  }
+  String get _lotteryId =>
+      Get.arguments?.toString() ??
+      controller.lotteryResults.value?.lotteryId ??
+      '';
 
   @override
   Widget build(BuildContext context) {
+    if (_lotteryId.isNotEmpty &&
+        controller.lotteryResults.value?.lotteryId != _lotteryId) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        controller.fetchLotteryResults(_lotteryId);
+      });
+    }
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(

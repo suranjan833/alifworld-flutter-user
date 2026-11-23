@@ -268,6 +268,7 @@ class AppPages {
     GetPage(
       name: _Paths.ORDER_DETAILS,
       page: () => const OrderDetailsView(),
+      binding: MyOrdersBinding(),
       transition: Transition.rightToLeft,
     ),
     GetPage(
