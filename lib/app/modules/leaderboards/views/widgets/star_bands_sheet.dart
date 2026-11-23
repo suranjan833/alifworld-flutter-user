@@ -8,16 +8,9 @@ import '../../../../data/services/rewards_service.dart';
 import '../../controllers/leaderboard_controller.dart';
 
 class StarBandsSheet extends GetView<LeaderboardController> {
-  final List<StarBandModel>? bands;
-  final String? period;
+  const StarBandsSheet({super.key});
 
-  const StarBandsSheet({
-    super.key,
-    this.bands,
-    this.period,
-  });
-
-  static void show(BuildContext context, {String? period}) {
+  static void show(BuildContext context) {
     if (Get.isRegistered<RewardsService>()) {
       RewardsService.to.fetchRewardsInfo();
     }
@@ -25,83 +18,26 @@ class StarBandsSheet extends GetView<LeaderboardController> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => StarBandsSheet(period: period),
+      builder: (ctx) => const StarBandsSheet(),
     );
-  }
-
-  static String _formatNumber(int number) {
-    return number.toString().replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (m) => '${m[1]},',
-        );
   }
 
   @override
   Widget build(BuildContext context) {
-    String resolvedPeriodKey = 'daily';
-    if (period != null && period!.trim().isNotEmpty) {
-      resolvedPeriodKey = period!.toLowerCase().trim();
-    } else if (Get.isRegistered<LeaderboardController>()) {
-      resolvedPeriodKey = controller.selectedPeriod.value.toLowerCase().trim();
-    }
-
-    final periodTitle = resolvedPeriodKey.isNotEmpty
-        ? (resolvedPeriodKey[0].toUpperCase() + resolvedPeriodKey.substring(1))
-        : 'Daily';
-
     return Obx(() {
       final rewardsInfo = Get.isRegistered<RewardsService>()
           ? RewardsService.to.info.value
           : null;
-      final clubPeriodTiers = rewardsInfo?.customerClub[resolvedPeriodKey];
-
-      final bronzePts = clubPeriodTiers?.bronze?.threshold ??
-          (resolvedPeriodKey == 'daily'
-              ? 1000
-              : (resolvedPeriodKey == 'weekly'
-                  ? 10000
-                  : (resolvedPeriodKey == 'monthly' ? 50000 : 100000)));
-      final bronzePct = clubPeriodTiers?.bronze?.pct ?? 1;
-
-      final silverPts = clubPeriodTiers?.silver?.threshold ??
-          (resolvedPeriodKey == 'daily'
-              ? 2000
-              : (resolvedPeriodKey == 'weekly'
-                  ? 20000
-                  : (resolvedPeriodKey == 'monthly' ? 100000 : 1500000)));
-      final silverPct = clubPeriodTiers?.silver?.pct ?? 2;
-
-      final goldPts = clubPeriodTiers?.gold?.threshold ??
-          (resolvedPeriodKey == 'daily'
-              ? 5000
-              : (resolvedPeriodKey == 'weekly'
-                  ? 40000
-                  : (resolvedPeriodKey == 'monthly' ? 200000 : 2500000)));
-      final goldPct = clubPeriodTiers?.gold?.pct ?? 3;
-
-      final tierItems = [
-        _ClubTierItem(
-          'Bronze',
-          '${_formatNumber(bronzePts)} points',
-          '$bronzePct% pool share',
-          const Color(0xFFB45309),
-        ),
-        _ClubTierItem(
-          'Silver',
-          '${_formatNumber(silverPts)} points',
-          '$silverPct% pool share',
-          const Color(0xFF64748B),
-        ),
-        _ClubTierItem(
-          'Gold',
-          '${_formatNumber(goldPts)} points',
-          '$goldPct% pool share',
-          const Color(0xFFD97706),
-        ),
-      ];
+      final bands = (rewardsInfo != null && rewardsInfo.customerStarBands.isNotEmpty)
+          ? rewardsInfo.customerStarBands
+          : [
+              StarBandModel(key: 'mega_star', from: 1, to: 10, pct: 1),
+              StarBandModel(key: 'super_star', from: 11, to: 50, pct: 1),
+              StarBandModel(key: 'star', from: 51, to: 100, pct: 1),
+            ];
 
       return Container(
-        padding: EdgeInsets.fromLTRB(20.w, 18.h, 20.w, 24.h),
+        padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 24.h),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
@@ -112,109 +48,119 @@ class StarBandsSheet extends GetView<LeaderboardController> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Top drag pill
+              Center(
+                child: Container(
+                  width: 44.w,
+                  height: 4.h,
+                  margin: EdgeInsets.only(bottom: 16.h),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                ),
+              ),
+
+              // Header: Icon + Title + Subtitle
               Row(
                 children: [
-                  Expanded(
-                    child: Text(
-                      'Club details · $periodTitle',
-                      style: GoogleFonts.inter(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF0F172A),
-                        letterSpacing: -0.2,
+                  Container(
+                    width: 44.r,
+                    height: 44.r,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFFF1EB),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.auto_awesome_outlined,
+                        size: 22.r,
+                        color: const Color(0xFFEA580C),
                       ),
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
-                    behavior: HitTestBehavior.opaque,
-                    child: Container(
-                      width: 32.r,
-                      height: 32.r,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFF1F5F9),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.close_rounded,
-                          size: 18.r,
-                          color: const Color(0xFF334155),
+                  SizedBox(width: 14.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Conditions & Rewards',
+                          style: GoogleFonts.inter(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF0F172A),
+                            letterSpacing: -0.2,
+                          ),
                         ),
-                      ),
+                        SizedBox(height: 2.h),
+                        Text(
+                          'Star rank bands and pool rewards',
+                          style: GoogleFonts.inter(
+                            fontSize: 12.5.sp,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 22.h),
+              SizedBox(height: 20.h),
 
-              ...List.generate(tierItems.length, (index) {
-                final item = tierItems[index];
-                return Column(
+              // Band Cards
+              ...bands.map((band) => _buildBandCard(band)),
+              SizedBox(height: 14.h),
+
+              // Bottom Info Box
+              Container(
+                padding: EdgeInsets.all(14.r),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(16.r),
+                  border: Border.all(
+                    color: const Color(0xFFE2E8F0),
+                    width: 1.0,
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: 4.h),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 10.r,
-                            height: 10.r,
-                            decoration: BoxDecoration(
-                              color: item.color,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          SizedBox(width: 10.w),
-                          SizedBox(
-                            width: 60.w,
-                            child: Text(
-                              item.name,
-                              style: GoogleFonts.inter(
-                                fontSize: 14.5.sp,
-                                fontWeight: FontWeight.w800,
-                                color: const Color(0xFF0F172A),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 12.w),
-                          Text(
-                            item.points,
-                            style: GoogleFonts.inter(
-                              fontSize: 13.5.sp,
-                              fontWeight: FontWeight.w400,
-                              color: const Color(0xFF475569),
-                            ),
-                          ),
-                          const Spacer(),
-                          Text(
-                            item.share,
-                            style: GoogleFonts.inter(
-                              fontSize: 14.5.sp,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFFEA580C),
-                            ),
-                          ),
-                        ],
+                    Container(
+                      width: 20.r,
+                      height: 20.r,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0xFFEA580C),
+                          width: 1.5,
+                        ),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        '!',
+                        style: GoogleFonts.inter(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w900,
+                          color: const Color(0xFFEA580C),
+                          height: 1.0,
+                        ),
                       ),
                     ),
-                    if (index != tierItems.length - 1)
-                      Divider(
-                        height: 24.h,
-                        thickness: 1.r,
-                        color: const Color(0xFFF1F5F9),
+                    SizedBox(width: 10.w),
+                    Expanded(
+                      child: Text(
+                        'Rankings are based on points earned from posted orders during the selected trailing period. Pool rewards are distributed equally among members of each band.',
+                        style: GoogleFonts.inter(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w400,
+                          color: const Color(0xFF64748B),
+                          height: 1.4,
+                        ),
                       ),
+                    ),
                   ],
-                );
-              }),
-              SizedBox(height: 14.h),
-              Center(
-                child: Container(
-                  width: 50.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF64748B).withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
                 ),
               ),
             ],
@@ -223,13 +169,77 @@ class StarBandsSheet extends GetView<LeaderboardController> {
       );
     });
   }
-}
 
-class _ClubTierItem {
-  final String name;
-  final String points;
-  final String share;
-  final Color color;
+  Widget _buildBandCard(StarBandModel band) {
+    Color tagBg;
+    Color tagColor;
+    if (band.key == 'mega_star') {
+      tagBg = const Color(0xFFFEF3C7);
+      tagColor = const Color(0xFFD97706);
+    } else if (band.key == 'super_star') {
+      tagBg = const Color(0xFFDBEAFE);
+      tagColor = const Color(0xFF2563EB);
+    } else {
+      tagBg = const Color(0xFFD1FAE5);
+      tagColor = const Color(0xFF059669);
+    }
 
-  const _ClubTierItem(this.name, this.points, this.share, this.color);
+    return Container(
+      margin: EdgeInsets.only(bottom: 12.h),
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: const Color(0xFFE2E8F0),
+          width: 1.0,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+            decoration: BoxDecoration(
+              color: tagBg,
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+            child: Text(
+              band.displayName,
+              style: GoogleFonts.inter(
+                fontSize: 12.5.sp,
+                fontWeight: FontWeight.w700,
+                color: tagColor,
+              ),
+            ),
+          ),
+          SizedBox(width: 14.w),
+          Expanded(
+            child: Text(
+              'Ranks ${band.from} – ${band.to}',
+              style: GoogleFonts.inter(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF0F172A),
+              ),
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF1EB),
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+            child: Text(
+              '${band.pct}% Pool',
+              style: GoogleFonts.inter(
+                fontSize: 12.5.sp,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFFEA580C),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

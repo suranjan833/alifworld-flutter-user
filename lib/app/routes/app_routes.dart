@@ -26,6 +26,7 @@ abstract class Routes {
   static const MY_WISHLIST = _Paths.MY_WISHLIST;
   static const WALLET = _Paths.WALLET;
   static const REFER_AND_EARN = _Paths.REFER_AND_EARN;
+  static const REFERRAL_LEVEL_HISTORY = _Paths.REFERRAL_LEVEL_HISTORY;
   static const NOTIFICATIONS = _Paths.NOTIFICATIONS;
   static const SUPPORT = _Paths.SUPPORT;
   static const PRODUCT_DETAILS = _Paths.PRODUCT_DETAILS;
@@ -70,6 +71,7 @@ abstract class _Paths {
   static const MY_WISHLIST = '/my-wishlist';
   static const WALLET = '/wallet';
   static const REFER_AND_EARN = '/refer-and-earn';
+  static const REFERRAL_LEVEL_HISTORY = '/referral-level-history';
   static const NOTIFICATIONS = '/notifications';
   static const SUPPORT = '/support';
   static const PRODUCT_DETAILS = '/product-details';

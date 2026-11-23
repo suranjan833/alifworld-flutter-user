@@ -468,45 +468,50 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
             ),
             SizedBox(height: 10.h),
 
-            // Rating Row
-            Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF7E6),
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.star_rounded,
-                        size: 16.r,
-                        color: AppColor.primaryDark,
-                      ),
-                      SizedBox(width: 4.w),
-                      Text(
-                        rating,
-                        style: GoogleFonts.lato(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.bold,
-                          color: AppColor.textPrimary,
+            if (item.displayRating > 0) ...[
+              // Rating Row
+              Row(
+                children: [
+                  Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF7E6),
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.star_rounded,
+                          size: 16.r,
+                          color: AppColor.primaryDark,
                         ),
+                        SizedBox(width: 4.w),
+                        Text(
+                          rating,
+                          style: GoogleFonts.lato(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.bold,
+                            color: AppColor.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (item.displayReviewsCount > 0) ...[
+                    SizedBox(width: 8.w),
+                    Text(
+                      '($reviews reviews)',
+                      style: GoogleFonts.lato(
+                        fontSize: 13.sp,
+                        color: AppColor.textSecondary,
                       ),
-                    ],
-                  ),
-                ),
-                SizedBox(width: 8.w),
-                Text(
-                  '($reviews reviews)',
-                  style: GoogleFonts.lato(
-                    fontSize: 13.sp,
-                    color: AppColor.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 14.h),
+                    ),
+                  ],
+                ],
+              ),
+              SizedBox(height: 14.h),
+            ],
 
             // Price Row
             Row(
@@ -765,8 +770,12 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
       }
 
       final isVisible = controller.isVisible;
-      final limitsText = controller.product.value?.purchaseLimitsText;
+      final isLoaded = controller.isDetailsLoaded.value;
+      final limitsText =
+          isLoaded ? controller.product.value?.purchaseLimitsText : null;
       final qty = controller.selectedQuantity.value;
+      final minQty = controller.minPurchaseQty;
+      final cap = controller.effectiveCap;
       String currentText = '$qty';
 
       return Container(
@@ -826,20 +835,19 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                       Icons.remove,
                       size: 18.r,
                       color: (!isVisible ||
-                              controller.selectedQuantity.value <=
-                                  controller.minPurchaseQty)
+                              !isLoaded ||
+                              qty <= minQty ||
+                              qty == 0)
                           ? const Color(0xFF94A3B8)
                           : AppColor.textPrimary,
                     ),
-                    onPressed: (isVisible &&
-                            controller.selectedQuantity.value >
-                                controller.minPurchaseQty)
+                    onPressed: (isVisible && isLoaded && qty > minQty)
                         ? () => controller.decrementQuantity()
                         : null,
                   ),
                   Focus(
                     onFocusChange: (hasFocus) {
-                      if (!hasFocus) {
+                      if (!hasFocus && isLoaded) {
                         final typed = int.tryParse(currentText);
                         if (typed != null && typed != qty) {
                           controller.setQuantity(typed);
@@ -850,52 +858,61 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                     },
                     child: SizedBox(
                       width: 44.w,
-                      child: TextFormField(
-                        key: ValueKey('pdp_qty_$qty'),
-                        initialValue: '$qty',
-                        enabled: isVisible,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.lato(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.bold,
-                          color: isVisible
-                              ? AppColor.textPrimary
-                              : const Color(0xFF94A3B8),
-                        ),
-                        decoration: const InputDecoration(
-                          isDense: true,
-                          contentPadding: EdgeInsets.symmetric(vertical: 6),
-                          border: InputBorder.none,
-                        ),
-                        onChanged: (val) {
-                          currentText = val;
-                        },
-                        onFieldSubmitted: (val) {
-                          final typed = int.tryParse(val);
-                          if (typed != null) {
-                            controller.setQuantity(typed);
-                          }
-                        },
-                      ),
+                      child: !isLoaded
+                          ? Center(
+                              child: Text(
+                                '0',
+                                style: GoogleFonts.lato(
+                                  fontSize: 15.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFF94A3B8),
+                                ),
+                              ),
+                            )
+                          : TextFormField(
+                              key: ValueKey('pdp_qty_$qty'),
+                              initialValue: '$qty',
+                              enabled: isVisible,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.lato(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.bold,
+                                color: isVisible
+                                    ? AppColor.textPrimary
+                                    : const Color(0xFF94A3B8),
+                              ),
+                              decoration: const InputDecoration(
+                                isDense: true,
+                                contentPadding:
+                                    EdgeInsets.symmetric(vertical: 6),
+                                border: InputBorder.none,
+                              ),
+                              onChanged: (val) {
+                                currentText = val;
+                              },
+                              onFieldSubmitted: (val) {
+                                final typed = int.tryParse(val);
+                                if (typed != null) {
+                                  controller.setQuantity(typed);
+                                }
+                              },
+                            ),
                     ),
                   ),
                   IconButton(
                     icon: Icon(
                       Icons.add,
                       size: 18.r,
-                      color: (!isVisible ||
-                              controller.selectedQuantity.value >=
-                                  controller.effectiveCap)
-                          ? const Color(0xFF94A3B8)
-                          : AppColor.textPrimary,
+                      color:
+                          (!isVisible || !isLoaded || qty >= cap || qty == 0)
+                              ? const Color(0xFF94A3B8)
+                              : AppColor.textPrimary,
                     ),
-                    onPressed: (isVisible &&
-                            controller.selectedQuantity.value <
-                                controller.effectiveCap)
+                    onPressed: (isVisible && isLoaded && qty < cap)
                         ? () => controller.incrementQuantity()
                         : null,
                   ),
@@ -1020,8 +1037,8 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
           ? seller!.avatar
           : 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=200&auto=format&fit=crop';
       final shopName = seller?.shopName ?? 'Alif Official Store';
-      final rating = seller?.rating ?? 4.9;
-      final reviews = seller?.reviewsCount ?? '1.2k';
+      final rating = seller?.rating ?? 0.0;
+      final reviews = seller?.reviewsCount ?? '';
 
       return Container(
         width: double.infinity,
@@ -1102,7 +1119,9 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                             ),
                             SizedBox(height: 3.h),
                             Text(
-                              '$rating ★ • $reviews ratings',
+                              (rating > 0 && reviews.isNotEmpty)
+                                  ? '$rating ★ • $reviews ratings'
+                                  : 'Verified Seller',
                               style: GoogleFonts.lato(
                                 fontSize: 12.5.sp,
                                 color: AppColor.textSecondary,

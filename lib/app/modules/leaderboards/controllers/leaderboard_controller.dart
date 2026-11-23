@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../models/leaderboard_model.dart';
+import '../views/widgets/club_details_sheet.dart';
 import '../views/widgets/star_bands_sheet.dart';
 
 class LeaderboardController extends GetxController {
@@ -127,6 +128,10 @@ class LeaderboardController extends GetxController {
   }
 
   void showConditionsSheet(BuildContext context) {
-    StarBandsSheet.show(context, period: selectedPeriod.value);
+    StarBandsSheet.show(context);
+  }
+
+  void showClubDetailsSheet(BuildContext context, {String? period}) {
+    ClubDetailsSheet.show(context, period: period ?? selectedPeriod.value);
   }
 }

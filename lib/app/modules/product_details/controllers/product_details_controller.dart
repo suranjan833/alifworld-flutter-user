@@ -24,7 +24,8 @@ class ProductDetailsController extends GetxController
   final selectedImageIndex = 0.obs;
   @override
   final isWishlisted = false.obs;
-  final selectedQuantity = 1.obs;
+  final selectedQuantity = 0.obs;
+  final isDetailsLoaded = false.obs;
   final isLoadingDetails = false.obs;
   final isBuyingNow = false.obs;
 
@@ -38,33 +39,45 @@ class ProductDetailsController extends GetxController
   void _initializeData(dynamic args) {
     if (args == null) return;
 
+    String? targetSlug;
     if (args is String) {
-      fetchProductBySlug(args);
-      return;
-    }
-
-    if (args is ProductDetailsModel) {
-      _setProduct(args);
+      targetSlug = args;
+    } else if (args is ProductDetailsModel) {
+      targetSlug = args.slug;
+      final hasVariantMin = args.variants.isNotEmpty &&
+          args.variants.first.minPurchaseQty != null;
+      _setProduct(args, isFullDetails: hasVariantMin);
     } else if (args is ShowcaseProductModel) {
-      _setProduct(ProductDetailsModel.fromShowcase(args));
+      targetSlug = args.slug;
+      _setProduct(ProductDetailsModel.fromShowcase(args), isFullDetails: false);
     } else if (args is Map<String, dynamic>) {
-      _setProduct(ProductDetailsModel.fromJson(args));
+      targetSlug = args['slug']?.toString();
+      _setProduct(ProductDetailsModel.fromJson(args), isFullDetails: false);
     } else {
       try {
         final map = (args as dynamic).toJson() as Map<String, dynamic>;
-        _setProduct(ProductDetailsModel.fromJson(map));
+        targetSlug = map['slug']?.toString();
+        _setProduct(ProductDetailsModel.fromJson(map), isFullDetails: false);
       } catch (_) {
         return;
       }
     }
 
-    final currentSlug = product.value?.slug;
-    if (currentSlug != null && currentSlug.isNotEmpty) {
-      fetchProductBySlug(currentSlug);
+    if (targetSlug != null && targetSlug.isNotEmpty) {
+      final cachedRaw = getBox.read('pdp_cache_$targetSlug');
+      if (cachedRaw is Map) {
+        try {
+          final cachedModel = ProductDetailsModel.fromJson(
+            Map<String, dynamic>.from(cachedRaw),
+          );
+          _setProduct(cachedModel, isFullDetails: true);
+        } catch (_) {}
+      }
+      fetchProductBySlug(targetSlug);
     }
   }
 
-  void _setProduct(ProductDetailsModel model) {
+  void _setProduct(ProductDetailsModel model, {bool isFullDetails = false}) {
     final prev = product.value;
     final finalImages = model.images.isNotEmpty
         ? model.images
@@ -101,8 +114,15 @@ class ProductDetailsController extends GetxController
     if (selectedVariantIndex.value >= merged.variants.length) {
       selectedVariantIndex.value = 0;
     }
-    final minQ = minPurchaseQty;
-    selectedQuantity.value = minQ;
+
+    final hasVariantMin = merged.variants.any((v) => v.minPurchaseQty != null);
+    if (isFullDetails || hasVariantMin) {
+      isDetailsLoaded.value = true;
+      selectedQuantity.value = minPurchaseQty;
+    } else {
+      isDetailsLoaded.value = false;
+      selectedQuantity.value = 0;
+    }
 
     recordRecentlyViewed();
     checkWishlistStatus();
@@ -110,7 +130,9 @@ class ProductDetailsController extends GetxController
 
   Future<void> fetchProductBySlug(String slug) async {
     try {
-      isLoadingDetails.value = true;
+      if (!isDetailsLoaded.value) {
+        isLoadingDetails.value = true;
+      }
       final response = await dioGet('catalog/products/$slug');
       if (response.statusCode == 200 && response.data != null) {
         dynamic rawData = response.data;
@@ -121,35 +143,12 @@ class ProductDetailsController extends GetxController
           rawData = rawData['product'];
         }
         if (rawData is Map) {
+          final cleanMap = Map<String, dynamic>.from(rawData);
+          getBox.write('pdp_cache_$slug', cleanMap);
           _setProduct(
-            ProductDetailsModel.fromJson(Map<String, dynamic>.from(rawData)),
+            ProductDetailsModel.fromJson(cleanMap),
+            isFullDetails: true,
           );
-          return;
-        }
-      }
-
-      final searchResponse = await dioGet('catalog/search');
-      if (searchResponse.statusCode == 200 && searchResponse.data != null) {
-        dynamic rawSearch = searchResponse.data;
-        if (rawSearch is Map && rawSearch.containsKey('data')) {
-          rawSearch = rawSearch['data'];
-        }
-        List items = [];
-        if (rawSearch is Map && rawSearch.containsKey('products')) {
-          items = rawSearch['products'] as List;
-        } else if (rawSearch is List) {
-          items = rawSearch;
-        }
-
-        for (var item in items) {
-          if (item is Map &&
-              (item['slug']?.toString() == slug ||
-                  item['id']?.toString() == slug)) {
-            _setProduct(
-              ProductDetailsModel.fromJson(Map<String, dynamic>.from(item)),
-            );
-            return;
-          }
         }
       }
     } catch (e) {
@@ -375,6 +374,28 @@ class ProductDetailsController extends GetxController
     selectedQuantity.value = newQty;
   }
 
+  Map<String, dynamic> _buildCartPayload(
+    ProductDetailsModel p,
+    String? fallbackVariantId,
+  ) {
+    final sv = selectedVariant;
+    return <String, dynamic>{
+      'id': p.id,
+      'productId': p.id,
+      'variantId': fallbackVariantId,
+      'variantLabel':
+          sv?.label ?? (p.variants.isNotEmpty ? p.variants.first.label : null),
+      'brand': p.displayBrand,
+      'title': p.name,
+      'price': activePriceValue,
+      'image': imagesList.first,
+      'slug': p.slug,
+      'variants': p.variants.map((v) => v.toJson()).toList(),
+      if (minPurchaseQty > 1) 'minPurchaseQty': minPurchaseQty,
+      if (maxPurchaseQty != null) 'maxPurchaseQty': maxPurchaseQty,
+    };
+  }
+
   Future<void> addToBag() async {
     if (!isVisible || variants.isEmpty) {
       Get.snackbar(
@@ -394,21 +415,7 @@ class ProductDetailsController extends GetxController
     final sv = selectedVariant;
     final fallbackVariantId =
         sv?.id ?? (p.variants.isNotEmpty ? p.variants.first.id : null);
-    final itemPayload = <String, dynamic>{
-      'id': p.id,
-      'productId': p.id,
-      'variantId': fallbackVariantId,
-      'variantLabel':
-          sv?.label ?? (p.variants.isNotEmpty ? p.variants.first.label : null),
-      'brand': p.displayBrand,
-      'title': p.name,
-      'price': activePriceValue,
-      'image': imagesList.first,
-      'slug': p.slug,
-      'variants': p.variants.map((v) => v.toJson()).toList(),
-      if (minPurchaseQty > 1) 'minPurchaseQty': minPurchaseQty,
-      if (maxPurchaseQty != null) 'maxPurchaseQty': maxPurchaseQty,
-    };
+    final itemPayload = _buildCartPayload(p, fallbackVariantId);
 
     final effectiveQty = selectedQuantity.value < minPurchaseQty
         ? minPurchaseQty
@@ -438,21 +445,7 @@ class ProductDetailsController extends GetxController
     final sv = selectedVariant;
     final fallbackVariantId =
         sv?.id ?? (p.variants.isNotEmpty ? p.variants.first.id : null);
-    final itemPayload = <String, dynamic>{
-      'id': p.id,
-      'productId': p.id,
-      'variantId': fallbackVariantId,
-      'variantLabel':
-          sv?.label ?? (p.variants.isNotEmpty ? p.variants.first.label : null),
-      'brand': p.displayBrand,
-      'title': p.name,
-      'price': activePriceValue,
-      'image': imagesList.first,
-      'slug': p.slug,
-      'variants': p.variants.map((v) => v.toJson()).toList(),
-      if (minPurchaseQty > 1) 'minPurchaseQty': minPurchaseQty,
-      if (maxPurchaseQty != null) 'maxPurchaseQty': maxPurchaseQty,
-    };
+    final itemPayload = _buildCartPayload(p, fallbackVariantId);
 
     final effectiveQty = selectedQuantity.value < minPurchaseQty
         ? minPurchaseQty

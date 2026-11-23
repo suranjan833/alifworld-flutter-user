@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../data/config/app_color.dart';
-import '../../../leaderboards/views/widgets/star_bands_sheet.dart';
+import '../../../leaderboards/views/widgets/club_details_sheet.dart';
 import '../../controllers/account_controller.dart';
 import 'milestone_timeline_widget.dart';
 
@@ -270,7 +270,7 @@ class AchievementsTimelineCard extends GetView<AccountController> {
 
                           // Right: Glassmorphism Club Tier Pill
                           GestureDetector(
-                            onTap: () => StarBandsSheet.show(
+                            onTap: () => ClubDetailsSheet.show(
                               context,
                               period: activePeriod,
                             ),
@@ -381,7 +381,7 @@ class AchievementsTimelineCard extends GetView<AccountController> {
     required String poolShareText,
   }) {
     return GestureDetector(
-      onTap: () => StarBandsSheet.show(context, period: activePeriod),
+      onTap: () => ClubDetailsSheet.show(context, period: activePeriod),
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),

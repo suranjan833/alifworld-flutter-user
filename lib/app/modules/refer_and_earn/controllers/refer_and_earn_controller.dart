@@ -74,13 +74,26 @@ class ReferAndEarnController extends GetxController {
       });
       return;
     }
-    fetchReferralData();
-    fetchReferralHistory();
+    _loadFromCache();
+    fetchReferralData(isBackground: referralInfo.value != null);
   }
 
-  /// Fresh load from API - never cache referral data
-  Future<void> fetchReferralData() async {
-    isLoading.value = true;
+  void _loadFromCache() {
+    try {
+      final cached = getBox.read('referral_info_cache');
+      if (cached is Map) {
+        referralInfo.value =
+            ReferralInfoModel.fromJson(Map<String, dynamic>.from(cached));
+      }
+    } catch (e) {
+      log('Error loading referral info cache: $e');
+    }
+  }
+
+  Future<void> fetchReferralData({bool isBackground = false}) async {
+    if (!isBackground) {
+      isLoading.value = true;
+    }
     try {
       final response = await dioGet('referrals');
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -92,6 +105,7 @@ class ReferAndEarnController extends GetxController {
             : resData;
 
         referralInfo.value = ReferralInfoModel.fromJson(data);
+        getBox.write('referral_info_cache', data);
       } else {
         log('Failed to fetch referral info: ${response.statusCode}');
       }

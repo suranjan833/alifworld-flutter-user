@@ -139,13 +139,13 @@ class ProductDetailsModel {
     return '$name ($vLabel)';
   }
 
-  String get displayBrand => brandName ?? 'Alif';
+  String get displayBrand => brandName ?? '';
 
   String get displayCategory => categoryName ?? '';
 
-  double get displayRating => ratingAvg ?? 4.8;
+  double get displayRating => ratingAvg ?? 0.0;
 
-  int get displayReviewsCount => ratingCount ?? 128;
+  int get displayReviewsCount => ratingCount ?? 0;
 
   String get displayImage => images.isNotEmpty
       ? images.first
@@ -159,7 +159,7 @@ class ProductDetailsModel {
 
   String get cleanDescription {
     if (description.isEmpty) {
-      return 'Experience genuine quality with $name. Certified authentic product directly from ${seller.shopName} on Alif with fast and secure shipping.';
+      return '';
     }
     if (!description.contains('<')) {
       return description;
@@ -283,10 +283,6 @@ class ProductDetailsModel {
     }
 
     String desc = json['description']?.toString() ?? '';
-    if (desc.isEmpty) {
-      desc =
-          'Experience genuine quality with $resolvedName. Certified authentic product directly from ${parsedSeller.shopName} on Alif with fast and secure shipping.';
-    }
 
     String? bName;
     if (json['brand'] is Map) {
@@ -295,20 +291,6 @@ class ProductDetailsModel {
       bName = json['brand'].toString();
     } else if (json['brandName'] != null) {
       bName = json['brandName'].toString();
-    }
-    if (bName == null || bName.isEmpty) {
-      final lowerName = resolvedName.toLowerCase();
-      if (lowerName.contains('iphone') ||
-          lowerName.contains('apple') ||
-          lowerName.contains('macbook') ||
-          lowerName.contains('ipad')) {
-        bName = 'Apple';
-      } else if (lowerName.contains('samsung') ||
-          lowerName.contains('galaxy')) {
-        bName = 'Samsung';
-      } else if (lowerName.contains('sony')) {
-        bName = 'Sony';
-      }
     }
 
     String? cName;
@@ -322,11 +304,15 @@ class ProductDetailsModel {
 
     int? minQty = json['minPurchaseQty'] is num
         ? (json['minPurchaseQty'] as num).toInt()
-        : (parsedVariants.isNotEmpty ? parsedVariants.first.minPurchaseQty : null);
+        : (parsedVariants.isNotEmpty
+              ? parsedVariants.first.minPurchaseQty
+              : null);
 
     int? maxQty = json['maxPurchaseQty'] is num
         ? (json['maxPurchaseQty'] as num).toInt()
-        : (parsedVariants.isNotEmpty ? parsedVariants.first.maxPurchaseQty : null);
+        : (parsedVariants.isNotEmpty
+              ? parsedVariants.first.maxPurchaseQty
+              : null);
 
     return ProductDetailsModel(
       id: json['id']?.toString() ?? '',

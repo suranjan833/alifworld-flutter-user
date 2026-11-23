@@ -446,8 +446,8 @@ class ShowcaseProductModel {
           (sellerShopName != null
               ? {'name': sellerShopName, 'shopName': sellerShopName}
               : null),
-      'rating': rating ?? 4.8,
-      'reviews': reviews ?? 24,
+      'rating': rating,
+      'reviews': reviews,
       'stockQty': stockQty,
       'productPoints': productPoints,
       'description': description,

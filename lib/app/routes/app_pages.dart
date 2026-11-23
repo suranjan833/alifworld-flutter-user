@@ -55,7 +55,9 @@ import '../modules/privacy_policy/views/privacy_policy_view.dart';
 import '../modules/product_details/bindings/product_details_binding.dart';
 import '../modules/product_details/views/product_details_view.dart';
 import '../modules/refer_and_earn/bindings/refer_and_earn_binding.dart';
+import '../modules/refer_and_earn/bindings/referral_level_history_binding.dart';
 import '../modules/refer_and_earn/views/refer_and_earn_view.dart';
+import '../modules/refer_and_earn/views/referral_level_history_view.dart';
 import '../modules/refund_policy/bindings/refund_policy_binding.dart';
 import '../modules/refund_policy/views/refund_policy_view.dart';
 import '../modules/search/bindings/search_binding.dart';
@@ -197,6 +199,12 @@ class AppPages {
       name: _Paths.REFER_AND_EARN,
       page: () => const ReferAndEarnView(),
       binding: ReferAndEarnBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: _Paths.REFERRAL_LEVEL_HISTORY,
+      page: () => const ReferralLevelHistoryView(),
+      binding: ReferralLevelHistoryBinding(),
       transition: Transition.rightToLeft,
     ),
     GetPage(

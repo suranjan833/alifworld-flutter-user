@@ -16,14 +16,13 @@ class ProductSellerModel {
     required this.shopName,
     this.slug = '',
     this.avatar = '',
-    this.rating = 4.9,
-    this.reviewsCount = '1.8k',
-    this.location = 'Dhaka, Bangladesh',
-    this.isVerified = true,
-    this.joinedDate = 'Verified Seller',
-    this.bio =
-        'Official retailer on Alif offering 100% authentic products with brand warranty and fast delivery.',
-    this.responseRate = '99%',
+    this.rating = 0.0,
+    this.reviewsCount = '',
+    this.location = '',
+    this.isVerified = false,
+    this.joinedDate = '',
+    this.bio = '',
+    this.responseRate = '',
   });
 
   factory ProductSellerModel.fromJson(Map<String, dynamic> json) {
@@ -37,14 +36,13 @@ class ProductSellerModel {
       avatar: json['avatar']?.toString() ??
           json['logoUrl']?.toString() ??
           'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=200&auto=format&fit=crop',
-      rating: json['rating'] is num ? (json['rating'] as num).toDouble() : 4.9,
-      reviewsCount: json['reviewsCount']?.toString() ?? '1.8k',
-      location: json['location']?.toString() ?? 'Dhaka, Bangladesh',
+      rating: json['rating'] is num ? (json['rating'] as num).toDouble() : 0.0,
+      reviewsCount: json['reviewsCount']?.toString() ?? '',
+      location: json['location']?.toString() ?? '',
       isVerified: json['isVerified'] == true || json['verified'] == true,
-      joinedDate: json['joinedDate']?.toString() ?? 'Verified Seller',
-      bio: json['bio']?.toString() ??
-          'Official retailer on Alif offering 100% authentic products with brand warranty and fast delivery.',
-      responseRate: json['responseRate']?.toString() ?? '99%',
+      joinedDate: json['joinedDate']?.toString() ?? '',
+      bio: json['bio']?.toString() ?? '',
+      responseRate: json['responseRate']?.toString() ?? '',
     );
   }
 
