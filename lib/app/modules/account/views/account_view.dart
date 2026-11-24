@@ -12,6 +12,7 @@ import 'widgets/account_balance_banner.dart';
 import 'widgets/account_quick_cards.dart';
 import 'widgets/account_user_card.dart';
 import 'widgets/achievements_timeline_card.dart';
+import 'widgets/lifetime_rank_card.dart';
 
 class AccountView extends GetView<AccountController> {
   const AccountView({super.key});
@@ -84,10 +85,16 @@ class AccountView extends GetView<AccountController> {
                             : const SizedBox.shrink(),
                       ),
 
-                      // 1.3 Achievements Section (Club progress timeline - ONLY when logged in)
+                      // 1.3 Lifetime Rank Card & Achievements Section (Club progress timeline - ONLY when logged in)
                       Obx(
                         () => controller.isLoggedIn.value
-                            ? const AchievementsTimelineCard()
+                            ? const Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  LifetimeRankCard(),
+                                  AchievementsTimelineCard(),
+                                ],
+                              )
                             : const SizedBox.shrink(),
                       ),
 

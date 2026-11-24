@@ -287,15 +287,103 @@ class MyProgressPeriodModel {
   }
 }
 
+class LifetimeThresholdsModel {
+  final int bronze;
+  final int silver;
+  final int gold;
+
+  LifetimeThresholdsModel({
+    this.bronze = 10000,
+    this.silver = 50000,
+    this.gold = 100000,
+  });
+
+  factory LifetimeThresholdsModel.fromJson(Map<String, dynamic> json) {
+    return LifetimeThresholdsModel(
+      bronze: (json['bronze'] as num?)?.toInt() ?? 10000,
+      silver: (json['silver'] as num?)?.toInt() ?? 50000,
+      gold: (json['gold'] as num?)?.toInt() ?? 100000,
+    );
+  }
+}
+
+class LifetimeProgressModel {
+  final int points;
+  final String? currentRank;
+  final String? nextRank;
+  final int pointsToNext;
+  final num progressPct;
+  final LifetimeThresholdsModel thresholds;
+
+  LifetimeProgressModel({
+    required this.points,
+    this.currentRank,
+    this.nextRank,
+    required this.pointsToNext,
+    required this.progressPct,
+    required this.thresholds,
+  });
+
+  factory LifetimeProgressModel.fromJson(Map<String, dynamic> json) {
+    return LifetimeProgressModel(
+      points: (json['points'] as num?)?.toInt() ?? 0,
+      currentRank: json['currentRank']?.toString(),
+      nextRank: json['nextRank']?.toString(),
+      pointsToNext: (json['pointsToNext'] as num?)?.toInt() ?? 0,
+      progressPct: json['progressPct'] as num? ?? 0,
+      thresholds: json['thresholds'] is Map<String, dynamic>
+          ? LifetimeThresholdsModel.fromJson(json['thresholds'])
+          : (json['thresholds'] is Map
+              ? LifetimeThresholdsModel.fromJson(
+                  Map<String, dynamic>.from(json['thresholds']))
+              : LifetimeThresholdsModel()),
+    );
+  }
+
+  double computeTimelineFill() {
+    final bronze = thresholds.bronze;
+    final silver = thresholds.silver;
+    final gold = thresholds.gold;
+    if (points <= 0) return 0.0;
+    if (points >= gold) return 1.0;
+
+    if (points < bronze) {
+      return (points / bronze) * (1.0 / 3.0);
+    } else if (points < silver) {
+      double seg = (points - bronze) / (silver - bronze);
+      return (1.0 / 3.0) + (seg * (1.0 / 3.0));
+    } else {
+      double seg = (points - silver) / (gold - silver);
+      return (2.0 / 3.0) + (seg * (1.0 / 3.0));
+    }
+  }
+
+  String get currentRankDisplay {
+    if (currentRank == null ||
+        currentRank!.isEmpty ||
+        currentRank!.toLowerCase() == 'regular') {
+      return 'Regular';
+    }
+    return currentRank![0].toUpperCase() + currentRank!.substring(1);
+  }
+
+  String? get nextRankDisplay {
+    if (nextRank == null || nextRank!.isEmpty) return null;
+    return nextRank![0].toUpperCase() + nextRank!.substring(1);
+  }
+}
+
 class MyProgressResponseModel {
   final String kind;
   final int pendingPoints;
   final List<MyProgressPeriodModel> periods;
+  final LifetimeProgressModel? lifetime;
 
   MyProgressResponseModel({
     required this.kind,
     required this.pendingPoints,
     required this.periods,
+    this.lifetime,
   });
 
   MyProgressPeriodModel? getPeriod(String period) {
@@ -313,10 +401,19 @@ class MyProgressResponseModel {
             .toList() ??
         [];
 
+    LifetimeProgressModel? lifetimeModel;
+    if (json['lifetime'] is Map) {
+      try {
+        lifetimeModel = LifetimeProgressModel.fromJson(
+            Map<String, dynamic>.from(json['lifetime']));
+      } catch (_) {}
+    }
+
     return MyProgressResponseModel(
       kind: json['kind']?.toString() ?? 'customer',
       pendingPoints: (json['pendingPoints'] as num?)?.toInt() ?? 0,
       periods: pList,
+      lifetime: lifetimeModel,
     );
   }
 }

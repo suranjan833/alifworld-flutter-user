@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -15,14 +16,17 @@ class TypewriterSearchHintController extends GetxController {
   List<String> _hints = const [];
 
   void setHints(List<String> hints) {
-    if (_hints != hints && hints.isNotEmpty) {
-      _hints = hints;
-      _hintIndex = 0;
-      _charIndex = 0;
-      _isDeleting = false;
+    if (listEquals(_hints, hints) || hints.isEmpty) return;
+    _hints = List.unmodifiable(hints);
+    _hintIndex = 0;
+    _charIndex = 0;
+    _isDeleting = false;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (isClosed) return;
       currentText.value = '';
       _startAnimation();
-    }
+    });
   }
 
   void _startAnimation() {
@@ -78,10 +82,11 @@ class TypewriterSearchHintText extends GetView<TypewriterSearchHintController> {
 
   @override
   Widget build(BuildContext context) {
-    if (!Get.isRegistered<TypewriterSearchHintController>()) {
-      Get.put(TypewriterSearchHintController());
-    }
-    controller.setHints(hints);
+    final ctrl = Get.isRegistered<TypewriterSearchHintController>()
+        ? Get.find<TypewriterSearchHintController>()
+        : Get.put(TypewriterSearchHintController());
+
+    ctrl.setHints(hints);
 
     final textStyle = style ??
         GoogleFonts.lato(
@@ -97,7 +102,7 @@ class TypewriterSearchHintText extends GetView<TypewriterSearchHintController> {
         Flexible(
           child: Obx(
             () => Text(
-              controller.currentText.value,
+              ctrl.currentText.value,
               style: textStyle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

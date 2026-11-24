@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -7,37 +6,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../config/app_color.dart';
-import '../config/functions/dio_function/app_config.dart';
+import '../controllers/wallet_pin_sheet_controller.dart';
 import '../services/wallet_pin_service.dart';
 
-typedef WalletPinSubmitCallback = Future<WalletPinActionResult> Function(String pin);
-
-class WalletPinActionResult {
-  final bool success;
-  final String? errorCode;
-  final String? errorMessage;
-  final dynamic data;
-
-  const WalletPinActionResult.success([this.data])
-      : success = true,
-        errorCode = null,
-        errorMessage = null;
-
-  const WalletPinActionResult.failure({
-    this.errorCode,
-    this.errorMessage,
-  })  : success = false,
-        data = null;
-}
+export '../controllers/wallet_pin_sheet_controller.dart';
 
 class WalletPinDialog {
   WalletPinDialog._();
 
-  /// Prompts user to enter or set their 6-digit wallet PIN.
-  /// If no PIN is set, guides the user through setting one and returns the new PIN.
-  /// If [onConfirm] is provided, executes the action directly while keeping the sheet
-  /// open on `WALLET_PIN_*` errors (such as wrong attempts left or lock).
-  /// Returns the 6-digit PIN if successfully entered/set, or `null` if dismissed.
   static Future<String?> promptPin(
     BuildContext context, {
     String title = 'Wallet PIN Required',
@@ -48,26 +24,31 @@ class WalletPinDialog {
         ? Get.find<WalletPinService>()
         : Get.put(WalletPinService(), permanent: true);
 
-    // Check current PIN status per §3.1
     final status = await pinService.checkStatus();
     if (!context.mounted) return null;
 
-    return await showModalBottomSheet<String>(
+    final sheetCtrl = Get.isRegistered<WalletPinSheetController>()
+        ? Get.find<WalletPinSheetController>()
+        : Get.put(WalletPinSheetController());
+
+    sheetCtrl.initSheet(
+      title: title,
+      subtitle: subtitle,
+      status: status,
+      isManageMode: false,
+      onConfirm: onConfirm,
+    );
+
+    final result = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      enableDrag: false,
-      isDismissible: true,
-      builder: (ctx) => _WalletPinSheet(
-        title: title,
-        subtitle: subtitle,
-        status: status,
-        onConfirm: onConfirm,
-      ),
+      builder: (ctx) => const WalletPinSheet(),
     );
+
+    return result;
   }
 
-  /// Opens management flow (Set / Change / Reset PIN)
   static Future<void> showManagePinSheet(BuildContext context) async {
     final pinService = Get.isRegistered<WalletPinService>()
         ? Get.find<WalletPinService>()
@@ -76,473 +57,117 @@ class WalletPinDialog {
     final status = await pinService.checkStatus();
     if (!context.mounted) return;
 
+    final sheetCtrl = Get.isRegistered<WalletPinSheetController>()
+        ? Get.find<WalletPinSheetController>()
+        : Get.put(WalletPinSheetController());
+
+    sheetCtrl.initSheet(
+      isManageMode: true,
+      status: status,
+    );
+
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => _WalletPinSheet(
-        isManageMode: true,
-        status: status,
-      ),
+      builder: (ctx) => const WalletPinSheet(),
     );
   }
 }
 
-class _WalletPinSheet extends StatefulWidget {
-  final String title;
-  final String? subtitle;
-  final WalletPinStatus? status;
-  final bool isManageMode;
-  final WalletPinSubmitCallback? onConfirm;
-
-  const _WalletPinSheet({
-    this.title = 'Wallet PIN',
-    this.subtitle,
-    this.status,
-    this.isManageMode = false,
-    this.onConfirm,
-  });
-
-  @override
-  State<_WalletPinSheet> createState() => _WalletPinSheetState();
-}
-
-enum _PinViewMode { enter, set, change, resetConfirm, locked }
-
-class _WalletPinSheetState extends State<_WalletPinSheet> {
-  late _PinViewMode _mode;
-  final _pinController = TextEditingController();
-  final _confirmPinController = TextEditingController();
-  final _currentPinController = TextEditingController();
-  final _mobileCodeController = TextEditingController();
-  final _emailCodeController = TextEditingController();
-
-  bool _isLoading = false;
-  String? _errorMessage;
-  bool _mobileSent = false;
-  bool _emailSent = false;
-  DateTime? _lockedUntil;
-  Timer? _lockCountdownTimer;
-  String _remainingLockText = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _lockedUntil = widget.status?.lockedUntil;
-
-    if (widget.status?.isLocked == true) {
-      _mode = _PinViewMode.locked;
-      _startLockTimer();
-    } else if (widget.status?.isSet != true) {
-      _mode = _PinViewMode.set;
-    } else if (widget.isManageMode) {
-      _mode = _PinViewMode.change;
-    } else {
-      _mode = _PinViewMode.enter;
-    }
-  }
-
-  @override
-  void dispose() {
-    _lockCountdownTimer?.cancel();
-    _pinController.dispose();
-    _confirmPinController.dispose();
-    _currentPinController.dispose();
-    _mobileCodeController.dispose();
-    _emailCodeController.dispose();
-    super.dispose();
-  }
-
-  void _startLockTimer() {
-    _updateLockText();
-    _lockCountdownTimer?.cancel();
-    _lockCountdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) return;
-      _updateLockText();
-    });
-  }
-
-  void _updateLockText() {
-    if (_lockedUntil == null) {
-      _remainingLockText = '';
-      return;
-    }
-    final diff = _lockedUntil!.difference(DateTime.now());
-    if (diff.isNegative) {
-      _lockCountdownTimer?.cancel();
-      setState(() {
-        _mode = _PinViewMode.enter;
-        _errorMessage = null;
-      });
-    } else {
-      final mins = diff.inMinutes;
-      final secs = diff.inSeconds % 60;
-      setState(() {
-        _remainingLockText = '${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
-      });
-    }
-  }
-
-  Future<void> _handleEnterSubmit() async {
-    final pin = _pinController.text.trim();
-    if (pin.length != 6 || !RegExp(r'^\d{6}$').hasMatch(pin)) {
-      setState(() => _errorMessage = 'Please enter a valid 6-digit PIN');
-      return;
-    }
-    if (widget.onConfirm != null) {
-      await _executeActionWithPin(pin);
-    } else {
-      // Return the entered pin to the caller
-      Navigator.of(context).pop(pin);
-    }
-  }
-
-  Future<void> _executeActionWithPin(String pin) async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final result = await widget.onConfirm!(pin);
-      if (!mounted) return;
-
-      if (result.success) {
-        setState(() => _isLoading = false);
-        Navigator.of(context).pop(pin);
-      } else {
-        final code = result.errorCode ?? '';
-        final msg = result.errorMessage ?? 'Action failed';
-
-        if (code == 'WALLET_PIN_LOCKED') {
-          setState(() {
-            _isLoading = false;
-            _lockedUntil = DateTime.now().add(const Duration(minutes: 30));
-            _mode = _PinViewMode.locked;
-            _errorMessage = null;
-          });
-          _startLockTimer();
-        } else if (code.startsWith('WALLET_PIN_')) {
-          // Keep sheet open, show server message (e.g., attempts left)
-          setState(() {
-            _isLoading = false;
-            _pinController.clear();
-            _errorMessage = msg;
-          });
-        } else {
-          // Other failures close sheet so underlying screen displays the error
-          setState(() => _isLoading = false);
-          Navigator.of(context).pop();
-        }
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'An unexpected error occurred: $e';
-      });
-    }
-  }
-
-  Future<void> _handleSetSubmit() async {
-    final pin = _pinController.text.trim();
-    final confirm = _confirmPinController.text.trim();
-
-    if (pin.length != 6 || !RegExp(r'^\d{6}$').hasMatch(pin)) {
-      setState(() => _errorMessage = 'PIN must be exactly 6 digits');
-      return;
-    }
-    if (pin != confirm) {
-      setState(() => _errorMessage = 'PINs do not match');
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    final service = Get.find<WalletPinService>();
-    final result = await service.setOrChangePin(pin: pin);
-
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    if (result['success'] == true) {
-      showSnack('Success', 'Wallet PIN set successfully', bg: AppColor.green);
-      if (widget.isManageMode) {
-        Navigator.of(context).pop();
-      } else if (widget.onConfirm != null) {
-        // Immediately run the pending action with the new PIN!
-        await _executeActionWithPin(pin);
-      } else {
-        // Return newly set pin so caller can proceed with action immediately
-        Navigator.of(context).pop(pin);
-      }
-    } else {
-      setState(() => _errorMessage = result['message']?.toString() ?? 'Failed to set PIN');
-    }
-  }
-
-  Future<void> _handleChangeSubmit() async {
-    final current = _currentPinController.text.trim();
-    final newPin = _pinController.text.trim();
-    final confirm = _confirmPinController.text.trim();
-
-    if (current.length != 6) {
-      setState(() => _errorMessage = 'Current PIN must be 6 digits');
-      return;
-    }
-    if (newPin.length != 6 || !RegExp(r'^\d{6}$').hasMatch(newPin)) {
-      setState(() => _errorMessage = 'New PIN must be 6 digits');
-      return;
-    }
-    if (newPin != confirm) {
-      setState(() => _errorMessage = 'New PINs do not match');
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    final service = Get.find<WalletPinService>();
-    final result = await service.setOrChangePin(pin: newPin, currentPin: current);
-
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    if (result['success'] == true) {
-      showSnack('Success', 'Wallet PIN updated successfully', bg: AppColor.green);
-      Navigator.of(context).pop();
-    } else {
-      final code = result['code']?.toString() ?? '';
-      if (code == 'WALLET_PIN_LOCKED') {
-        _lockedUntil = DateTime.now().add(const Duration(minutes: 30));
-        _mode = _PinViewMode.locked;
-        _startLockTimer();
-      } else {
-        setState(() => _errorMessage = result['message']?.toString() ?? 'Failed to change PIN');
-      }
-    }
-  }
-
-  Future<void> _handleStartReset() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    final service = Get.find<WalletPinService>();
-    final res = await service.requestReset();
-
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    if (res['success'] == true) {
-      setState(() {
-        _mobileSent = res['mobileSent'] == true;
-        _emailSent = res['emailSent'] == true;
-        _mode = _PinViewMode.resetConfirm;
-        _pinController.clear();
-        _confirmPinController.clear();
-      });
-    } else {
-      setState(() => _errorMessage = res['message']?.toString() ?? 'Failed to send reset code');
-    }
-  }
-
-  Future<void> _handleConfirmResetSubmit() async {
-    final newPin = _pinController.text.trim();
-    final confirm = _confirmPinController.text.trim();
-    final mCode = _mobileCodeController.text.trim();
-    final eCode = _emailCodeController.text.trim();
-
-    if (_mobileSent && mCode.isEmpty) {
-      setState(() => _errorMessage = 'Please enter mobile OTP code');
-      return;
-    }
-    if (_emailSent && eCode.isEmpty) {
-      setState(() => _errorMessage = 'Please enter email OTP code');
-      return;
-    }
-    if (newPin.length != 6 || !RegExp(r'^\d{6}$').hasMatch(newPin)) {
-      setState(() => _errorMessage = 'New PIN must be 6 digits');
-      return;
-    }
-    if (newPin != confirm) {
-      setState(() => _errorMessage = 'PINs do not match');
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    final service = Get.find<WalletPinService>();
-    final res = await service.confirmReset(
-      mobileCode: _mobileSent ? mCode : null,
-      emailCode: _emailSent ? eCode : null,
-      newPin: newPin,
-    );
-
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    if (res['success'] == true) {
-      showSnack('Success', 'Wallet PIN reset successfully', bg: AppColor.green);
-      if (widget.isManageMode) {
-        Navigator.of(context).pop();
-      } else if (widget.onConfirm != null) {
-        // Immediately run the pending action with the new PIN!
-        await _executeActionWithPin(newPin);
-      } else {
-        // Return new PIN
-        Navigator.of(context).pop(newPin);
-      }
-    } else {
-      setState(() => _errorMessage = res['message']?.toString() ?? 'Reset failed');
-    }
-  }
+class WalletPinSheet extends GetView<WalletPinSheetController> {
+  const WalletPinSheet({super.key});
 
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    return PopScope(
-      canPop: !_isLoading,
-      child: Container(
-        padding: EdgeInsets.only(
-          left: 20.w,
-          right: 20.w,
-          top: 16.h,
-          bottom: bottomInset + 24.h,
-        ),
-        decoration: BoxDecoration(
-          color: AppColor.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Drag handle
-              Center(
-                child: Container(
-                  width: 40.w,
-                  height: 4.h,
-                  margin: EdgeInsets.only(bottom: 16.h),
-                  decoration: BoxDecoration(
-                    color: AppColor.border,
-                    borderRadius: BorderRadius.circular(2.r),
+    return Obx(() {
+      final isLoading = controller.isLoading.value;
+      final errorMessage = controller.errorMessage.value;
+      final mode = controller.mode.value;
+
+      return PopScope(
+        canPop: !isLoading,
+        child: Container(
+          padding: EdgeInsets.only(
+            left: 20.w,
+            right: 20.w,
+            top: 16.h,
+            bottom: bottomInset + 24.h,
+          ),
+          decoration: BoxDecoration(
+            color: AppColor.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40.w,
+                    height: 4.h,
+                    margin: EdgeInsets.only(bottom: 16.h),
+                    decoration: BoxDecoration(
+                      color: AppColor.border,
+                      borderRadius: BorderRadius.circular(2.r),
+                    ),
                   ),
                 ),
-              ),
-
-              // Title and icon
-              _buildHeader(),
-
-              if (_errorMessage != null) ...[
-                SizedBox(height: 12.h),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                  decoration: BoxDecoration(
-                    color: AppColor.red.shade50,
-                    borderRadius: BorderRadius.circular(8.r),
-                    border: Border.all(color: AppColor.red.shade200),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.error_outline, color: AppColor.red, size: 18.r),
-                      SizedBox(width: 8.w),
-                      Expanded(
-                        child: Text(
-                          _errorMessage!,
-                          style: GoogleFonts.lato(
-                            fontSize: 13.sp,
-                            color: AppColor.red,
-                            fontWeight: FontWeight.w500,
+                _buildHeader(),
+                if (errorMessage != null) ...[
+                  SizedBox(height: 12.h),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                    decoration: BoxDecoration(
+                      color: AppColor.red.shade50,
+                      borderRadius: BorderRadius.circular(8.r),
+                      border: Border.all(color: AppColor.red.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.error_outline, color: AppColor.red, size: 18.r),
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: Text(
+                            errorMessage,
+                            style: GoogleFonts.lato(
+                              fontSize: 13.sp,
+                              color: AppColor.red,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
+                ],
+                SizedBox(height: 16.h),
+                if (mode == PinViewMode.enter) _buildEnterView(context),
+                if (mode == PinViewMode.set) _buildSetView(context),
+                if (mode == PinViewMode.change) _buildChangeView(context),
+                if (mode == PinViewMode.resetConfirm) _buildResetConfirmView(context),
+                if (mode == PinViewMode.locked) _buildLockedView(),
               ],
-
-              SizedBox(height: 16.h),
-
-              // View body depending on mode
-              if (_mode == _PinViewMode.enter) _buildEnterView(),
-              if (_mode == _PinViewMode.set) _buildSetView(),
-              if (_mode == _PinViewMode.change) _buildChangeView(),
-              if (_mode == _PinViewMode.resetConfirm) _buildResetConfirmView(),
-              if (_mode == _PinViewMode.locked) _buildLockedView(),
-            ],
+            ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildHeader() {
-    String titleText;
-    String subtitleText;
-    IconData icon;
-    Color iconBg;
-    Color iconColor;
-
-    switch (_mode) {
-      case _PinViewMode.enter:
-        titleText = widget.title;
-        subtitleText = widget.subtitle ?? 'Enter your 6-digit Wallet PIN to proceed';
-        icon = Iconsax.lock;
-        iconBg = AppColor.primary.withValues(alpha: 0.1);
-        iconColor = AppColor.primary;
-        break;
-      case _PinViewMode.set:
-        titleText = 'Set Wallet PIN';
-        subtitleText = 'Create a secure 6-digit PIN for wallet transactions';
-        icon = Iconsax.shield_security;
-        iconBg = AppColor.green.shade50;
-        iconColor = AppColor.green;
-        break;
-      case _PinViewMode.change:
-        titleText = 'Change Wallet PIN';
-        subtitleText = 'Enter your current PIN and choose a new 6-digit PIN';
-        icon = Iconsax.key;
-        iconBg = AppColor.primary.withValues(alpha: 0.1);
-        iconColor = AppColor.primary;
-        break;
-      case _PinViewMode.resetConfirm:
-        titleText = 'Reset Wallet PIN';
-        subtitleText = 'Enter the OTP code sent to your verified channels';
-        icon = Iconsax.refresh;
-        iconBg = AppColor.blue.shade50;
-        iconColor = AppColor.blue;
-        break;
-      case _PinViewMode.locked:
-        titleText = 'Wallet PIN Locked';
-        subtitleText = 'Too many failed attempts. Locked for 30 minutes.';
-        icon = Iconsax.lock_slash;
-        iconBg = AppColor.red.shade50;
-        iconColor = AppColor.red;
-        break;
-    }
+    final info = controller.headerInfo;
 
     return Row(
       children: [
         Container(
           width: 44.r,
           height: 44.r,
-          decoration: BoxDecoration(
-            color: iconBg,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: iconColor, size: 22.r),
+          decoration: BoxDecoration(color: info.iconBg, shape: BoxShape.circle),
+          child: Icon(info.icon, color: info.iconColor, size: 22.r),
         ),
         SizedBox(width: 12.w),
         Expanded(
@@ -550,17 +175,17 @@ class _WalletPinSheetState extends State<_WalletPinSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                titleText,
+                info.title,
                 style: GoogleFonts.lato(
                   fontSize: 18.sp,
                   fontWeight: FontWeight.bold,
                   color: AppColor.textPrimary,
                 ),
               ),
-              if (subtitleText.isNotEmpty) ...[
+              if (info.subtitle.isNotEmpty) ...[
                 SizedBox(height: 2.h),
                 Text(
-                  subtitleText,
+                  info.subtitle,
                   style: GoogleFonts.lato(
                     fontSize: 12.sp,
                     color: AppColor.textSecondary,
@@ -575,7 +200,7 @@ class _WalletPinSheetState extends State<_WalletPinSheet> {
   }
 
   Widget _buildPinField({
-    required TextEditingController controller,
+    required TextEditingController fieldController,
     required String label,
     required String hint,
     TextInputAction action = TextInputAction.next,
@@ -594,191 +219,193 @@ class _WalletPinSheetState extends State<_WalletPinSheet> {
         ),
         SizedBox(height: 6.h),
         TextField(
-          controller: controller,
+          controller: fieldController,
           keyboardType: TextInputType.number,
           obscureText: true,
-          maxLength: 6,
+          maxLength: 4,
           textInputAction: action,
           onSubmitted: (_) => onSubmitted?.call(),
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           decoration: InputDecoration(
             counterText: '',
             hintText: hint,
-            hintStyle: GoogleFonts.lato(
-              fontSize: 14.sp,
-              color: AppColor.textHint,
-            ),
-            filled: true,
-            fillColor: const Color(0xFFF8F9FA),
+            hintStyle: GoogleFonts.lato(color: AppColor.textHint, fontSize: 13.sp),
             contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10.r),
-              borderSide: const BorderSide(color: AppColor.border),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10.r),
-              borderSide: const BorderSide(color: AppColor.border),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10.r),
-              borderSide: const BorderSide(color: AppColor.primary, width: 1.5),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: AppColor.border)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: AppColor.border)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: AppColor.primary, width: 1.5)),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildEnterView() {
+  Widget _buildEnterView(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildPinField(
-          controller: _pinController,
-          label: 'Enter 6-Digit PIN',
-          hint: '••••••',
+          fieldController: controller.pinController,
+          label: 'Enter 4-Digit PIN',
+          hint: '••••',
           action: TextInputAction.done,
-          onSubmitted: _handleEnterSubmit,
+          onSubmitted: () => controller.handleEnterSubmit(context),
         ),
-        SizedBox(height: 6.h),
+        SizedBox(height: 8.h),
         Align(
           alignment: Alignment.centerRight,
           child: TextButton(
-            onPressed: _isLoading ? null : _handleStartReset,
+            onPressed: controller.isLoading.value ? null : () => controller.handleStartReset(),
             style: TextButton.styleFrom(
               padding: EdgeInsets.zero,
-              minimumSize: Size.zero,
+              minimumSize: Size(50.w, 30.h),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             child: Text(
               'Forgot PIN?',
               style: GoogleFonts.lato(
                 fontSize: 13.sp,
-                color: AppColor.primary,
                 fontWeight: FontWeight.w600,
+                color: AppColor.primary,
               ),
             ),
           ),
         ),
-        SizedBox(height: 18.h),
+        SizedBox(height: 16.h),
         _buildActionButton(
-          label: 'Confirm PIN',
-          onPressed: _handleEnterSubmit,
+          label: 'Verify & Proceed',
+          onPressed: () => controller.handleEnterSubmit(context),
         ),
       ],
     );
   }
 
-  Widget _buildSetView() {
+  Widget _buildSetView(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildPinField(
-          controller: _pinController,
-          label: 'New 6-Digit PIN',
-          hint: 'Enter 6 digits',
+          fieldController: controller.pinController,
+          label: 'New 4-Digit PIN',
+          hint: 'Enter 4 digits',
         ),
         SizedBox(height: 12.h),
         _buildPinField(
-          controller: _confirmPinController,
+          fieldController: controller.confirmPinController,
           label: 'Confirm PIN',
-          hint: 'Re-enter 6 digits',
+          hint: 'Re-enter 4 digits',
           action: TextInputAction.done,
-          onSubmitted: _handleSetSubmit,
+          onSubmitted: () => controller.handleSetSubmit(context),
         ),
         SizedBox(height: 20.h),
         _buildActionButton(
-          label: 'Set PIN & Continue',
-          onPressed: _handleSetSubmit,
+          label: 'Set Wallet PIN',
+          onPressed: () => controller.handleSetSubmit(context),
         ),
       ],
     );
   }
 
-  Widget _buildChangeView() {
+  Widget _buildChangeView(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildPinField(
-          controller: _currentPinController,
+          fieldController: controller.currentPinController,
           label: 'Current PIN',
-          hint: 'Enter current 6-digit PIN',
+          hint: 'Enter current 4-digit PIN',
         ),
         SizedBox(height: 12.h),
         _buildPinField(
-          controller: _pinController,
-          label: 'New 6-Digit PIN',
-          hint: 'Enter new 6-digit PIN',
+          fieldController: controller.pinController,
+          label: 'New 4-Digit PIN',
+          hint: 'Enter new 4-digit PIN',
         ),
         SizedBox(height: 12.h),
         _buildPinField(
-          controller: _confirmPinController,
+          fieldController: controller.confirmPinController,
           label: 'Confirm New PIN',
-          hint: 'Re-enter new 6 digits',
+          hint: 'Re-enter new 4 digits',
           action: TextInputAction.done,
-          onSubmitted: _handleChangeSubmit,
+          onSubmitted: () => controller.handleChangeSubmit(context),
         ),
-        SizedBox(height: 6.h),
+        SizedBox(height: 8.h),
         Align(
           alignment: Alignment.centerRight,
           child: TextButton(
-            onPressed: _isLoading ? null : _handleStartReset,
+            onPressed: controller.isLoading.value ? null : () => controller.handleStartReset(),
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size(50.w, 30.h),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
             child: Text(
-              'Forgot Current PIN?',
+              'Forgot PIN?',
               style: GoogleFonts.lato(
                 fontSize: 13.sp,
-                color: AppColor.primary,
                 fontWeight: FontWeight.w600,
+                color: AppColor.primary,
               ),
             ),
           ),
         ),
-        SizedBox(height: 14.h),
+        SizedBox(height: 16.h),
         _buildActionButton(
-          label: 'Change PIN',
-          onPressed: _handleChangeSubmit,
+          label: 'Update PIN',
+          onPressed: () => controller.handleChangeSubmit(context),
         ),
       ],
     );
   }
 
-  Widget _buildResetConfirmView() {
+  Widget _buildResetConfirmView(BuildContext context) {
+    final mobileSent = controller.mobileSent.value;
+    final emailSent = controller.emailSent.value;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (_mobileSent) ...[
+        if (mobileSent) ...[
           _buildPinField(
-            controller: _mobileCodeController,
+            fieldController: controller.mobileCodeController,
             label: 'Mobile OTP Code',
-            hint: 'Enter code sent via SMS',
+            hint: 'Enter SMS OTP',
           ),
           SizedBox(height: 12.h),
         ],
-        if (_emailSent) ...[
+        if (emailSent) ...[
           _buildPinField(
-            controller: _emailCodeController,
+            fieldController: controller.emailCodeController,
             label: 'Email OTP Code',
-            hint: 'Enter code sent via Email',
+            hint: 'Enter email OTP',
+          ),
+          SizedBox(height: 12.h),
+        ],
+        if (!mobileSent && !emailSent) ...[
+          _buildPinField(
+            fieldController: controller.mobileCodeController,
+            label: 'Reset OTP Code',
+            hint: 'Enter 6-digit OTP code',
           ),
           SizedBox(height: 12.h),
         ],
         _buildPinField(
-          controller: _pinController,
-          label: 'New 6-Digit PIN',
-          hint: 'Enter 6 digits',
+          fieldController: controller.pinController,
+          label: 'New 4-Digit PIN',
+          hint: 'Enter 4 digits',
         ),
         SizedBox(height: 12.h),
         _buildPinField(
-          controller: _confirmPinController,
+          fieldController: controller.confirmPinController,
           label: 'Confirm New PIN',
-          hint: 'Re-enter 6 digits',
+          hint: 'Re-enter 4 digits',
           action: TextInputAction.done,
-          onSubmitted: _handleConfirmResetSubmit,
+          onSubmitted: () => controller.handleConfirmResetSubmit(context),
         ),
         SizedBox(height: 20.h),
         _buildActionButton(
           label: 'Reset & Set PIN',
-          onPressed: _handleConfirmResetSubmit,
+          onPressed: () => controller.handleConfirmResetSubmit(context),
         ),
       ],
     );
@@ -786,38 +413,39 @@ class _WalletPinSheetState extends State<_WalletPinSheet> {
 
   Widget _buildLockedView() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        SizedBox(height: 8.h),
+        SizedBox(height: 10.h),
         Text(
-          'Your wallet PIN is temporarily locked due to 5 consecutive wrong attempts.',
+          'Your wallet PIN is temporarily locked due to 5 consecutive incorrect attempts.',
           textAlign: TextAlign.center,
-          style: GoogleFonts.lato(
-            fontSize: 14.sp,
-            color: AppColor.textSecondary,
-          ),
+          style: GoogleFonts.lato(fontSize: 14.sp, color: AppColor.textSecondary, height: 1.4),
         ),
         SizedBox(height: 16.h),
-        if (_remainingLockText.isNotEmpty)
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-            decoration: BoxDecoration(
-              color: AppColor.red.shade50,
-              borderRadius: BorderRadius.circular(20.r),
-            ),
-            child: Text(
-              'Unlocks in $_remainingLockText',
-              style: GoogleFonts.lato(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.bold,
-                color: AppColor.red,
-              ),
-            ),
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+          decoration: BoxDecoration(
+            color: AppColor.red.shade50,
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: AppColor.red.shade200),
           ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Iconsax.timer, color: AppColor.red, size: 20.r),
+              SizedBox(width: 8.w),
+              Obx(
+                () => Text(
+                  'Unlocks in ${controller.remainingLockText.value}',
+                  style: GoogleFonts.lato(fontSize: 15.sp, fontWeight: FontWeight.bold, color: AppColor.red),
+                ),
+              ),
+            ],
+          ),
+        ),
         SizedBox(height: 24.h),
         _buildActionButton(
-          label: 'Reset PIN via OTP Now',
-          onPressed: _handleStartReset,
+          label: 'Reset PIN with OTP',
+          onPressed: () => controller.handleStartReset(),
         ),
       ],
     );
@@ -827,36 +455,25 @@ class _WalletPinSheetState extends State<_WalletPinSheet> {
     required String label,
     required VoidCallback onPressed,
   }) {
-    return SizedBox(
-      height: 48.h,
-      child: ElevatedButton(
-        onPressed: _isLoading ? null : onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColor.primary,
-          foregroundColor: AppColor.white,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-          disabledBackgroundColor: AppColor.primary.withValues(alpha: 0.6),
-        ),
-        child: _isLoading
-            ? SizedBox(
-                width: 22.r,
-                height: 22.r,
-                child: const CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColor.white),
-                ),
-              )
-            : Text(
-                label,
-                style: GoogleFonts.lato(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+    final isLoading = controller.isLoading.value;
+    return ElevatedButton(
+      onPressed: isLoading ? null : onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColor.primary,
+        foregroundColor: AppColor.white,
+        padding: EdgeInsets.symmetric(vertical: 14.h),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       ),
+      child: isLoading
+          ? SizedBox(
+              height: 20.r,
+              width: 20.r,
+              child: const CircularProgressIndicator(color: AppColor.white, strokeWidth: 2),
+            )
+          : Text(
+              label,
+              style: GoogleFonts.lato(fontSize: 15.sp, fontWeight: FontWeight.bold, color: AppColor.white),
+            ),
     );
   }
 }

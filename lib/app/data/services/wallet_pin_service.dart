@@ -135,14 +135,22 @@ class WalletPinService extends GetxService {
 
   /// POST /api/v1/account/wallet-pin/reset-confirm
   Future<Map<String, dynamic>> confirmReset({
+    String? code,
     String? mobileCode,
     String? emailCode,
     required String newPin,
   }) async {
     try {
       isLoading.value = true;
+      final resolvedCode = (code != null && code.trim().isNotEmpty)
+          ? code.trim()
+          : ((mobileCode != null && mobileCode.trim().isNotEmpty)
+              ? mobileCode.trim()
+              : emailCode?.trim());
       final payload = <String, dynamic>{
         'newPin': newPin.trim(),
+        if (resolvedCode != null && resolvedCode.isNotEmpty)
+          'code': resolvedCode,
         if (mobileCode != null && mobileCode.trim().isNotEmpty)
           'mobileCode': mobileCode.trim(),
         if (emailCode != null && emailCode.trim().isNotEmpty)

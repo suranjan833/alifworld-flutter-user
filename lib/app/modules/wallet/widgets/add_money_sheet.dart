@@ -16,11 +16,15 @@ import '../controllers/manual_payment_controller.dart';
 class AddMoneySheet extends GetView<ManualPaymentController> {
   const AddMoneySheet({super.key});
 
-  static Future<void> show(BuildContext context) {
+  static Future<void> show(BuildContext context, {int initialTab = 0}) {
     if (!Get.isRegistered<ManualPaymentController>()) {
       Get.put(ManualPaymentController());
     }
-    Get.find<ManualPaymentController>().openDepositSheet();
+    final ctrl = Get.find<ManualPaymentController>();
+    ctrl.openDepositSheet();
+    if (initialTab != 0) {
+      ctrl.depositTab.value = initialTab;
+    }
 
     return showModalBottomSheet(
       context: context,

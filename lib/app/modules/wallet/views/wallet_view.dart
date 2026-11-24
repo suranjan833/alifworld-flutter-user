@@ -637,6 +637,57 @@ class WalletView extends GetView<WalletController> {
                     ),
                   ],
                 ),
+                SizedBox(height: 12.h),
+                GestureDetector(
+                  onTap: () => AddMoneySheet.show(context, initialTab: 1),
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0FDF4),
+                      borderRadius: BorderRadius.circular(10.r),
+                      border: Border.all(color: const Color(0xFFBBF7D0)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.storefront_rounded,
+                          size: 16.r,
+                          color: const Color(0xFF16A34A),
+                        ),
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: Text(
+                            'Deposit cash at any Alifworld Service Point with 0 fee',
+                            style: GoogleFonts.lato(
+                              fontSize: 11.5.sp,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF15803D),
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 6.w,
+                            vertical: 2.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF16A34A),
+                            borderRadius: BorderRadius.circular(4.r),
+                          ),
+                          child: Text(
+                            '0% FEE',
+                            style: GoogleFonts.lato(
+                              fontSize: 9.5.sp,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ],

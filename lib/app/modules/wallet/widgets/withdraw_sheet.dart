@@ -470,28 +470,80 @@ class WithdrawSheet extends GetView<ManualPaymentController> {
             ),
           ],
 
-          // Fee Preview (§7): Hide when fee == 0! Never show "Fee: ৳0".
+          // Fee Preview (§7): Breakdown matching specification
           if (feeMinor > 0 && !isOverBalance) ...[
-            SizedBox(height: 6.h),
+            SizedBox(height: 10.h),
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
-                borderRadius: BorderRadius.circular(8.r),
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(10.r),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
-              child: Row(
+              child: Column(
                 children: [
-                  Icon(Iconsax.info_circle, size: 14.r, color: const Color(0xFF1D4ED8)),
-                  SizedBox(width: 6.w),
-                  Expanded(
-                    child: Text(
-                      'Fee ৳${fee.toStringAsFixed(2)} — you receive ৳${net.toStringAsFixed(2)} payout (Main debited ৳${enteredAmount.toStringAsFixed(2)})',
-                      style: GoogleFonts.lato(
-                        fontSize: 11.5.sp,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF1D4ED8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Withdrawal Amount',
+                        style: GoogleFonts.lato(
+                          fontSize: 12.sp,
+                          color: const Color(0xFF64748B),
+                        ),
                       ),
-                    ),
+                      Text(
+                        '৳${enteredAmount.toStringAsFixed(2)}',
+                        style: GoogleFonts.lato(
+                          fontSize: 12.5.sp,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF0F172A),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 6.h),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Platform Charge (${config.withdrawFee.pct}%)',
+                        style: GoogleFonts.lato(
+                          fontSize: 12.sp,
+                          color: const Color(0xFFDC2626),
+                        ),
+                      ),
+                      Text(
+                        '-৳${fee.toStringAsFixed(2)}',
+                        style: GoogleFonts.lato(
+                          fontSize: 12.5.sp,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFFDC2626),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Divider(color: Color(0xFFE2E8F0), height: 14),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'You Will Receive',
+                        style: GoogleFonts.lato(
+                          fontSize: 12.5.sp,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF0F172A),
+                        ),
+                      ),
+                      Text(
+                        '৳${net.toStringAsFixed(2)}',
+                        style: GoogleFonts.lato(
+                          fontSize: 13.5.sp,
+                          fontWeight: FontWeight.w900,
+                          color: const Color(0xFF16A34A),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

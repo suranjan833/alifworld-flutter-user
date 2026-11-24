@@ -1,65 +1,51 @@
 // ignore_for_file: library_prefixes
 
-import 'package:dio/dio.dart' as DIO;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/models/manual_payment_model.dart';
+import '../../../data/models/redeem_model.dart';
 import '../../../data/widgets/wallet_pin_dialog.dart';
+import 'manual_payment_cards_mixin.dart';
 import 'wallet_controller.dart';
 
-class ManualPaymentController extends GetxController {
-  // §2 Config
+class ManualPaymentController extends GetxController
+    with ManualPaymentCardsMixin {
+  // Config
   final config = Rxn<ManualPaymentConfigModel>();
   final isLoadingConfig = false.obs;
 
-  // §4 Service Points
+  // Service Points
   final servicePoints = <ServicePointModel>[].obs;
   final isLoadingServicePoints = false.obs;
 
-  // §5 Saved Cards / Accounts
-  final withdrawalAccounts = <WithdrawalAccountModel>[].obs;
-  final isLoadingAccounts = false.obs;
-  final selectedAccountId = RxnString();
-  final isDeletingAccountId = RxnString();
-  final pendingDeleteCardId = RxnString(); // For 2-tap confirm (§5.3)
-
-  // §3 Deposit Form & Upload
-  final isUploadingReceipt = false.obs;
-  final localReceiptPath = RxnString();
-  final uploadedReceiptUrl = RxnString();
-  final uploadedReceiptName = RxnString();
+  // Deposit Form State & Submissions
   final isSubmittingDeposit = false.obs;
-
-  // Deposit Sheet UI State & Controllers (AddMoneySheet)
-  final depositTab = 0.obs; // 0: Bank Transfer, 1: Service Point, 2: History
+  final depositTab = 0.obs;
   final enteredDepositAmount = 0.0.obs;
   final depositAmountCtrl = TextEditingController();
   final depositRefCtrl = TextEditingController();
 
-  // §3.3 Deposits List
+  // Deposits List
   final deposits = <ManualDepositModel>[].obs;
   final isLoadingDeposits = false.obs;
   final depositNextCursor = RxnString();
 
-  // §6 Withdrawal Form & List
+  // Withdrawal Form State & Submissions
   final isSubmittingWithdrawal = false.obs;
   final withdrawals = <ManualWithdrawalModel>[].obs;
   final isLoadingWithdrawals = false.obs;
   final withdrawalNextCursor = RxnString();
 
-  // Withdraw Sheet UI State & Controllers (WithdrawSheet)
-  final withdrawTab = 0.obs; // 0: Withdraw, 1: History
+  // Withdraw Sheet UI State
+  final withdrawTab = 0.obs;
   final isAddingNewCard = false.obs;
   final enteredWithdrawAmount = 0.0.obs;
   final withdrawAmountCtrl = TextEditingController();
   final cardLabelCtrl = TextEditingController();
   final dynamicFieldCtrls = <String, TextEditingController>{};
-
-  final ImagePicker _picker = ImagePicker();
 
   TextEditingController getWithdrawFieldCtrl(String id) {
     if (!dynamicFieldCtrls.containsKey(id)) {
@@ -73,9 +59,7 @@ class ManualPaymentController extends GetxController {
     depositAmountCtrl.clear();
     depositRefCtrl.clear();
     enteredDepositAmount.value = 0.0;
-    localReceiptPath.value = null;
-    uploadedReceiptUrl.value = null;
-    uploadedReceiptName.value = null;
+    clearUploadedReceipt();
     fetchConfig();
     fetchServicePoints();
     fetchDeposits(refresh: true);
@@ -128,8 +112,6 @@ class ManualPaymentController extends GetxController {
     super.onClose();
   }
 
-  /// §2 GET /manual-payments/config
-  /// Never cached across sessions; reload whenever sheet opens.
   Future<void> fetchConfig() async {
     isLoadingConfig.value = true;
     try {
@@ -150,7 +132,6 @@ class ManualPaymentController extends GetxController {
     }
   }
 
-  /// §4 GET /service-points
   Future<void> fetchServicePoints() async {
     isLoadingServicePoints.value = true;
     try {
@@ -162,7 +143,8 @@ class ManualPaymentController extends GetxController {
         }
         if (rawData is Map && rawData['items'] is List) {
           final list = (rawData['items'] as List)
-              .map((e) => ServicePointModel.fromJson(Map<String, dynamic>.from(e)))
+              .map((e) =>
+                  ServicePointModel.fromJson(Map<String, dynamic>.from(e)))
               .toList();
           servicePoints.assignAll(list);
         }
@@ -174,185 +156,6 @@ class ManualPaymentController extends GetxController {
     }
   }
 
-  /// §5.1 GET /manual-payments/withdrawal-accounts
-  Future<void> fetchWithdrawalAccounts() async {
-    isLoadingAccounts.value = true;
-    try {
-      final response = await dioGet('manual-payments/withdrawal-accounts');
-      if (response.statusCode == 200 && response.data != null) {
-        dynamic rawData = response.data;
-        if (rawData is Map && rawData.containsKey('data')) {
-          rawData = rawData['data'];
-        }
-        if (rawData is Map && rawData['items'] is List) {
-          final list = (rawData['items'] as List)
-              .map((e) =>
-                  WithdrawalAccountModel.fromJson(Map<String, dynamic>.from(e)))
-              .toList();
-          withdrawalAccounts.assignAll(list);
-
-          // §6.1 Auto-select the first card when list loads
-          if (withdrawalAccounts.isNotEmpty) {
-            if (selectedAccountId.value == null ||
-                !withdrawalAccounts.any((a) => a.id == selectedAccountId.value)) {
-              selectedAccountId.value = withdrawalAccounts.first.id;
-            }
-          } else {
-            selectedAccountId.value = null;
-          }
-        }
-      }
-    } catch (e) {
-      debugPrint('Error fetching withdrawal accounts: $e');
-    } finally {
-      isLoadingAccounts.value = false;
-    }
-  }
-
-  /// §5.2 POST /manual-payments/withdrawal-accounts
-  Future<bool> createWithdrawalAccount({
-    required String label,
-    required Map<String, dynamic> details,
-  }) async {
-    final trimmedLabel = label.trim();
-    if (trimmedLabel.isEmpty) {
-      showSnack('Validation Error', 'Card label / nickname is required');
-      return false;
-    }
-
-    try {
-      final payload = <String, dynamic>{
-        'label': trimmedLabel,
-        'details': details,
-      };
-
-      final response = await dioPost(
-        endUrl: 'manual-payments/withdrawal-accounts',
-        data: payload,
-        isJson: true,
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        dynamic rawData = response.data;
-        if (rawData is Map && rawData.containsKey('data')) {
-          rawData = rawData['data'];
-        }
-        if (rawData is Map<String, dynamic>) {
-          final newCard = WithdrawalAccountModel.fromJson(rawData);
-          withdrawalAccounts.insert(0, newCard);
-          // Auto select immediately after saving (§5.2)
-          selectedAccountId.value = newCard.id;
-          showSnack('Success', 'Bank card added successfully');
-          return true;
-        }
-        await fetchWithdrawalAccounts();
-        return true;
-      } else {
-        final err = _extractErrorMessage(response.data);
-        showSnack('Error', err ?? 'Failed to add card');
-        return false;
-      }
-    } catch (e) {
-      showSnack('Error', 'Failed to save card: $e');
-      return false;
-    }
-  }
-
-  /// §5.3 DELETE /manual-payments/withdrawal-accounts/[id]
-  Future<bool> deleteWithdrawalAccount(String id) async {
-    isDeletingAccountId.value = id;
-    try {
-      final response =
-          await dioDelete('manual-payments/withdrawal-accounts/$id');
-      if (response.statusCode == 200) {
-        withdrawalAccounts.removeWhere((c) => c.id == id);
-        if (selectedAccountId.value == id) {
-          selectedAccountId.value =
-              withdrawalAccounts.isNotEmpty ? withdrawalAccounts.first.id : null;
-        }
-        showSnack('Deleted', 'Card removed');
-        return true;
-      } else if (response.statusCode == 404) {
-        // §8 NOT_FOUND -> Refresh card list
-        await fetchWithdrawalAccounts();
-        return false;
-      } else {
-        final err = _extractErrorMessage(response.data);
-        showSnack('Error', err ?? 'Failed to delete card');
-        return false;
-      }
-    } catch (e) {
-      showSnack('Error', 'Failed to delete card: $e');
-      return false;
-    } finally {
-      isDeletingAccountId.value = null;
-      pendingDeleteCardId.value = null;
-    }
-  }
-
-  /// §3.1 Upload receipt via image picker or camera
-  Future<void> pickAndUploadReceipt(ImageSource source) async {
-    debugPrint('[ManualPayment] pickAndUploadReceipt called: source=$source');
-    try {
-      final XFile? pickedFile = await _picker.pickImage(
-        source: source,
-        imageQuality: 85,
-        maxWidth: 1600,
-      );
-      debugPrint('[ManualPayment] pickedFile: $pickedFile');
-      if (pickedFile == null) return;
-
-      // Update state immediately so thumbnail preview renders INSTANTLY!
-      localReceiptPath.value = pickedFile.path;
-      uploadedReceiptName.value = pickedFile.name;
-      uploadedReceiptUrl.value = null;
-      isUploadingReceipt.value = true;
-
-      final formDataMap = <String, dynamic>{
-        'kind': 'document',
-        'file': await DIO.MultipartFile.fromFile(
-          pickedFile.path,
-          filename: pickedFile.name,
-        ),
-      };
-
-      final response = await dioPost(
-        endUrl: 'account/uploads',
-        data: formDataMap,
-        isJson: false,
-        isFile: true,
-      );
-
-      if ((response.statusCode == 200 || response.statusCode == 201) &&
-          response.data != null) {
-        dynamic rawData = response.data;
-        if (rawData is Map && rawData.containsKey('data')) {
-          rawData = rawData['data'];
-        }
-        if (rawData is Map && rawData['url'] != null) {
-          uploadedReceiptUrl.value = rawData['url'].toString();
-          showSnack('Receipt Uploaded', 'Receipt attached successfully');
-        } else {
-          showSnack('Upload Failed', 'No receipt URL returned');
-        }
-      } else {
-        final err = _extractErrorMessage(response.data);
-        showSnack('Upload Failed', err ?? 'Could not upload receipt image');
-      }
-    } catch (e) {
-      showSnack('Upload Error', 'Failed to upload receipt: $e');
-    } finally {
-      isUploadingReceipt.value = false;
-    }
-  }
-
-  void clearUploadedReceipt() {
-    localReceiptPath.value = null;
-    uploadedReceiptUrl.value = null;
-    uploadedReceiptName.value = null;
-  }
-
-  /// §3.2 POST /manual-payments/deposits
   Future<bool> createDeposit({
     required double amount,
     required String reference,
@@ -412,7 +215,6 @@ class ManualPaymentController extends GetxController {
     }
   }
 
-  /// §3.3 GET /manual-payments/deposits (cursor-paged)
   Future<void> fetchDeposits({bool refresh = true}) async {
     if (refresh) {
       isLoadingDeposits.value = true;
@@ -454,7 +256,7 @@ class ManualPaymentController extends GetxController {
     }
   }
 
-  /// §6.1 POST /manual-payments/withdrawals
+  /// POST /manual-payments/withdrawals with Idempotency-Key
   Future<WalletPinActionResult> executeWithdrawal({
     required double amount,
     required String walletPin,
@@ -482,10 +284,12 @@ class ManualPaymentController extends GetxController {
 
     isSubmittingWithdrawal.value = true;
     try {
+      final idempotencyKey = generateUuidV4();
       final response = await dioPost(
         endUrl: 'manual-payments/withdrawals',
         data: payload,
         isJson: true,
+        customHeaders: {'Idempotency-Key': idempotencyKey},
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -493,7 +297,6 @@ class ManualPaymentController extends GetxController {
           'Withdrawal Requested',
           'Request submitted and pending admin approval',
         );
-        // Refresh Main balance immediately after 201 submit: amount held immediately
         if (Get.isRegistered<WalletController>()) {
           await Get.find<WalletController>().fetchWallets();
           Get.find<WalletController>().fetchTransactions(refresh: true);
@@ -505,7 +308,6 @@ class ManualPaymentController extends GetxController {
         var errMsg =
             _extractErrorMessage(response.data) ?? 'Failed to submit withdrawal';
 
-        // 409 INSUFFICIENT_BALANCE error mapping
         if (response.statusCode == 409 || errCode == 'INSUFFICIENT_BALANCE') {
           errCode = 'INSUFFICIENT_BALANCE';
           errMsg = errMsg.isNotEmpty && errMsg != 'Failed to submit withdrawal'
@@ -516,7 +318,6 @@ class ManualPaymentController extends GetxController {
           }
         }
 
-        // Keep PIN sheet open on WALLET_PIN_* errors (§8)
         return WalletPinActionResult.failure(
           errorCode: errCode,
           errorMessage: errMsg,
@@ -532,7 +333,6 @@ class ManualPaymentController extends GetxController {
     }
   }
 
-  /// §6.2 GET /manual-payments/withdrawals (cursor-paged)
   Future<void> fetchWithdrawals({bool refresh = true}) async {
     if (refresh) {
       isLoadingWithdrawals.value = true;
@@ -566,7 +366,6 @@ class ManualPaymentController extends GetxController {
           }
           withdrawalNextCursor.value = rawData['nextCursor']?.toString();
 
-          // When a withdrawal's status becomes rejected, refresh Main balance too — refund has landed
           if (refresh && items.any((w) => w.isRejected)) {
             if (Get.isRegistered<WalletController>()) {
               Get.find<WalletController>().fetchWallets();
