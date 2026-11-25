@@ -13,6 +13,7 @@ import '../../../data/widgets/points_badge.dart';
 import '../../../routes/app_pages.dart';
 import '../../bag/controllers/bag_controller.dart';
 import '../controllers/product_details_controller.dart';
+import 'widgets/product_addons_section.dart';
 import 'widgets/product_reviews_section.dart';
 
 class ProductDetailsView extends GetView<ProductDetailsController> {
@@ -224,6 +225,9 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
 
                     // 3. Variant Selector Card (if variants exist)
                     _buildVariantsSection(),
+
+                    // Product Add-ons Section
+                    const ProductAddonsSection(),
 
                     // 4. Quantity Selector Card
                     _buildQuantityCard(),

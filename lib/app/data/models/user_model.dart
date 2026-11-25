@@ -67,7 +67,10 @@ class UserModel {
       role: json['role']?.toString(),
       status: json['status']?.toString(),
       gender: json['gender']?.toString(),
-      dateOfBirth: json['dateOfBirth']?.toString() ?? json['dob']?.toString(),
+      dateOfBirth: json['dateOfBirth']?.toString() ??
+          json['dob']?.toString() ??
+          json['date_of_birth']?.toString() ??
+          json['birthDate']?.toString(),
       sellerStatus: json['sellerStatus']?.toString(),
       riderStatus: json['riderStatus']?.toString(),
       referralCode: json['referralCode']?.toString() ??

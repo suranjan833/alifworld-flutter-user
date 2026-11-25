@@ -78,7 +78,9 @@ class ReferralLevelHistoryView extends GetView<ReferralLevelHistoryController> {
                   child: _buildHeaderCard(),
                 ),
               ),
-              if (controller.items.isEmpty && !controller.isLoading.value)
+              if (controller.items.isEmpty &&
+                  !controller.isLoading.value &&
+                  !controller.isInitialLoading.value)
                 SliverFillRemaining(
                   hasScrollBody: false,
                   child: _buildEmptyState(),

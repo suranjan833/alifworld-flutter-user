@@ -211,7 +211,9 @@ class WalletPinSheetController extends GetxController {
           errorMessage.value = msg;
         } else {
           isLoading.value = false;
-          Get.back();
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
         }
       }
     } catch (e) {
@@ -244,13 +246,14 @@ class WalletPinSheetController extends GetxController {
     if (result['success'] == true) {
       showSnack('Success', 'Wallet PIN set successfully', bg: AppColor.green);
       if (isManageMode) {
-        Get.back();
-      } else if (onConfirm != null) {
         if (context.mounted) {
-          await executeActionWithPin(context, pin);
+          Navigator.of(context).pop();
         }
       } else {
-        Get.back(result: pin);
+        // Immediately dismiss the PIN dialog without holding, returning the newly set PIN
+        if (context.mounted) {
+          Navigator.of(context).pop(pin);
+        }
       }
     } else {
       errorMessage.value =

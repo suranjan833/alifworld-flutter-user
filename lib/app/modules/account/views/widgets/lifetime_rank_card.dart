@@ -301,136 +301,139 @@ class LifetimeRankCard extends GetView<AccountController> {
 
   Widget _buildTimelineTrack(double fillFraction, int activeIndex) {
     const tiers = ['Regular', 'Bronze', 'Silver', 'Gold'];
+    const double badgeSize = 32.0;
+    const double lineHeight = 4.0;
 
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 4.w),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Background & Progress Connecting Track
-          Positioned(
-            top: 15.r,
-            left: 20.w,
-            right: 20.w,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final totalW = constraints.maxWidth;
-                final filledW = (totalW * fillFraction).clamp(0.0, totalW);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final totalW = constraints.maxWidth;
+        final colWidth = totalW / tiers.length;
+        final startX = colWidth * 0.5;
+        final trackWidth = colWidth * (tiers.length - 1);
+        final filledW = (trackWidth * fillFraction.clamp(0.0, 1.0)).toDouble();
 
-                return Stack(
-                  children: [
-                    Container(
-                      height: 4.h,
-                      width: totalW,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE2E8F0),
-                        borderRadius: BorderRadius.circular(2.r),
-                      ),
-                    ),
-                    Container(
-                      height: 4.h,
-                      width: filledW,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEA580C),
-                        borderRadius: BorderRadius.circular(2.r),
-                      ),
-                    ),
-                  ],
-                );
-              },
+        return Stack(
+          children: [
+            // Background track strictly between node centers
+            Positioned(
+              top: (badgeSize.r - lineHeight.h) / 2,
+              left: startX,
+              width: trackWidth,
+              height: lineHeight.h,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE2E8F0),
+                  borderRadius: BorderRadius.circular(lineHeight.h / 2),
+                ),
+              ),
             ),
-          ),
-          // 4 Node Badges & Labels Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: List.generate(tiers.length, (idx) {
-              final isCurrent = idx == activeIndex;
-              final isPassed = idx < activeIndex;
-              final tierName = tiers[idx];
-
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Circular Badge
-                  if (isCurrent)
-                    Container(
-                      width: 32.r,
-                      height: 32.r,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFFEA580C),
-                        border: Border.all(
-                          color: const Color(0xFFFFEDD5),
-                          width: 3.5.r,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFEA580C).withValues(alpha: 0.3),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      alignment: Alignment.center,
-                      child: Icon(
-                        Icons.workspace_premium_rounded,
-                        size: 15.r,
-                        color: Colors.white,
-                      ),
-                    )
-                  else if (isPassed)
-                    Container(
-                      width: 30.r,
-                      height: 30.r,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Color(0xFFEA580C),
-                      ),
-                      alignment: Alignment.center,
-                      child: Icon(
-                        Icons.workspace_premium_rounded,
-                        size: 15.r,
-                        color: Colors.white,
-                      ),
-                    )
-                  else
-                    Container(
-                      width: 30.r,
-                      height: 30.r,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFFF8FAFC),
-                        border: Border.all(
-                          color: const Color(0xFFCBD5E1),
-                          width: 1.5.r,
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      child: Icon(
-                        Icons.workspace_premium_rounded,
-                        size: 15.r,
-                        color: const Color(0xFF94A3B8),
-                      ),
-                    ),
-                  SizedBox(height: 6.h),
-                  // Label Below
-                  Text(
-                    tierName,
-                    style: GoogleFonts.lato(
-                      fontSize: 12.sp,
-                      fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
-                      color: isCurrent
-                          ? const Color(0xFFEA580C)
-                          : (isPassed ? const Color(0xFF334155) : const Color(0xFF64748B)),
-                    ),
+            // Progress filled track
+            if (filledW > 0)
+              Positioned(
+                top: (badgeSize.r - lineHeight.h) / 2,
+                left: startX,
+                width: filledW,
+                height: lineHeight.h,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEA580C),
+                    borderRadius: BorderRadius.circular(lineHeight.h / 2),
                   ),
-                ],
-              );
-            }),
-          ),
-        ],
-      ),
+                ),
+              ),
+            // 4 Node Badges & Labels Row
+            Row(
+              children: List.generate(tiers.length, (idx) {
+                final isCurrent = idx == activeIndex;
+                final isPassed = idx < activeIndex;
+                final tierName = tiers[idx];
+
+                return Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Circular Badge
+                      if (isCurrent)
+                        Container(
+                          width: badgeSize.r,
+                          height: badgeSize.r,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: const Color(0xFFEA580C),
+                            border: Border.all(
+                              color: const Color(0xFFFFEDD5),
+                              width: 3.5.r,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFEA580C).withValues(alpha: 0.3),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          alignment: Alignment.center,
+                          child: Icon(
+                            Icons.workspace_premium_rounded,
+                            size: 15.r,
+                            color: Colors.white,
+                          ),
+                        )
+                      else if (isPassed)
+                        Container(
+                          width: badgeSize.r,
+                          height: badgeSize.r,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Color(0xFFEA580C),
+                          ),
+                          alignment: Alignment.center,
+                          child: Icon(
+                            Icons.workspace_premium_rounded,
+                            size: 15.r,
+                            color: Colors.white,
+                          ),
+                        )
+                      else
+                        Container(
+                          width: badgeSize.r,
+                          height: badgeSize.r,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: const Color(0xFFF8FAFC),
+                            border: Border.all(
+                              color: const Color(0xFFCBD5E1),
+                              width: 1.5.r,
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Icon(
+                            Icons.workspace_premium_rounded,
+                            size: 15.r,
+                            color: const Color(0xFF94A3B8),
+                          ),
+                        ),
+                      SizedBox(height: 8.h),
+                      // Label Below
+                      Text(
+                        tierName,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.lato(
+                          fontSize: 12.sp,
+                          fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+                          color: isCurrent
+                              ? const Color(0xFFEA580C)
+                              : (isPassed ? const Color(0xFF334155) : const Color(0xFF64748B)),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ),
+          ],
+        );
+      },
     );
   }
 }

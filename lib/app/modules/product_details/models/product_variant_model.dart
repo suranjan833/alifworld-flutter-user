@@ -1,3 +1,5 @@
+import 'variant_addon_model.dart';
+
 class ProductVariantModel {
   final String id;
   final String sku;
@@ -14,6 +16,8 @@ class ProductVariantModel {
   final List<Map<String, dynamic>> dimensions;
   final int? minPurchaseQty;
   final int? maxPurchaseQty;
+  final List<VariantAddonModel>? _addons;
+  List<VariantAddonModel> get addons => _addons ?? const [];
 
   ProductVariantModel({
     required this.id,
@@ -31,7 +35,8 @@ class ProductVariantModel {
     this.dimensions = const [],
     this.minPurchaseQty,
     this.maxPurchaseQty,
-  });
+    List<VariantAddonModel>? addons = const [],
+  }) : _addons = addons;
 
   bool get isCampaignActive =>
       campaignSaleMinor != null && campaignSaleMinor! > 0;
@@ -137,6 +142,14 @@ class ProductVariantModel {
     final rawMax = json['maxPurchaseQty'];
     final int? maxQty = rawMax is num ? rawMax.toInt() : null;
 
+    List<VariantAddonModel> parsedAddons = [];
+    if (json['addons'] is List) {
+      parsedAddons = (json['addons'] as List)
+          .whereType<Map>()
+          .map((e) => VariantAddonModel.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    }
+
     return ProductVariantModel(
       id: json['id']?.toString() ?? '',
       sku: json['sku']?.toString() ?? '',
@@ -161,6 +174,7 @@ class ProductVariantModel {
       dimensions: dims,
       minPurchaseQty: minQty,
       maxPurchaseQty: maxQty,
+      addons: parsedAddons,
     );
   }
 
@@ -179,6 +193,7 @@ class ProductVariantModel {
       'images': images,
       'attributes': attributes,
       'dimensions': dimensions,
+      'addons': addons.map((e) => e.toJson()).toList(),
       if (minPurchaseQty != null) 'minPurchaseQty': minPurchaseQty,
       if (maxPurchaseQty != null) 'maxPurchaseQty': maxPurchaseQty,
     };

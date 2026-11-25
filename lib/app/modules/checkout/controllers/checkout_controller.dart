@@ -850,6 +850,9 @@ class CheckoutController extends GetxController {
         batchNumber: successOrderData!['batchNumber'] as String?,
         paymentStatus: successOrderData!['paymentStatus'] as String?,
       );
+    } else if (pin != null && successOrderData == null) {
+      // PIN was newly set and dialog closed cleanly, now execute place order
+      await _executePlaceOrder(walletPin: pin);
     }
   }
 
@@ -1023,7 +1026,38 @@ class CheckoutController extends GetxController {
           };
         }
 
-        // 3. Other non-PIN errors handled on checkout view
+        // 3. Address issue (ADDRESS_NOT_FOUND / INVALID_ADDRESS)
+        if (errorCode == 'ADDRESS_NOT_FOUND' ||
+            errorCode == 'INVALID_ADDRESS' ||
+            errorCode == 'DELIVERY_ADDRESS_NOT_FOUND' ||
+            errorMsg.toLowerCase().contains('address not found') ||
+            errorMsg.toLowerCase().contains('delivery address not found')) {
+          if (Get.isBottomSheetOpen == true || Get.isDialogOpen == true) {
+            Get.back();
+          }
+          selectedAddressIndex.value = -1;
+          await fetchUserAddresses();
+          Get.snackbar(
+            'Address Required',
+            'Delivery address not found. Please add a valid address to complete your order.',
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: AppColor.error,
+            colorText: AppColor.white,
+            duration: const Duration(seconds: 4),
+          );
+          if (Get.context != null) {
+            openAddAddressModal(Get.context!);
+          }
+          return {
+            'success': false,
+            'pinResult': const WalletPinActionResult.failure(
+              errorCode: 'ADDRESS_NOT_FOUND',
+              errorMessage: 'Delivery address not found. Please add an address.',
+            ),
+          };
+        }
+
+        // 4. Other non-PIN errors handled on checkout view
         if (response.statusCode == 401 || errorCode == 'UNAUTHENTICATED') {
           Get.snackbar(
             'Login Required',

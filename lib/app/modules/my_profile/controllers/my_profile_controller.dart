@@ -106,8 +106,15 @@ class MyProfileController extends GetxController {
         if (rawData is Map && rawData.containsKey('data')) {
           rawData = rawData['data'];
         }
+        Map<String, dynamic>? userMap;
         if (rawData is Map && rawData.containsKey('user')) {
-          final userMap = Map<String, dynamic>.from(rawData['user']);
+          userMap = Map<String, dynamic>.from(rawData['user']);
+        } else if (rawData is Map<String, dynamic> &&
+            (rawData.containsKey('id') || rawData.containsKey('phone'))) {
+          userMap = rawData;
+        }
+
+        if (userMap != null) {
           final userModel = UserModel.fromJson(userMap);
 
           if (userModel.displayName.isNotEmpty) {
@@ -144,9 +151,11 @@ class MyProfileController extends GetxController {
               selectedGender.value = 'Other';
             }
             isGenderLocked.value = true;
+            getBox.write(USER_GENDER, selectedGender.value);
           }
           if (userModel.dateOfBirth != null &&
               userModel.dateOfBirth!.isNotEmpty) {
+            isDobLocked.value = true;
             try {
               final parsed = DateTime.parse(userModel.dateOfBirth!);
               selectedDate = parsed;
@@ -154,8 +163,12 @@ class MyProfileController extends GetxController {
                   "${parsed.day} ${_getMonthName(parsed.month)} ${parsed.year}";
               dobController.text = formattedDate;
               userDob.value = formattedDate;
-              isDobLocked.value = true;
-            } catch (_) {}
+              getBox.write(USER_DOB, formattedDate);
+            } catch (_) {
+              dobController.text = userModel.dateOfBirth!;
+              userDob.value = userModel.dateOfBirth!;
+              getBox.write(USER_DOB, userModel.dateOfBirth!);
+            }
           }
           _updateProfileDoneState();
         }
@@ -279,10 +292,14 @@ class MyProfileController extends GetxController {
         final Map<String, dynamic> payload = {
           'firstName': firstName,
           'lastName': lastName,
-          'gender': selectedGender.value.toLowerCase(),
         };
+        if (!isGenderLocked.value && selectedGender.value.isNotEmpty) {
+          payload['gender'] = selectedGender.value.toLowerCase();
+        }
         if (email.isNotEmpty) payload['email'] = email;
-        if (dobIso != null) payload['dateOfBirth'] = dobIso;
+        if (!isDobLocked.value && dobIso != null) {
+          payload['dateOfBirth'] = dobIso;
+        }
 
         final response = await dioPut(
           endUrl: 'auth/me',
@@ -364,7 +381,17 @@ class MyProfileController extends GetxController {
       if (rawData['error'] is Map) {
         final code = rawData['error']['code']?.toString();
         final rawMsg = rawData['error']['message']?.toString();
-        if (code == 'EMAIL_TAKEN') {
+        if (code == 'DOB_LOCKED' ||
+            (rawMsg != null &&
+                (rawMsg.toLowerCase().contains("date of birth") ||
+                    rawMsg.toLowerCase().contains("can't be changed")))) {
+          isDobLocked.value = true;
+          if (dobController.text.isNotEmpty) {
+            getBox.write(USER_DOB, dobController.text);
+          }
+          _updateProfileDoneState();
+          msg = "Date of birth is already set and cannot be changed.";
+        } else if (code == 'EMAIL_TAKEN') {
           msg = 'This email address is already registered to another account.';
         } else if (code == 'INVALID_DOB') {
           msg = 'Please provide a valid date of birth.';

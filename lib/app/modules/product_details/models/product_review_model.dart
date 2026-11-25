@@ -15,15 +15,17 @@ class ProductReviewsResponse {
         json['summary'] is Map<String, dynamic>
             ? json['summary'] as Map<String, dynamic>
             : (json['summary'] is Map
-                ? Map<String, dynamic>.from(json['summary'] as Map)
-                : {}),
+                  ? Map<String, dynamic>.from(json['summary'] as Map)
+                  : {}),
       ),
       reviews: (json['reviews'] as List? ?? [])
-          .map((r) => ProductReviewItem.fromJson(
-                r is Map<String, dynamic>
-                    ? r
-                    : (r is Map ? Map<String, dynamic>.from(r) : {}),
-              ))
+          .map(
+            (r) => ProductReviewItem.fromJson(
+              r is Map<String, dynamic>
+                  ? r
+                  : (r is Map ? Map<String, dynamic>.from(r) : {}),
+            ),
+          )
           .toList(),
       nextCursor: json['nextCursor']?.toString(),
     );
@@ -48,10 +50,12 @@ class ReviewSummary {
         dist[k.toString()] = (v is num) ? v.toInt() : 0;
       });
     }
+    final rawAvg =
+        json['average'] ?? json['avg'] ?? json['rating'] ?? json['avgRating'];
+    final rawCount = json['count'] ?? json['total'] ?? json['totalReviews'];
     return ReviewSummary(
-      average:
-          (json['average'] is num) ? (json['average'] as num).toDouble() : 0.0,
-      count: (json['count'] is num) ? (json['count'] as num).toInt() : 0,
+      average: (rawAvg is num) ? rawAvg.toDouble() : 0.0,
+      count: (rawCount is num) ? rawCount.toInt() : 0,
       distribution: dist,
     );
   }
@@ -64,7 +68,8 @@ class ProductReviewItem {
   final String? body;
   final String? reply;
   final List<String> photos;
-  final String? authorName;
+  final String? reviewerName;
+  String? get authorName => reviewerName;
   final DateTime createdAt;
 
   ProductReviewItem({
@@ -74,9 +79,10 @@ class ProductReviewItem {
     this.body,
     this.reply,
     this.photos = const [],
-    this.authorName,
+    String? reviewerName,
+    String? authorName,
     required this.createdAt,
-  });
+  }) : reviewerName = reviewerName ?? authorName;
 
   factory ProductReviewItem.fromJson(Map<String, dynamic> json) {
     final rawPhotos = json['photos'];
@@ -91,13 +97,20 @@ class ProductReviewItem {
       }
     }
 
-    String? name;
-    if (json['user'] is Map) {
-      name = json['user']['name']?.toString();
-    } else if (json['customerName'] != null) {
-      name = json['customerName']?.toString();
-    } else if (json['userName'] != null) {
-      name = json['userName']?.toString();
+    String? name = json['reviewerName']?.toString() ??
+        json['customerName']?.toString() ??
+        json['userName']?.toString() ??
+        json['authorName']?.toString() ??
+        json['name']?.toString();
+    if (name == null || name.isEmpty) {
+      if (json['user'] is Map) {
+        name = json['user']['name']?.toString() ??
+            json['user']['displayName']?.toString() ??
+            json['user']['fullName']?.toString();
+      } else if (json['customer'] is Map) {
+        name = json['customer']['name']?.toString() ??
+            json['customer']['displayName']?.toString();
+      }
     }
 
     return ProductReviewItem(
@@ -107,7 +120,7 @@ class ProductReviewItem {
       body: json['body']?.toString(),
       reply: json['reply']?.toString(),
       photos: photoList,
-      authorName: name,
+      reviewerName: name,
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now()
           : DateTime.now(),

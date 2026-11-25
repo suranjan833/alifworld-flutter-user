@@ -551,6 +551,29 @@ class BagView extends GetView<BagController> {
                       ),
                     ),
                   ],
+                  if (item.addonsSummary != null &&
+                      item.addonsSummary!.isNotEmpty) ...[
+                    SizedBox(height: 3.h),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8.w,
+                        vertical: 2.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0FDF4),
+                        borderRadius: BorderRadius.circular(6.r),
+                        border: Border.all(color: const Color(0xFFBBF7D0)),
+                      ),
+                      child: Text(
+                        '+ ${item.addonsSummary!}',
+                        style: GoogleFonts.lato(
+                          fontSize: 10.5.sp,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF166534),
+                        ),
+                      ),
+                    ),
+                  ],
                   if (item.hasPurchaseLimits &&
                       item.purchaseLimitsText != null) ...[
                     SizedBox(height: 3.h),

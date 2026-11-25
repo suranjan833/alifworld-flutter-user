@@ -20,6 +20,9 @@ class CartItemModel {
   final int? compareAtPriceMinor;
   final int? minPurchaseQty;
   final int? maxPurchaseQty;
+  final List<dynamic>? addons;
+  final String? addonsSummary;
+  final String? addonsKey;
 
   CartItemModel({
     required this.id,
@@ -41,6 +44,9 @@ class CartItemModel {
     this.compareAtPriceMinor,
     this.minPurchaseQty,
     this.maxPurchaseQty,
+    this.addons,
+    this.addonsSummary,
+    this.addonsKey,
   });
 
   int get effectiveMinQty =>
@@ -261,6 +267,44 @@ class CartItemModel {
         variantObj?['maxPurchaseQty'];
     final int? extractedMaxQty = rawMaxQty is num ? rawMaxQty.toInt() : null;
 
+    final rawAddons = json['addons'] ?? json['selectedAddons'];
+    List<dynamic>? extractedAddons;
+    if (rawAddons is List) {
+      extractedAddons = rawAddons;
+    }
+
+    String? extractedAddonsSummary = json['addonsSummary']?.toString();
+    if ((extractedAddonsSummary == null || extractedAddonsSummary.isEmpty) &&
+        extractedAddons != null &&
+        extractedAddons.isNotEmpty) {
+      final parts = <String>[];
+      for (final a in extractedAddons) {
+        if (a is Map) {
+          final name = a['name']?.toString() ?? a['addonName']?.toString();
+          final opt = a['optionLabel']?.toString() ??
+              (a['checked'] == true ? '' : null) ??
+              (a['optionLabels'] is List
+                  ? (a['optionLabels'] as List).join(', ')
+                  : null);
+          if (name != null && opt != null && opt.isNotEmpty) {
+            parts.add('$name: $opt');
+          } else if (name != null) {
+            parts.add(name);
+          } else if (opt != null && opt.isNotEmpty) {
+            parts.add(opt);
+          }
+        }
+      }
+      if (parts.isNotEmpty) {
+        extractedAddonsSummary = parts.join(' • ');
+      }
+    }
+
+    final String extractedAddonsKey = json['addonsKey']?.toString() ??
+        (extractedAddons != null && extractedAddons.isNotEmpty
+            ? extractedAddons.map((e) => e.toString()).join('|')
+            : 'none');
+
     return CartItemModel(
       id: extractedId,
       productId: extractedProductId,
@@ -281,6 +325,9 @@ class CartItemModel {
       compareAtPriceMinor: extractedCompareAtPriceMinor,
       minPurchaseQty: extractedMinQty,
       maxPurchaseQty: extractedMaxQty,
+      addons: extractedAddons,
+      addonsSummary: extractedAddonsSummary,
+      addonsKey: extractedAddonsKey,
     );
   }
 
@@ -304,7 +351,11 @@ class CartItemModel {
       if (lineTotalMinor != null) 'lineTotalMinor': lineTotalMinor,
       if (pointsPerUnit != null) 'pointsPerUnit': pointsPerUnit,
       if (linePoints != null) 'linePoints': linePoints,
-      if (compareAtPriceMinor != null) 'compareAtPriceMinor': compareAtPriceMinor,
+      if (compareAtPriceMinor != null)
+        'compareAtPriceMinor': compareAtPriceMinor,
+      if (addons != null) 'addons': addons,
+      if (addonsSummary != null) 'addonsSummary': addonsSummary,
+      if (addonsKey != null) 'addonsKey': addonsKey,
     };
   }
 
@@ -326,6 +377,9 @@ class CartItemModel {
     int? pointsPerUnit,
     int? linePoints,
     int? compareAtPriceMinor,
+    List<dynamic>? addons,
+    String? addonsSummary,
+    String? addonsKey,
   }) {
     return CartItemModel(
       id: id ?? this.id,
@@ -345,6 +399,11 @@ class CartItemModel {
       pointsPerUnit: pointsPerUnit ?? this.pointsPerUnit,
       linePoints: linePoints ?? this.linePoints,
       compareAtPriceMinor: compareAtPriceMinor ?? this.compareAtPriceMinor,
+      minPurchaseQty: minPurchaseQty,
+      maxPurchaseQty: maxPurchaseQty,
+      addons: addons ?? this.addons,
+      addonsSummary: addonsSummary ?? this.addonsSummary,
+      addonsKey: addonsKey ?? this.addonsKey,
     );
   }
 

@@ -35,6 +35,9 @@ class ReferRankCard extends GetView<ReferAndEarnController> {
       fillPct = (rank.l1Count / rank.thresholds.bronze) / 3.0;
     }
 
+    const double circleSize = 32.0;
+    const double lineHeight = 4.0;
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -161,70 +164,124 @@ class ReferRankCard extends GetView<ReferAndEarnController> {
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
             child: Column(
               children: [
-                Stack(
-                  alignment: Alignment.centerLeft,
-                  children: [
-                    // Background track
-                    Container(
-                      height: 4.h,
-                      color: const Color(0xFFE2E8F0),
-                    ),
-                    // Active progress fill
-                    FractionallySizedBox(
-                      widthFactor: fillPct.clamp(0.0, 1.0),
-                      child: Container(
-                        height: 4.h,
-                        color: const Color(0xFFE65100),
-                      ),
-                    ),
-                    // Stops
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: stops.map((stop) {
-                        final isReached = _isRankReached(stop, rank.rank);
-                        return Column(
-                          children: [
-                            Container(
-                              width: 28.r,
-                              height: 28.r,
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final totalWidth = constraints.maxWidth;
+                    final colWidth = totalWidth / stops.length;
+                    final startX = colWidth * 0.5;
+                    final trackWidth = colWidth * (stops.length - 1);
+                    final activeWidth =
+                        (trackWidth * fillPct.clamp(0.0, 1.0)).toDouble();
+
+                    return Stack(
+                      children: [
+                        // Background track line strictly connecting node centers
+                        Positioned(
+                          left: startX,
+                          top: (circleSize.r - lineHeight.h) / 2,
+                          width: trackWidth,
+                          height: lineHeight.h,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE2E8F0),
+                              borderRadius:
+                                  BorderRadius.circular(lineHeight.h / 2),
+                            ),
+                          ),
+                        ),
+                        // Active progress fill line
+                        if (activeWidth > 0)
+                          Positioned(
+                            left: startX,
+                            top: (circleSize.r - lineHeight.h) / 2,
+                            width: activeWidth,
+                            height: lineHeight.h,
+                            child: Container(
                               decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: isReached
-                                    ? const Color(0xFFE65100)
-                                    : Colors.white,
-                                border: Border.all(
-                                  color: isReached
-                                      ? const Color(0xFFE65100)
-                                      : const Color(0xFFCBD5E1),
-                                  width: 2,
-                                ),
-                              ),
-                              child: Icon(
-                                Icons.emoji_events_rounded,
-                                size: 14.r,
-                                color: isReached
-                                    ? Colors.white
-                                    : const Color(0xFF94A3B8),
+                                color: const Color(0xFFE65100),
+                                borderRadius:
+                                    BorderRadius.circular(lineHeight.h / 2),
                               ),
                             ),
-                            SizedBox(height: 6.h),
-                            Text(
-                              stop,
-                              style: GoogleFonts.lato(
-                                fontSize: 11.5.sp,
-                                fontWeight: isReached
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                                color: isReached
-                                    ? const Color(0xFFE65100)
-                                    : const Color(0xFF64748B),
+                          ),
+                        // Evenly-spaced stops
+                        Row(
+                          children: stops.map((stop) {
+                            final isReached = _isRankReached(stop, rank.rank);
+                            final reqCount =
+                                _getStopThreshold(stop, rank.thresholds);
+
+                            return Expanded(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: circleSize.r,
+                                    height: circleSize.r,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: isReached
+                                          ? const Color(0xFFE65100)
+                                          : Colors.white,
+                                      border: Border.all(
+                                        color: isReached
+                                            ? const Color(0xFFE65100)
+                                            : const Color(0xFFCBD5E1),
+                                        width: 2.2,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: (isReached
+                                                  ? const Color(0xFFE65100)
+                                                  : Colors.black)
+                                              .withValues(alpha: 0.1),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.emoji_events_rounded,
+                                        size: 15.r,
+                                        color: isReached
+                                            ? Colors.white
+                                            : const Color(0xFF94A3B8),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 8.h),
+                                  Text(
+                                    stop,
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.lato(
+                                      fontSize: 12.sp,
+                                      fontWeight: isReached
+                                          ? FontWeight.bold
+                                          : FontWeight.w600,
+                                      color: isReached
+                                          ? const Color(0xFFE65100)
+                                          : const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                  SizedBox(height: 2.h),
+                                  Text(
+                                    reqCount,
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.lato(
+                                      fontSize: 10.5.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: const Color(0xFF94A3B8),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
-                        );
-                      }).toList(),
-                    ),
-                  ],
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    );
+                  },
                 ),
                 SizedBox(height: 18.h),
 
@@ -234,16 +291,23 @@ class ReferRankCard extends GetView<ReferAndEarnController> {
                   padding:
                       EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFF3E0),
+                    color: const Color(0xFFFFF7ED),
                     borderRadius: BorderRadius.circular(10.r),
-                    border: Border.all(color: const Color(0xFFFFCC80)),
+                    border: Border.all(color: const Color(0xFFFFEDD5)),
                   ),
                   child: Row(
                     children: [
-                      Icon(
-                        Iconsax.award,
-                        color: const Color(0xFFE65100),
-                        size: 20.r,
+                      Container(
+                        padding: EdgeInsets.all(6.r),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFFEDD5),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Iconsax.award,
+                          color: const Color(0xFFEA580C),
+                          size: 18.r,
+                        ),
                       ),
                       SizedBox(width: 10.w),
                       Expanded(
@@ -255,7 +319,7 @@ class ReferRankCard extends GetView<ReferAndEarnController> {
                           style: GoogleFonts.lato(
                             fontSize: 13.sp,
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xFFBF360C),
+                            color: const Color(0xFF9A3412),
                           ),
                         ),
                       ),
@@ -265,12 +329,22 @@ class ReferRankCard extends GetView<ReferAndEarnController> {
                 SizedBox(height: 12.h),
 
                 // Thresholds Subtext
-                Text(
-                  'Bronze ${rank.thresholds.bronze} · Silver ${rank.thresholds.silver} · Gold ${rank.thresholds.gold} level-1 referrals — Ranks celebrate your referrals — top referrers may receive gifts from the Alifworld team.',
-                  style: GoogleFonts.lato(
-                    fontSize: 11.sp,
-                    color: const Color(0xFF64748B),
-                    height: 1.4,
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(12.r),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(10.r),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Text(
+                    'Bronze ${rank.thresholds.bronze} · Silver ${rank.thresholds.silver} · Gold ${rank.thresholds.gold} level-1 referrals\n'
+                    'Ranks celebrate your referrals — top referrers may receive gifts from the Alifworld team.',
+                    style: GoogleFonts.lato(
+                      fontSize: 11.5.sp,
+                      color: const Color(0xFF64748B),
+                      height: 1.45,
+                    ),
                   ),
                 ),
               ],
@@ -279,6 +353,21 @@ class ReferRankCard extends GetView<ReferAndEarnController> {
         ],
       ),
     );
+  }
+
+  String _getStopThreshold(String stop, ReferThresholds t) {
+    switch (stop.toLowerCase()) {
+      case 'unranked':
+        return '0';
+      case 'bronze':
+        return '${t.bronze}';
+      case 'silver':
+        return '${t.silver}';
+      case 'gold':
+        return '${t.gold}';
+      default:
+        return '';
+    }
   }
 
   bool _isRankReached(String stop, String currentRank) {

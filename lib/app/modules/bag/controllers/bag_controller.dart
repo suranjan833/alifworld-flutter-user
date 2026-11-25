@@ -232,9 +232,16 @@ class BagController extends GetxController with SkeletonLoadingMixin {
         : (item['priceMinor'] as num?)?.toInt() ??
             (item['unitPriceMinor'] as num?)?.toInt();
 
+    final rawAddons = item['addons'];
+    final List<dynamic>? addons = rawAddons is List ? rawAddons : null;
+    final String currentAddonsKey = addons != null && addons.isNotEmpty
+        ? addons.map((e) => e.toString()).join('|')
+        : 'none';
+
     final existingIdx = cartItems.indexWhere((c) =>
-        (vId != null && vId.isNotEmpty && c.variantId == vId) ||
-        (c.productId == pId && (vId == null || vId.isEmpty)));
+        ((vId != null && vId.isNotEmpty && c.variantId == vId) ||
+            (c.productId == pId && (vId == null || vId.isEmpty))) &&
+        (c.addonsKey ?? 'none') == currentAddonsKey);
 
     if (existingIdx != -1) {
       final existing = cartItems[existingIdx];
@@ -266,6 +273,8 @@ class BagController extends GetxController with SkeletonLoadingMixin {
         maxPurchaseQty: item['maxPurchaseQty'] is num
             ? (item['maxPurchaseQty'] as num).toInt()
             : null,
+        addons: addons,
+        addonsKey: currentAddonsKey,
       );
       cartItems.add(newItem);
       cartItems.refresh();
@@ -707,12 +716,18 @@ class BagController extends GetxController with SkeletonLoadingMixin {
 
     isMutating.value = true;
     try {
+      final postData = <String, dynamic>{
+        'variantId': variantId,
+        'qty': qtyToAdd,
+      };
+      if (item['addons'] != null &&
+          item['addons'] is List &&
+          (item['addons'] as List).isNotEmpty) {
+        postData['addons'] = item['addons'];
+      }
       final response = await dioPost(
         endUrl: 'cart',
-        data: {
-          'variantId': variantId,
-          'qty': qtyToAdd,
-        },
+        data: postData,
         isJson: true,
       );
 

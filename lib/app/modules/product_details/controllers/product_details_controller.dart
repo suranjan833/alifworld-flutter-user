@@ -9,11 +9,16 @@ import '../../../routes/app_pages.dart';
 import '../../bag/controllers/bag_controller.dart';
 import '../../home/models/showcase_model.dart';
 import '../models/product_details_model.dart';
+import 'product_addons_mixin.dart';
 import 'product_reviews_mixin.dart';
 import 'product_wishlist_share_mixin.dart';
 
 class ProductDetailsController extends GetxController
-    with SkeletonLoadingMixin, ProductWishlistShareMixin, ProductReviewsMixin {
+    with
+        SkeletonLoadingMixin,
+        ProductWishlistShareMixin,
+        ProductReviewsMixin,
+        ProductAddonsMixin {
   @override
   final product = Rxn<ProductDetailsModel>();
   @override
@@ -218,6 +223,9 @@ class ProductDetailsController extends GetxController
   String? get campaignName => selectedVariant?.campaignName;
 
   double get activePriceValue {
+    if (totalAddonPriceMinor > 0) {
+      return totalLivePrice;
+    }
     final minor = activePriceMinor;
     if (minor > 0) return minor / 100.0;
     return product.value?.price ?? 0.0;
@@ -303,6 +311,7 @@ class ProductDetailsController extends GetxController
   void selectVariant(int index) {
     if (index >= 0 && index < variants.length) {
       selectedVariantIndex.value = index;
+      resetAddons();
       final minQty = minPurchaseQty;
       final cap = effectiveCap;
       if (selectedQuantity.value < minQty) {
@@ -393,6 +402,7 @@ class ProductDetailsController extends GetxController
     String? fallbackVariantId,
   ) {
     final sv = selectedVariant;
+    final addonsPayload = buildAddonsPayload();
     return <String, dynamic>{
       'id': p.id,
       'productId': p.id,
@@ -405,6 +415,7 @@ class ProductDetailsController extends GetxController
       'image': imagesList.first,
       'slug': p.slug,
       'variants': p.variants.map((v) => v.toJson()).toList(),
+      if (addonsPayload.isNotEmpty) 'addons': addonsPayload,
       if (minPurchaseQty > 1) 'minPurchaseQty': minPurchaseQty,
       if (maxPurchaseQty != null) 'maxPurchaseQty': maxPurchaseQty,
     };
