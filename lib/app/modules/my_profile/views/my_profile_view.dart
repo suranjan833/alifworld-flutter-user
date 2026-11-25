@@ -122,24 +122,73 @@ class MyProfileView extends GetView<MyProfileController> {
                       ),
                       SizedBox(height: 24.h),
 
+                      // Verified & Locked Banner if profile is done
+                      Obx(() {
+                        if (controller.isProfileDone.value) {
+                          return Container(
+                            margin: EdgeInsets.only(bottom: 18.h),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 14.w,
+                              vertical: 10.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(10.r),
+                              border: Border.all(color: const Color(0xFFCBD5E1)),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Iconsax.lock,
+                                  size: 16.r,
+                                  color: const Color(0xFF475569),
+                                ),
+                                SizedBox(width: 8.w),
+                                Expanded(
+                                  child: Text(
+                                    'Profile details are verified and cannot be edited.',
+                                    style: GoogleFonts.lato(
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF334155),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      }),
+
                       // Form Fields
                       _buildFieldLabel('Full Name'),
                       SizedBox(height: 6.h),
-                      _buildTextField(
+                      Obx(() => _buildTextField(
                         controller: controller.nameController,
                         hint: 'Enter your full name',
                         prefixIcon: Iconsax.user,
-                      ),
+                        readOnly: controller.isNameLocked.value,
+                        suffixIcon: controller.isNameLocked.value ? Iconsax.lock : null,
+                        helperText: controller.isNameLocked.value
+                            ? 'Full name cannot be changed once set.'
+                            : null,
+                      )),
                       SizedBox(height: 16.h),
 
                       _buildFieldLabel('Email Address'),
                       SizedBox(height: 6.h),
-                      _buildTextField(
+                      Obx(() => _buildTextField(
                         controller: controller.emailController,
                         hint: 'Enter your email address',
                         prefixIcon: Iconsax.sms,
                         keyboardType: TextInputType.emailAddress,
-                      ),
+                        readOnly: controller.isEmailLocked.value,
+                        suffixIcon: controller.isEmailLocked.value ? Iconsax.lock : null,
+                        helperText: controller.isEmailLocked.value
+                            ? 'Email address cannot be changed once set.'
+                            : null,
+                      )),
                       SizedBox(height: 16.h),
 
                       _buildFieldLabel('Phone Number'),
@@ -162,17 +211,25 @@ class MyProfileView extends GetView<MyProfileController> {
 
                       _buildFieldLabel('Date of Birth'),
                       SizedBox(height: 6.h),
-                      GestureDetector(
-                        onTap: () => controller.selectDateOfBirth(context),
+                      Obx(() => GestureDetector(
+                        onTap: controller.isDobLocked.value
+                            ? null
+                            : () => controller.selectDateOfBirth(context),
                         child: AbsorbPointer(
                           child: _buildTextField(
                             controller: controller.dobController,
                             hint: 'Select Date of Birth',
                             prefixIcon: Iconsax.calendar_1,
-                            suffixIcon: Iconsax.arrow_down_1,
+                            suffixIcon: controller.isDobLocked.value
+                                ? Iconsax.lock
+                                : Iconsax.arrow_down_1,
+                            readOnly: controller.isDobLocked.value,
+                            helperText: controller.isDobLocked.value
+                                ? 'Date of birth cannot be changed once set.'
+                                : null,
                           ),
                         ),
-                      ),
+                      )),
                       SizedBox(height: 20.h),
 
                       // Gender Selection
@@ -181,19 +238,22 @@ class MyProfileView extends GetView<MyProfileController> {
                       Obx(
                         () => Row(
                           children: [
-                            _buildGenderChip('Male'),
+                            _buildGenderChip('Male', isLocked: controller.isGenderLocked.value),
                             SizedBox(width: 12.w),
-                            _buildGenderChip('Female'),
+                            _buildGenderChip('Female', isLocked: controller.isGenderLocked.value),
                             SizedBox(width: 12.w),
-                            _buildGenderChip('Other'),
+                            _buildGenderChip('Other', isLocked: controller.isGenderLocked.value),
                           ],
                         ),
                       ),
                       SizedBox(height: 32.h),
 
                       // Save Button
-                      Obx(
-                        () => SizedBox(
+                      Obx(() {
+                        if (controller.isProfileDone.value) {
+                          return const SizedBox.shrink();
+                        }
+                        return SizedBox(
                           width: double.infinity,
                           height: 50.h,
                           child: ElevatedButton(
@@ -226,8 +286,8 @@ class MyProfileView extends GetView<MyProfileController> {
                                     ),
                                   ),
                           ),
-                        ),
-                      ),
+                        );
+                      }),
                       SizedBox(height: 20.h),
                     ],
                   ),
@@ -326,18 +386,18 @@ class MyProfileView extends GetView<MyProfileController> {
     );
   }
 
-  Widget _buildGenderChip(String gender) {
+  Widget _buildGenderChip(String gender, {bool isLocked = false}) {
     final isSelected = controller.selectedGender.value == gender;
 
     return Expanded(
       child: GestureDetector(
-        onTap: () => controller.setGender(gender),
+        onTap: isLocked ? null : () => controller.setGender(gender),
         child: Container(
           padding: EdgeInsets.symmetric(vertical: 12.h),
           decoration: BoxDecoration(
             color: isSelected
                 ? const Color(0xFFFFF7E6)
-                : const Color(0xFFF8F9FA),
+                : (isLocked ? const Color(0xFFF1F5F9) : const Color(0xFFF8F9FA)),
             borderRadius: BorderRadius.circular(12.r),
             border: Border.all(
               color: isSelected ? AppColor.primary : const Color(0xFFE2E8F0),
@@ -352,7 +412,7 @@ class MyProfileView extends GetView<MyProfileController> {
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                 color: isSelected
                     ? AppColor.primaryDark
-                    : AppColor.textSecondary,
+                    : (isLocked ? const Color(0xFF94A3B8) : AppColor.textSecondary),
               ),
             ),
           ),

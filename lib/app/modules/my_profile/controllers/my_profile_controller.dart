@@ -23,6 +23,12 @@ class MyProfileController extends GetxController {
   final userPhone = ''.obs;
   final userDob = ''.obs;
 
+  final isNameLocked = false.obs;
+  final isEmailLocked = false.obs;
+  final isDobLocked = false.obs;
+  final isGenderLocked = false.obs;
+  final isProfileDone = false.obs;
+
   DateTime? selectedDate;
 
   bool get _hasAuth {
@@ -55,11 +61,19 @@ class MyProfileController extends GetxController {
   void _loadCachedProfile() {
     final savedName = getBox.read(USER_NAME);
     if (savedName != null && savedName.toString().trim().isNotEmpty) {
-      userName.value = savedName.toString().trim();
+      final n = savedName.toString().trim();
+      userName.value = n;
+      if (n.toLowerCase() != 'user') {
+        isNameLocked.value = true;
+      }
     }
     final savedEmail = getBox.read(USER_EMAIL);
     if (savedEmail != null && savedEmail.toString().trim().isNotEmpty) {
-      userEmail.value = savedEmail.toString().trim();
+      final em = savedEmail.toString().trim();
+      userEmail.value = em;
+      if (em.contains('@')) {
+        isEmailLocked.value = true;
+      }
     }
     final savedPhone = getBox.read(USER_PHONE);
     if (savedPhone != null && savedPhone.toString().trim().isNotEmpty) {
@@ -68,11 +82,14 @@ class MyProfileController extends GetxController {
     final savedGender = getBox.read(USER_GENDER);
     if (savedGender != null && savedGender.toString().trim().isNotEmpty) {
       selectedGender.value = savedGender.toString().trim();
+      isGenderLocked.value = true;
     }
     final savedDob = getBox.read(USER_DOB);
     if (savedDob != null && savedDob.toString().trim().isNotEmpty) {
       userDob.value = savedDob.toString().trim();
+      isDobLocked.value = true;
     }
+    isProfileDone.value = isNameLocked.value && isEmailLocked.value;
   }
 
   /// 1. GET /auth/me - Fetch fresh profile from API
@@ -95,11 +112,17 @@ class MyProfileController extends GetxController {
             userName.value = userModel.displayName;
             nameController.text = userModel.displayName;
             getBox.write(USER_NAME, userModel.displayName);
+            if (userModel.displayName.toLowerCase() != 'user') {
+              isNameLocked.value = true;
+            }
           }
           if (userModel.email != null && userModel.email!.isNotEmpty) {
             userEmail.value = userModel.email!;
             emailController.text = userModel.email!;
             getBox.write(USER_EMAIL, userModel.email!);
+            if (userModel.email!.contains('@')) {
+              isEmailLocked.value = true;
+            }
           }
           if (userModel.phone != null && userModel.phone!.isNotEmpty) {
             userPhone.value = userModel.phone!;
@@ -118,6 +141,7 @@ class MyProfileController extends GetxController {
             } else {
               selectedGender.value = 'Other';
             }
+            isGenderLocked.value = true;
           }
           if (userModel.dateOfBirth != null &&
               userModel.dateOfBirth!.isNotEmpty) {
@@ -128,8 +152,10 @@ class MyProfileController extends GetxController {
                   "${parsed.day} ${_getMonthName(parsed.month)} ${parsed.year}";
               dobController.text = formattedDate;
               userDob.value = formattedDate;
+              isDobLocked.value = true;
             } catch (_) {}
           }
+          isProfileDone.value = isNameLocked.value && isEmailLocked.value;
         }
       }
     } catch (e) {
@@ -277,6 +303,12 @@ class MyProfileController extends GetxController {
           }
           if (dobIso != null) getBox.write(USER_DOB, dobController.text);
           getBox.write(USER_GENDER, selectedGender.value);
+
+          isNameLocked.value = true;
+          if (email.isNotEmpty) isEmailLocked.value = true;
+          if (dobIso != null) isDobLocked.value = true;
+          isGenderLocked.value = true;
+          isProfileDone.value = true;
 
           // Synchronize with AccountController if registered
           if (Get.isRegistered<AccountController>()) {

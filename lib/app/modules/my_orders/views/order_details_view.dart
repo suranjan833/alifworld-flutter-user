@@ -9,6 +9,7 @@ import '../../../data/config/app_color.dart';
 import '../../../data/widgets/skeleton_box.dart';
 import '../controllers/order_details_controller.dart';
 import '../models/order_model.dart';
+import 'widgets/product_review_bottom_sheet.dart';
 
 class OrderDetailsView extends GetView<OrderDetailsController> {
   final OrderModel? order;
@@ -108,7 +109,7 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
                 SizedBox(height: 14.h),
 
                 // 4. Ordered Items Card
-                _buildOrderedItemsCard(o),
+                _buildOrderedItemsCard(context, o),
                 SizedBox(height: 14.h),
 
                 // 5. Payment & Price Summary Card
@@ -920,8 +921,10 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
   }
 
   /// 4. Ordered Items Card
-  Widget _buildOrderedItemsCard(OrderModel o) {
+  Widget _buildOrderedItemsCard(BuildContext context, OrderModel o) {
     final items = o.items;
+    final status = (o.backendStatus.isNotEmpty ? o.backendStatus : o.status).toLowerCase().trim();
+    final isDelivered = status.contains('deliver') || status == 'completed';
 
     return Container(
       width: double.infinity,
@@ -1085,6 +1088,82 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
                       ),
                     ],
                   ),
+                  if (isDelivered && item.productId.isNotEmpty) ...[
+                    SizedBox(height: 10.h),
+                    Obx(() {
+                      final isReviewed = controller.isItemReviewed(item);
+                      if (isReviewed) {
+                        return Align(
+                          alignment: Alignment.centerRight,
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 10.w,
+                              vertical: 4.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0FDF4),
+                              borderRadius: BorderRadius.circular(6.r),
+                              border: Border.all(
+                                color: const Color(0xFF86EFAC),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Iconsax.tick_circle,
+                                  size: 13.r,
+                                  color: const Color(0xFF16A34A),
+                                ),
+                                SizedBox(width: 4.w),
+                                Text(
+                                  'Reviewed',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11.5.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF16A34A),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      return Align(
+                        alignment: Alignment.centerRight,
+                        child: OutlinedButton.icon(
+                          onPressed: () =>
+                              ProductReviewBottomSheet.show(context, item),
+                          icon: Icon(
+                            Iconsax.edit_2,
+                            size: 13.r,
+                            color: AppColor.primary,
+                          ),
+                          label: Text(
+                            'Write a Review',
+                            style: GoogleFonts.inter(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColor.primary,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: AppColor.primary),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 12.w,
+                              vertical: 6.h,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
                   if (!isLast)
                     Divider(
                       color: const Color(0xFFF1F5F9),

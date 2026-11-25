@@ -242,7 +242,9 @@ class ReferralLevelHistoryView extends GetView<ReferralLevelHistoryController> {
                 Text(
                   controller.items.isNotEmpty
                       ? 'Showing ${controller.items.length} ${controller.items.length == 1 ? 'member' : 'members'}'
-                      : 'Loading members...',
+                      : (controller.isLoading.value || controller.isInitialLoading.value) && controller.userCount.value > 0
+                          ? 'Loading members...'
+                          : 'No members yet',
                   style: GoogleFonts.lato(
                     fontSize: 12.sp,
                     color: AppColor.textSecondary,

@@ -9,10 +9,11 @@ import '../../../routes/app_pages.dart';
 import '../../bag/controllers/bag_controller.dart';
 import '../../home/models/showcase_model.dart';
 import '../models/product_details_model.dart';
+import 'product_reviews_mixin.dart';
 import 'product_wishlist_share_mixin.dart';
 
 class ProductDetailsController extends GetxController
-    with SkeletonLoadingMixin, ProductWishlistShareMixin {
+    with SkeletonLoadingMixin, ProductWishlistShareMixin, ProductReviewsMixin {
   @override
   final product = Rxn<ProductDetailsModel>();
   @override
@@ -80,6 +81,7 @@ class ProductDetailsController extends GetxController
         } catch (_) {}
       }
       fetchProductBySlug(targetSlug);
+      fetchProductReviews(targetSlug);
     }
   }
 

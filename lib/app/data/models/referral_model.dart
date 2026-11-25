@@ -9,6 +9,7 @@ class ReferralInfoModel {
   final int ownRegistrationBonusMinor;
   final RegistrationBonusConfig registrationBonus;
   final int registrationMaxLevels;
+  final ReferRankModel referRank;
   final List<ReferralLevelModel> levels;
   final String currency;
   final String currencySymbol;
@@ -23,6 +24,7 @@ class ReferralInfoModel {
     required this.ownRegistrationBonusMinor,
     required this.registrationBonus,
     required this.registrationMaxLevels,
+    required this.referRank,
     required this.levels,
     required this.currency,
     required this.currencySymbol,
@@ -85,6 +87,22 @@ class ReferralInfoModel {
 
     final currencySym = json['currencySymbol']?.toString() ?? '৳';
 
+    ReferRankModel parsedRank;
+    if (json['referRank'] is Map) {
+      parsedRank = ReferRankModel.fromJson(
+        json['referRank'] is Map<String, dynamic>
+            ? json['referRank'] as Map<String, dynamic>
+            : Map<String, dynamic>.from(json['referRank'] as Map),
+      );
+    } else {
+      final l1Count = parsedLevels.isNotEmpty
+          ? (parsedLevels.first.userCount ??
+              (json['referredCount'] as num?)?.toInt() ??
+              0)
+          : ((json['referredCount'] as num?)?.toInt() ?? 0);
+      parsedRank = ReferRankModel.fallback(l1Count);
+    }
+
     return ReferralInfoModel(
       code: code,
       link: link,
@@ -102,6 +120,7 @@ class ReferralInfoModel {
           : RegistrationBonusConfig.fallback(currencySym),
       registrationMaxLevels:
           (json['registrationMaxLevels'] as num?)?.toInt() ?? 3,
+      referRank: parsedRank,
       levels: parsedLevels,
       currency: json['currency']?.toString() ?? 'BDT',
       currencySymbol: currencySym,
@@ -119,6 +138,7 @@ class ReferralInfoModel {
         'ownRegistrationBonusMinor': ownRegistrationBonusMinor,
         'registrationBonus': registrationBonus.toJson(),
         'registrationMaxLevels': registrationMaxLevels,
+        'referRank': referRank.toJson(),
         'levels': levels.map((e) => e.toJson()).toList(),
         'currency': currency,
         'currencySymbol': currencySymbol,
@@ -321,4 +341,98 @@ class ReferralLookupModel {
       maskedPhone: rawPhone,
     );
   }
+}
+
+class ReferRankModel {
+  final String rank;
+  final int l1Count;
+  final ReferThresholds thresholds;
+  final String? nextRank;
+  final int? referralsToNext;
+
+  ReferRankModel({
+    required this.rank,
+    required this.l1Count,
+    required this.thresholds,
+    this.nextRank,
+    this.referralsToNext,
+  });
+
+  factory ReferRankModel.fromJson(Map<String, dynamic> json) {
+    return ReferRankModel(
+      rank: json['rank']?.toString().toLowerCase() ?? 'unranked',
+      l1Count: (json['l1Count'] as num?)?.toInt() ?? 0,
+      thresholds: ReferThresholds.fromJson(
+        json['thresholds'] is Map<String, dynamic>
+            ? json['thresholds'] as Map<String, dynamic>
+            : (json['thresholds'] is Map
+                ? Map<String, dynamic>.from(json['thresholds'] as Map)
+                : {}),
+      ),
+      nextRank: json['nextRank']?.toString().toLowerCase(),
+      referralsToNext: (json['referralsToNext'] as num?)?.toInt(),
+    );
+  }
+
+  factory ReferRankModel.fallback(int l1) {
+    const bronzeTh = 10;
+    const silverTh = 50;
+    const goldTh = 100;
+    String r = 'unranked';
+    String? next = 'bronze';
+    int? toNext = bronzeTh - l1;
+
+    if (l1 >= goldTh) {
+      r = 'gold';
+      next = null;
+      toNext = null;
+    } else if (l1 >= silverTh) {
+      r = 'silver';
+      next = 'gold';
+      toNext = goldTh - l1;
+    } else if (l1 >= bronzeTh) {
+      r = 'bronze';
+      next = 'silver';
+      toNext = silverTh - l1;
+    }
+
+    return ReferRankModel(
+      rank: r,
+      l1Count: l1,
+      thresholds:
+          ReferThresholds(bronze: bronzeTh, silver: silverTh, gold: goldTh),
+      nextRank: next,
+      referralsToNext: toNext,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'rank': rank,
+        'l1Count': l1Count,
+        'thresholds': thresholds.toJson(),
+        if (nextRank != null) 'nextRank': nextRank,
+        if (referralsToNext != null) 'referralsToNext': referralsToNext,
+      };
+}
+
+class ReferThresholds {
+  final int bronze;
+  final int silver;
+  final int gold;
+
+  ReferThresholds({this.bronze = 10, this.silver = 50, this.gold = 100});
+
+  factory ReferThresholds.fromJson(Map<String, dynamic> json) {
+    return ReferThresholds(
+      bronze: (json['bronze'] as num?)?.toInt() ?? 10,
+      silver: (json['silver'] as num?)?.toInt() ?? 50,
+      gold: (json['gold'] as num?)?.toInt() ?? 100,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'bronze': bronze,
+        'silver': silver,
+        'gold': gold,
+      };
 }

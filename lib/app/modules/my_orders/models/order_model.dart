@@ -53,6 +53,7 @@ class OrderItemModel {
   final double price;
   final double lineTotal;
   final int? pointsPerUnit;
+  final bool isReviewed;
 
   OrderItemModel({
     required this.id,
@@ -64,6 +65,7 @@ class OrderItemModel {
     this.price = 0.0,
     this.lineTotal = 0.0,
     this.pointsPerUnit,
+    this.isReviewed = false,
   });
 
   factory OrderItemModel.fromJson(Map<String, dynamic> json) {
@@ -121,6 +123,10 @@ class OrderItemModel {
     final ptsPerUnit = (json['pointsPerUnit'] as num?)?.toInt() ??
         (prod?['productPoints'] as num?)?.toInt();
 
+    final isRev = json['isReviewed'] == true ||
+        json['reviewed'] == true ||
+        json['hasReviewed'] == true;
+
     return OrderItemModel(
       id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
       productId:
@@ -132,6 +138,7 @@ class OrderItemModel {
       price: parsedPrice,
       lineTotal: parsedLineTotal,
       pointsPerUnit: ptsPerUnit,
+      isReviewed: isRev,
     );
   }
 

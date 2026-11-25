@@ -403,6 +403,12 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
   }
 
   void openMyProfileSheet() {
+    final isNameLocked = userName.value.trim().isNotEmpty &&
+        userName.value.trim().toLowerCase() != 'user';
+    final isEmailLocked = userEmail.value.trim().isNotEmpty &&
+        userEmail.value.trim().contains('@');
+    final isProfileDone = isNameLocked && isEmailLocked;
+
     final nameController = TextEditingController(text: userName.value);
     final emailController = TextEditingController(text: userEmail.value);
     final phoneController = TextEditingController(text: userPhone.value);
@@ -492,6 +498,39 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
                 ),
               ),
               SizedBox(height: 20.h),
+              if (isProfileDone)
+                Container(
+                  margin: EdgeInsets.only(bottom: 14.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 8.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(8.r),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Iconsax.lock,
+                        size: 15.r,
+                        color: const Color(0xFF475569),
+                      ),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: Text(
+                          'Profile details are verified and cannot be edited.',
+                          style: GoogleFonts.lato(
+                            fontSize: 11.5.sp,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF334155),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               // Full Name
               Text(
                 'Full Name',
@@ -504,9 +543,12 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
               SizedBox(height: 6.h),
               TextField(
                 controller: nameController,
+                readOnly: isNameLocked,
                 style: GoogleFonts.lato(
                   fontSize: 14.sp,
-                  color: AppColor.textPrimary,
+                  color: isNameLocked
+                      ? const Color(0xFF64748B)
+                      : AppColor.textPrimary,
                 ),
                 decoration: InputDecoration(
                   hintText: 'Enter full name',
@@ -515,6 +557,15 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
                     size: 20.r,
                     color: AppColor.textSecondary,
                   ),
+                  suffixIcon: isNameLocked
+                      ? Icon(
+                          Iconsax.lock,
+                          size: 16.r,
+                          color: const Color(0xFF94A3B8),
+                        )
+                      : null,
+                  filled: isNameLocked,
+                  fillColor: const Color(0xFFF1F5F9),
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 14.w,
                     vertical: 12.h,
@@ -542,10 +593,13 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
               SizedBox(height: 6.h),
               TextField(
                 controller: emailController,
+                readOnly: isEmailLocked,
                 keyboardType: TextInputType.emailAddress,
                 style: GoogleFonts.lato(
                   fontSize: 14.sp,
-                  color: AppColor.textPrimary,
+                  color: isEmailLocked
+                      ? const Color(0xFF64748B)
+                      : AppColor.textPrimary,
                 ),
                 decoration: InputDecoration(
                   hintText: 'Enter email address',
@@ -554,6 +608,15 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
                     size: 20.r,
                     color: AppColor.textSecondary,
                   ),
+                  suffixIcon: isEmailLocked
+                      ? Icon(
+                          Iconsax.lock,
+                          size: 16.r,
+                          color: const Color(0xFF94A3B8),
+                        )
+                      : null,
+                  filled: isEmailLocked,
+                  fillColor: const Color(0xFFF1F5F9),
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 14.w,
                     vertical: 12.h,
@@ -619,8 +682,9 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
                   ),
                 ),
               ),
-              SizedBox(height: 24.h),
-              // Save Button
+              if (!isProfileDone) ...[
+                SizedBox(height: 24.h),
+                // Save Button
               SizedBox(
                 width: double.infinity,
                 height: 48.h,
@@ -768,6 +832,7 @@ class AccountController extends GetxController with SkeletonLoadingMixin {
                   ),
                 ),
               ),
+            ],
               SizedBox(height: 16.h),
             ],
           ),

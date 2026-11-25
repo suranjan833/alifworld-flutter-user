@@ -13,6 +13,7 @@ import '../../../data/widgets/points_badge.dart';
 import '../../../routes/app_pages.dart';
 import '../../bag/controllers/bag_controller.dart';
 import '../controllers/product_details_controller.dart';
+import 'widgets/product_reviews_section.dart';
 
 class ProductDetailsView extends GetView<ProductDetailsController> {
   const ProductDetailsView({super.key});
@@ -208,6 +209,7 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
           children: [
             Expanded(
               child: SingleChildScrollView(
+                controller: controller.scrollController,
                 physics: const BouncingScrollPhysics(),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -237,6 +239,11 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
 
                     // 7. Seller Details Card
                     _buildSellerCard(),
+                    SizedBox(height: 10.h),
+
+                    // Product Reviews Section
+                    const ProductReviewsSection(),
+                    SizedBox(height: 10.h),
 
                     // 8. Recently Viewed Strip (§5)
                     _buildRecentlyViewedStrip(),
@@ -467,9 +474,12 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
             ),
             SizedBox(height: 10.h),
 
-            if (item.displayRating > 0) ...[
-              // Rating Row
-              Row(
+            // Rating Pill (Click to scroll down to reviews section)
+            GestureDetector(
+              onTap: controller.scrollToReviews,
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
                     padding:
@@ -479,6 +489,7 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                       borderRadius: BorderRadius.circular(8.r),
                     ),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           Icons.star_rounded,
@@ -487,7 +498,11 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                         ),
                         SizedBox(width: 4.w),
                         Text(
-                          rating,
+                          item.displayRating > 0
+                              ? rating
+                              : ((controller.reviewsData.value?.summary.average ?? 0.0) > 0
+                                  ? (controller.reviewsData.value?.summary.average ?? 0.0).toStringAsFixed(1)
+                                  : '0.0'),
                           style: GoogleFonts.lato(
                             fontSize: 13.sp,
                             fontWeight: FontWeight.bold,
@@ -497,20 +512,18 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                       ],
                     ),
                   ),
-                  if (item.displayReviewsCount > 0) ...[
-                    SizedBox(width: 8.w),
-                    Text(
-                      '($reviews reviews)',
-                      style: GoogleFonts.lato(
-                        fontSize: 13.sp,
-                        color: AppColor.textSecondary,
-                      ),
+                  SizedBox(width: 8.w),
+                  Text(
+                    '(${item.displayReviewsCount > 0 ? reviews : (controller.reviewsData.value?.summary.count ?? 0)} reviews)',
+                    style: GoogleFonts.lato(
+                      fontSize: 13.sp,
+                      color: AppColor.textSecondary,
                     ),
-                  ],
+                  ),
                 ],
               ),
-              SizedBox(height: 14.h),
-            ],
+            ),
+            SizedBox(height: 14.h),
 
             // Price Row
             Row(
