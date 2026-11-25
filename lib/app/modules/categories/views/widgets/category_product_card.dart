@@ -103,7 +103,8 @@ class CategoryProductCard extends GetView<CategoryProductsController> {
                               product.variants!.isNotEmpty)
                           ? product.variants!.first['id']?.toString()
                           : null;
-                      final isWishlisted = controller.isVariantWishlisted(vId);
+                      final isWishlisted =
+                          controller.isVariantWishlisted(vId, productId);
                       return GestureDetector(
                         onTap: () => controller.toggleWishlist(productId, vId),
                         child: AnimatedSwitcher(

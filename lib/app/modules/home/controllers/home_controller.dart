@@ -6,6 +6,7 @@ import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/mixins/skeleton_loading_mixin.dart';
 import '../../../data/services/wishlist_service.dart';
 import '../../../data/widgets/app_cached_image.dart';
+import '../../../routes/app_pages.dart';
 import '../../bag/controllers/bag_controller.dart';
 import '../models/home_category_model.dart';
 import '../models/showcase_model.dart';
@@ -35,13 +36,8 @@ class HomeController extends GetxController with SkeletonLoadingMixin {
   @override
   void onInit() {
     super.onInit();
-    // 1. Immediately hydrate from persistent local cache (Stale-While-Revalidate)
     _loadFromLocalCache();
-
-    // 2. Fetch fresh or validate cache in background / parallel
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      loadHomeData();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => loadHomeData());
   }
 
   void _loadFromLocalCache() {
@@ -439,9 +435,9 @@ class HomeController extends GetxController with SkeletonLoadingMixin {
   }
 
   String _extractVariantId(Map prod) {
-    if (prod['variants'] is List && (prod['variants'] as List).isNotEmpty) {
-      final fv = (prod['variants'] as List).first;
-      if (fv is Map && fv['id'] != null) return fv['id'].toString();
+    final v = prod['variants'];
+    if (v is List && v.isNotEmpty && v.first is Map && v.first['id'] != null) {
+      return v.first['id'].toString();
     }
     return prod['variantId']?.toString() ?? '';
   }
@@ -452,43 +448,44 @@ class HomeController extends GetxController with SkeletonLoadingMixin {
     if (!wishlistSvc.hasAuth) return;
 
     final visibleVariantIds = <String>[];
-    for (var cat in categories) {
-      for (var prod in cat.products) {
+    for (final r in (showcase.value?.rails ?? [])) {
+      for (final p in r.products) {
+        final vId = p.variantId ?? (p.variants.isNotEmpty ? p.variants.first['id']?.toString() : null);
+        if (vId != null && vId.isNotEmpty) visibleVariantIds.add(vId);
+      }
+    }
+    for (final cat in categories) {
+      for (final prod in cat.products) {
         final vId = _extractVariantId(prod);
         if (vId.isNotEmpty) visibleVariantIds.add(vId);
       }
     }
-
     if (visibleVariantIds.isNotEmpty) {
       await wishlistSvc.checkStatus(visibleVariantIds);
-      for (var cat in categories) {
-        for (var prod in cat.products) {
-          final vId = _extractVariantId(prod);
-          if (vId.isNotEmpty) {
-            prod['isFavorite'] = wishlistSvc.isWishlisted(vId);
-          }
-        }
-      }
-      selectedCategoryIndex.refresh();
+    }
+  }
+
+  Future<void> toggleProductWishlist(Map<String, dynamic> product) async {
+    if (!Get.isRegistered<WishlistService>()) return;
+    final wishlistSvc = WishlistService.to;
+    if (!wishlistSvc.hasAuth) return Get.toNamed(Routes.LOGIN);
+
+    final pId = product['productId']?.toString() ?? product['id']?.toString() ?? '';
+    final vId = _extractVariantId(product);
+    final targetId = vId.isNotEmpty ? vId : pId;
+    if (targetId.isNotEmpty) {
+      await wishlistSvc.toggleWishlist(targetId, productId: pId.isNotEmpty ? pId : null);
     }
   }
 
   Future<void> toggleFavorite(int productIndex) async {
     final products = currentCategory.products;
-    if (productIndex < 0 || productIndex >= products.length) return;
-
-    final prod = products[productIndex];
-    final vId = _extractVariantId(prod);
-    if (vId.isEmpty || !Get.isRegistered<WishlistService>()) return;
-
-    final newStatus = await WishlistService.to.toggleWishlist(vId);
-    prod['isFavorite'] = newStatus;
-    selectedCategoryIndex.refresh();
+    if (productIndex >= 0 && productIndex < products.length) {
+      await toggleProductWishlist(products[productIndex]);
+    }
   }
 
-  void setLocation(String newLocation) {
-    currentLocation.value = newLocation;
-  }
+  void setLocation(String newLocation) => currentLocation.value = newLocation;
 
   Future<void> fetchGPSLocation() async {
     isFetchingLocation.value = true;

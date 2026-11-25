@@ -95,7 +95,7 @@ class ReferralCodeCard extends GetView<ReferAndEarnController> {
                 child: ElevatedButton.icon(
                   onPressed:
                       code.isNotEmpty ? () => controller.shareInvite() : null,
-                  icon: Icon(Iconsax.share, size: 18.r),
+                  icon: Icon(Icons.share_rounded, size: 18.r),
                   label: Text(
                     'Share Invite',
                     style: GoogleFonts.lato(

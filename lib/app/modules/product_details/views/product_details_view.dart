@@ -44,7 +44,7 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
         actions: [
           IconButton(
             icon: Icon(
-              Iconsax.share,
+              Icons.share_rounded,
               color: AppColor.textPrimary,
               size: 22.r,
             ),

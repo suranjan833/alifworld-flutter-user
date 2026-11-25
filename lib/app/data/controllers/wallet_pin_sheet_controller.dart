@@ -69,7 +69,7 @@ class WalletPinSheetController extends GetxController {
       case PinViewMode.enter:
         return PinHeaderInfo(
           title: title,
-          subtitle: subtitle ?? 'Enter your 4-digit Wallet PIN to proceed',
+          subtitle: subtitle ?? 'Enter your 6-digit Wallet PIN to proceed',
           icon: Iconsax.lock,
           iconBg: AppColor.primary.withValues(alpha: 0.1),
           iconColor: AppColor.primary,
@@ -77,7 +77,7 @@ class WalletPinSheetController extends GetxController {
       case PinViewMode.set:
         return PinHeaderInfo(
           title: 'Set Wallet PIN',
-          subtitle: 'Create a secure 4-digit PIN for wallet transactions',
+          subtitle: 'Create a secure 6-digit PIN for wallet transactions',
           icon: Iconsax.shield_security,
           iconBg: AppColor.green.shade50,
           iconColor: AppColor.green,
@@ -85,7 +85,7 @@ class WalletPinSheetController extends GetxController {
       case PinViewMode.change:
         return PinHeaderInfo(
           title: 'Change Wallet PIN',
-          subtitle: 'Enter your current PIN and choose a new 4-digit PIN',
+          subtitle: 'Enter your current PIN and choose a new 6-digit PIN',
           icon: Iconsax.key,
           iconBg: AppColor.primary.withValues(alpha: 0.1),
           iconColor: AppColor.primary,
@@ -174,8 +174,8 @@ class WalletPinSheetController extends GetxController {
 
   Future<void> handleEnterSubmit(BuildContext context) async {
     final pin = pinController.text.trim();
-    if (pin.length != 4 || !RegExp(r'^\d{4}$').hasMatch(pin)) {
-      errorMessage.value = 'Please enter a valid 4-digit PIN';
+    if ((pin.length != 6 && pin.length != 4) || !RegExp(r'^\d{4,6}$').hasMatch(pin)) {
+      errorMessage.value = 'Please enter a valid 6-digit PIN';
       return;
     }
     if (onConfirm != null) {
@@ -224,8 +224,8 @@ class WalletPinSheetController extends GetxController {
     final pin = pinController.text.trim();
     final confirm = confirmPinController.text.trim();
 
-    if (pin.length != 4 || !RegExp(r'^\d{4}$').hasMatch(pin)) {
-      errorMessage.value = 'PIN must be exactly 4 digits';
+    if (pin.length != 6 || !RegExp(r'^\d{6}$').hasMatch(pin)) {
+      errorMessage.value = 'PIN must be exactly 6 digits';
       return;
     }
     if (pin != confirm) {
@@ -263,12 +263,12 @@ class WalletPinSheetController extends GetxController {
     final newPin = pinController.text.trim();
     final confirm = confirmPinController.text.trim();
 
-    if (current.length != 4) {
-      errorMessage.value = 'Current PIN must be 4 digits';
+    if (current.length != 6 && current.length != 4) {
+      errorMessage.value = 'Current PIN must be 6 digits';
       return;
     }
-    if (newPin.length != 4 || !RegExp(r'^\d{4}$').hasMatch(newPin)) {
-      errorMessage.value = 'New PIN must be 4 digits';
+    if (newPin.length != 6 || !RegExp(r'^\d{6}$').hasMatch(newPin)) {
+      errorMessage.value = 'New PIN must be 6 digits';
       return;
     }
     if (newPin != confirm) {
@@ -336,8 +336,8 @@ class WalletPinSheetController extends GetxController {
       errorMessage.value = 'Please enter email OTP code';
       return;
     }
-    if (newPin.length != 4 || !RegExp(r'^\d{4}$').hasMatch(newPin)) {
-      errorMessage.value = 'New PIN must be 4 digits';
+    if (newPin.length != 6 || !RegExp(r'^\d{6}$').hasMatch(newPin)) {
+      errorMessage.value = 'New PIN must be 6 digits';
       return;
     }
     if (newPin != confirm) {

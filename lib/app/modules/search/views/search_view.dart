@@ -772,7 +772,8 @@ class SearchView extends GetView<CatalogSearchController> {
                               product.variants!.isNotEmpty)
                           ? product.variants!.first['id']?.toString()
                           : null;
-                      final isWish = controller.isVariantWishlisted(vId);
+                      final isWish =
+                          controller.isVariantWishlisted(vId, productId);
                       return GestureDetector(
                         onTap: () =>
                             controller.toggleWishlist(productId, vId),

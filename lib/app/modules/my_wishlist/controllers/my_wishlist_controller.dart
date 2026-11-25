@@ -100,18 +100,25 @@ class MyWishlistController extends GetxController with SkeletonLoadingMixin {
           wishlistItems.assignAll(items);
           if (Get.isRegistered<WishlistService>()) {
             WishlistService.to.count.value = items.length;
-            final currentIds = items
+            final currentVariantIds = items
                 .map((it) => it['variantId']?.toString())
                 .where((id) => id != null && id.isNotEmpty)
                 .cast<String>()
                 .toSet();
-            WishlistService.to.wishlistedVariantIds.assignAll(currentIds);
+            final currentProductIds = items
+                .map((it) => it['productId']?.toString())
+                .where((id) => id != null && id.isNotEmpty)
+                .cast<String>()
+                .toSet();
+            WishlistService.to.syncLocalWishlist(
+              variantIds: currentVariantIds,
+              productIds: currentProductIds,
+            );
           }
         } else {
           wishlistItems.clear();
           if (Get.isRegistered<WishlistService>()) {
-            WishlistService.to.count.value = 0;
-            WishlistService.to.wishlistedVariantIds.clear();
+            WishlistService.to.clear();
           }
         }
       } else {
@@ -134,6 +141,14 @@ class MyWishlistController extends GetxController with SkeletonLoadingMixin {
       vId = existing?['variantId']?.toString() ?? id;
     }
 
+    final matched = wishlistItems.firstWhereOrNull(
+      (item) =>
+          item['id'] == id ||
+          item['variantId'] == id ||
+          item['variantId'] == vId,
+    );
+    final pId = matched?['productId']?.toString();
+
     wishlistItems.removeWhere(
       (item) =>
           item['id'] == id ||
@@ -142,12 +157,7 @@ class MyWishlistController extends GetxController with SkeletonLoadingMixin {
     );
 
     if (Get.isRegistered<WishlistService>()) {
-      if (vId.isNotEmpty) {
-        WishlistService.to.wishlistedVariantIds.remove(vId);
-      }
-      if (WishlistService.to.count.value > 0) {
-        WishlistService.to.count.value--;
-      }
+      WishlistService.to.removeFromWishlist(variantId: vId, productId: pId);
     }
 
     try {

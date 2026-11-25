@@ -143,7 +143,7 @@ class WalletRedeemController extends GetxController {
     final pin = await WalletPinDialog.promptPin(
       context,
       title: 'Confirm Redeem PIN',
-      subtitle: 'Enter your 4-digit wallet PIN to complete redemption',
+      subtitle: 'Enter your 6-digit wallet PIN to complete redemption',
     );
 
     if (pin == null || pin.isEmpty) return;

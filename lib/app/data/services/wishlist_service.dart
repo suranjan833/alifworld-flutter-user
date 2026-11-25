@@ -9,6 +9,36 @@ class WishlistService extends GetxService {
 
   final count = 0.obs;
   final wishlistedVariantIds = <String>{}.obs;
+  final wishlistedProductIds = <String>{}.obs;
+
+  static const String _kVariantIdsKey = 'wishlist_variant_ids';
+  static const String _kProductIdsKey = 'wishlist_product_ids';
+
+  @override
+  void onInit() {
+    super.onInit();
+    _loadFromLocal();
+  }
+
+  void _loadFromLocal() {
+    try {
+      final rawVariants = getBox.read<List>(_kVariantIdsKey);
+      if (rawVariants != null && rawVariants.isNotEmpty) {
+        wishlistedVariantIds.assignAll(rawVariants.map((e) => e.toString()));
+      }
+      final rawProducts = getBox.read<List>(_kProductIdsKey);
+      if (rawProducts != null && rawProducts.isNotEmpty) {
+        wishlistedProductIds.assignAll(rawProducts.map((e) => e.toString()));
+      }
+    } catch (_) {}
+  }
+
+  void _saveToLocal() {
+    try {
+      getBox.write(_kVariantIdsKey, wishlistedVariantIds.toList());
+      getBox.write(_kProductIdsKey, wishlistedProductIds.toList());
+    } catch (_) {}
+  }
 
   bool get hasAuth {
     final token = getBox.read(USER_TOKEN);
@@ -17,13 +47,46 @@ class WishlistService extends GetxService {
         (session != null && session.toString().trim().isNotEmpty);
   }
 
-  bool isWishlisted(String? variantId) {
-    if (variantId == null || variantId.isEmpty) return false;
-    return wishlistedVariantIds.contains(variantId);
+  bool isWishlisted(String? variantId, [String? productId]) {
+    if (variantId != null &&
+        variantId.isNotEmpty &&
+        wishlistedVariantIds.contains(variantId)) {
+      return true;
+    }
+    if (productId != null &&
+        productId.isNotEmpty &&
+        wishlistedProductIds.contains(productId)) {
+      return true;
+    }
+    return false;
   }
 
-  /// Initial or badge-only count refresh
-  /// GET /wishlist/status (no params) -> { data: { wishlistedVariantIds: [], count: N } }
+  bool isProductWishlisted({
+    String? productId,
+    String? variantId,
+    List<dynamic>? variants,
+  }) {
+    if (productId != null &&
+        productId.isNotEmpty &&
+        wishlistedProductIds.contains(productId)) {
+      return true;
+    }
+    if (variantId != null &&
+        variantId.isNotEmpty &&
+        wishlistedVariantIds.contains(variantId)) {
+      return true;
+    }
+    if (variants != null && variants.isNotEmpty) {
+      for (final v in variants) {
+        final id = v is Map ? v['id']?.toString() : v?.toString();
+        if (id != null && id.isNotEmpty && wishlistedVariantIds.contains(id)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   Future<int> refreshCount() async {
     if (!hasAuth) {
       count.value = 0;
@@ -44,8 +107,6 @@ class WishlistService extends GetxService {
     return count.value;
   }
 
-  /// One status call per screen with visible variant IDs
-  /// GET /wishlist/status?variantIds=v1,v2,v3 (max 200)
   Future<Set<String>> checkStatus(Iterable<String?> variantIds) async {
     if (!hasAuth) {
       count.value = 0;
@@ -78,7 +139,6 @@ class WishlistService extends GetxService {
                 .map((e) => e.toString())
                 .toSet();
 
-            // Update local cache: for checked ids, update their status
             for (final id in cleanIds) {
               if (returnedIds.contains(id)) {
                 wishlistedVariantIds.add(id);
@@ -86,6 +146,7 @@ class WishlistService extends GetxService {
                 wishlistedVariantIds.remove(id);
               }
             }
+            _saveToLocal();
             return returnedIds;
           }
         }
@@ -95,9 +156,7 @@ class WishlistService extends GetxService {
     return wishlistedVariantIds;
   }
 
-  /// Toggle wishlist by variantId
-  /// POST /wishlist or DELETE /wishlist?variantId={variantId}
-  Future<bool> toggleWishlist(String variantId) async {
+  Future<bool> toggleWishlist(String variantId, {String? productId}) async {
     if (!hasAuth) {
       Get.toNamed(Routes.LOGIN);
       return false;
@@ -105,17 +164,23 @@ class WishlistService extends GetxService {
 
     if (variantId.isEmpty) return false;
 
-    final isCurrentlyWish = wishlistedVariantIds.contains(variantId);
+    final isCurrentlyWish = isWishlisted(variantId, productId);
     final willAdd = !isCurrentlyWish;
 
-    // Optimistic update
     if (willAdd) {
       wishlistedVariantIds.add(variantId);
+      if (productId != null && productId.isNotEmpty) {
+        wishlistedProductIds.add(productId);
+      }
       count.value++;
     } else {
       wishlistedVariantIds.remove(variantId);
+      if (productId != null && productId.isNotEmpty) {
+        wishlistedProductIds.remove(productId);
+      }
       if (count.value > 0) count.value--;
     }
+    _saveToLocal();
 
     try {
       if (willAdd) {
@@ -132,9 +197,12 @@ class WishlistService extends GetxService {
             count.value = (d['items'] as List).length;
           }
         } else {
-          // Revert on API non-success
           wishlistedVariantIds.remove(variantId);
+          if (productId != null && productId.isNotEmpty) {
+            wishlistedProductIds.remove(productId);
+          }
           if (count.value > 0) count.value--;
+          _saveToLocal();
 
           String? errCode;
           String? errMsg;
@@ -162,28 +230,63 @@ class WishlistService extends GetxService {
         if (res.statusCode == 200 || res.statusCode == 204) {
           refreshCount();
         } else {
-          // Revert on API non-success
           wishlistedVariantIds.add(variantId);
+          if (productId != null && productId.isNotEmpty) {
+            wishlistedProductIds.add(productId);
+          }
           count.value++;
+          _saveToLocal();
           return isCurrentlyWish;
         }
       }
       return willAdd;
     } catch (_) {
-      // Revert on error
       if (willAdd) {
         wishlistedVariantIds.remove(variantId);
+        if (productId != null && productId.isNotEmpty) {
+          wishlistedProductIds.remove(productId);
+        }
         if (count.value > 0) count.value--;
       } else {
         wishlistedVariantIds.add(variantId);
+        if (productId != null && productId.isNotEmpty) {
+          wishlistedProductIds.add(productId);
+        }
         count.value++;
       }
+      _saveToLocal();
       return isCurrentlyWish;
     }
+  }
+
+  void syncLocalWishlist({
+    Set<String>? variantIds,
+    Set<String>? productIds,
+  }) {
+    if (variantIds != null) {
+      wishlistedVariantIds.assignAll(variantIds);
+    }
+    if (productIds != null) {
+      wishlistedProductIds.assignAll(productIds);
+    }
+    _saveToLocal();
+  }
+
+  void removeFromWishlist({String? variantId, String? productId}) {
+    if (variantId != null && variantId.isNotEmpty) {
+      wishlistedVariantIds.remove(variantId);
+    }
+    if (productId != null && productId.isNotEmpty) {
+      wishlistedProductIds.remove(productId);
+    }
+    if (count.value > 0) count.value--;
+    _saveToLocal();
   }
 
   void clear() {
     count.value = 0;
     wishlistedVariantIds.clear();
+    wishlistedProductIds.clear();
+    _saveToLocal();
   }
 }

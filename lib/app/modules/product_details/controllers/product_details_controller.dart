@@ -299,8 +299,8 @@ class ProductDetailsController extends GetxController
       selectedImageIndex.value = 0;
       recordRecentlyViewed();
       if (isVisible && Get.isRegistered<WishlistService>()) {
-        isWishlisted.value =
-            WishlistService.to.isWishlisted(selectedVariant?.id);
+        isWishlisted.value = WishlistService.to
+            .isWishlisted(selectedVariant?.id, product.value?.id);
       }
     }
   }

@@ -478,8 +478,6 @@ class HomeView extends GetView<HomeController> {
   }
 
   Widget _buildProductCard(Map<String, dynamic> product, int index) {
-    final isFav = product['isFavorite'] as bool? ?? false;
-
     return GestureDetector(
       onTap: () => Get.toNamed(Routes.PRODUCT_DETAILS, arguments: product),
       behavior: HitTestBehavior.opaque,
@@ -536,32 +534,48 @@ class HomeView extends GetView<HomeController> {
                         ),
                       ),
                       // Favorite Button top right
-                      Align(
-                        alignment: Alignment.topRight,
-                        child: GestureDetector(
-                          onTap: () => controller.toggleFavorite(index),
-                          child: Container(
-                            padding: EdgeInsets.all(6.w),
-                            decoration: BoxDecoration(
-                              color: AppColor.white,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColor.black.withValues(alpha: 0.06),
-                                  blurRadius: 6,
-                                ),
-                              ],
-                            ),
-                            child: Icon(
-                              isFav ? Iconsax.heart5 : Iconsax.heart,
-                              size: 16.r,
-                              color: isFav
-                                  ? AppColor.red
-                                  : AppColor.textSecondary,
+                      Obx(() {
+                        final pId = product['productId']?.toString() ??
+                            product['id']?.toString();
+                        final vId = product['variantId']?.toString();
+                        final variants = product['variants'] as List<dynamic>?;
+                        final isWish = Get.isRegistered<WishlistService>() &&
+                            WishlistService.to.isProductWishlisted(
+                              productId: pId,
+                              variantId: vId,
+                              variants: variants,
+                            );
+
+                        return Align(
+                          alignment: Alignment.topRight,
+                          child: GestureDetector(
+                            onTap: () =>
+                                controller.toggleProductWishlist(product),
+                            behavior: HitTestBehavior.opaque,
+                            child: Container(
+                              padding: EdgeInsets.all(6.w),
+                              decoration: BoxDecoration(
+                                color: AppColor.white,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color:
+                                        AppColor.black.withValues(alpha: 0.06),
+                                    blurRadius: 6,
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                isWish ? Iconsax.heart5 : Iconsax.heart,
+                                size: 16.r,
+                                color: isWish
+                                    ? AppColor.red
+                                    : AppColor.textSecondary,
+                              ),
                             ),
                           ),
-                        ),
-                      ),
+                        );
+                      }),
                     ],
                   ),
                   SizedBox(height: 10.h),

@@ -57,6 +57,11 @@ mixin ProductWishlistShareMixin {
     final p = product.value;
     if (p == null) return;
 
+    final sv = selectedVariant;
+    if (wishlistSvc.isWishlisted(sv?.id, p.id)) {
+      isWishlisted.value = true;
+    }
+
     final targetVariantIds = <String>[];
     for (var v in variants) {
       if (v.id.isNotEmpty) targetVariantIds.add(v.id);
@@ -70,10 +75,13 @@ mixin ProductWishlistShareMixin {
     if (targetVariantIds.isEmpty) return;
 
     await wishlistSvc.checkStatus(targetVariantIds);
-    final sv = selectedVariant;
     final activeVId = sv?.id ??
         (targetVariantIds.isNotEmpty ? targetVariantIds.first : '');
-    isWishlisted.value = wishlistSvc.isWishlisted(activeVId);
+    final serverWish = wishlistSvc.isWishlisted(activeVId, p.id);
+    isWishlisted.value = serverWish;
+    if (serverWish && p.id.isNotEmpty) {
+      wishlistSvc.wishlistedProductIds.add(p.id);
+    }
   }
 
   Future<void> toggleWishlist() async {
@@ -112,7 +120,7 @@ mixin ProductWishlistShareMixin {
     }
 
     final wasWishlisted = isWishlisted.value;
-    final newStatus = await wishlistSvc.toggleWishlist(vId);
+    final newStatus = await wishlistSvc.toggleWishlist(vId, productId: p?.id);
     isWishlisted.value = newStatus;
 
     if (newStatus != wasWishlisted) {

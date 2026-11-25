@@ -395,11 +395,12 @@ class CatalogSearchController extends GetxController {
   // Wishlist & Cart Actions
   // ---------------------------------------------------------------------------
 
-  bool isVariantWishlisted(String? vId) {
-    if (vId == null || vId.isEmpty) return false;
+  bool isVariantWishlisted(String? vId, [String? pId]) {
+    if ((vId == null || vId.isEmpty) && (pId == null || pId.isEmpty)) return false;
     return wishlistedProductIds.contains(vId) ||
+        (pId != null && wishlistedProductIds.contains(pId)) ||
         (Get.isRegistered<WishlistService>() &&
-            WishlistService.to.isWishlisted(vId));
+            WishlistService.to.isWishlisted(vId, pId));
   }
 
   Future<void> _syncWishlist() async {
