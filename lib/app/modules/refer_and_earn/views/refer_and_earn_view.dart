@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../data/config/app_color.dart';
 import '../../../data/widgets/skeleton_box.dart';
 import '../controllers/refer_and_earn_controller.dart';
+import 'widgets/refer_rank_card.dart';
 import 'widgets/referral_code_card.dart';
 import 'widgets/referral_earnings_card.dart';
 import 'widgets/referral_hero_banner.dart';
@@ -75,6 +76,8 @@ class ReferAndEarnView extends GetView<ReferAndEarnController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ReferralHeroBanner(info: info),
+                SizedBox(height: 16.h),
+                ReferRankCard(info: info),
                 SizedBox(height: 16.h),
                 ReferralCodeCard(info: info),
                 SizedBox(height: 16.h),

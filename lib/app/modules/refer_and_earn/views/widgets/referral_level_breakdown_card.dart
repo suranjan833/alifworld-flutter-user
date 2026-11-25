@@ -47,6 +47,34 @@ class ReferralLevelBreakdownCard extends GetView<ReferAndEarnController> {
             ],
           ),
           SizedBox(height: 12.h),
+          Container(
+            width: double.infinity,
+            margin: EdgeInsets.only(bottom: 10.h),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF6FF),
+              borderRadius: BorderRadius.circular(8.r),
+              border: Border.all(color: const Color(0xFFBFDBFE)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Iconsax.info_circle,
+                    size: 15.r, color: const Color(0xFF2563EB)),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Text(
+                    'When someone registers with your code, you and your uplines earn a % of the registration bonus — up to 3 levels.',
+                    style: GoogleFonts.lato(
+                      fontSize: 11.5.sp,
+                      color: const Color(0xFF1E40AF),
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           Text(
             '1. Registration Referral Rates (% of welcome bonus)',
             style: GoogleFonts.lato(
@@ -212,6 +240,34 @@ class ReferralLevelBreakdownCard extends GetView<ReferAndEarnController> {
                 ),
               ],
             ],
+          ),
+          SizedBox(height: 14.h),
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(8.r),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Iconsax.info_circle,
+                    size: 15.r, color: AppColor.textSecondary),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Text(
+                    'Referral rewards are ongoing — you earn on every order your referrals place, up to 3 levels.',
+                    style: GoogleFonts.lato(
+                      fontSize: 11.5.sp,
+                      color: const Color(0xFF475569),
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

@@ -7,6 +7,7 @@ import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/models/user_model.dart';
 import '../../../routes/app_pages.dart';
 import '../../account/controllers/account_controller.dart';
+import '../views/widgets/profile_confirm_dialog.dart';
 
 class MyProfileController extends GetxController {
   late TextEditingController nameController;
@@ -63,17 +64,13 @@ class MyProfileController extends GetxController {
     if (savedName != null && savedName.toString().trim().isNotEmpty) {
       final n = savedName.toString().trim();
       userName.value = n;
-      if (n.toLowerCase() != 'user') {
-        isNameLocked.value = true;
-      }
+      if (n.toLowerCase() != 'user') isNameLocked.value = true;
     }
     final savedEmail = getBox.read(USER_EMAIL);
     if (savedEmail != null && savedEmail.toString().trim().isNotEmpty) {
       final em = savedEmail.toString().trim();
       userEmail.value = em;
-      if (em.contains('@')) {
-        isEmailLocked.value = true;
-      }
+      if (em.contains('@')) isEmailLocked.value = true;
     }
     final savedPhone = getBox.read(USER_PHONE);
     if (savedPhone != null && savedPhone.toString().trim().isNotEmpty) {
@@ -89,13 +86,18 @@ class MyProfileController extends GetxController {
       userDob.value = savedDob.toString().trim();
       isDobLocked.value = true;
     }
-    isProfileDone.value = isNameLocked.value && isEmailLocked.value;
+    _updateProfileDoneState();
   }
 
-  /// 1. GET /auth/me - Fetch fresh profile from API
+  void _updateProfileDoneState() {
+    isProfileDone.value = isNameLocked.value &&
+        isEmailLocked.value &&
+        isDobLocked.value &&
+        isGenderLocked.value;
+  }
+
   Future<void> fetchProfile() async {
     if (!_hasAuth) return;
-
     isLoading.value = true;
     try {
       final response = await dioGet('auth/me');
@@ -155,7 +157,7 @@ class MyProfileController extends GetxController {
               isDobLocked.value = true;
             } catch (_) {}
           }
-          isProfileDone.value = isNameLocked.value && isEmailLocked.value;
+          _updateProfileDoneState();
         }
       }
     } catch (e) {
@@ -175,10 +177,12 @@ class MyProfileController extends GetxController {
   }
 
   void setGender(String gender) {
+    if (isGenderLocked.value) return;
     selectedGender.value = gender;
   }
 
   Future<void> selectDateOfBirth(BuildContext context) async {
+    if (isDobLocked.value) return;
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: selectedDate ?? DateTime(1998, 6, 15),
@@ -209,58 +213,57 @@ class MyProfileController extends GetxController {
 
   String _getMonthName(int month) {
     const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
     return months[month - 1];
   }
 
-  /// 2. PUT /auth/me - Update user profile
-  Future<void> saveProfile() async {
+  Future<void> onSavePressed(BuildContext context) async {
     final enteredName = nameController.text.trim();
     if (enteredName.isEmpty) {
-      Get.snackbar(
-        'Required',
-        'Please enter your full name',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: AppColor.error,
-        colorText: AppColor.white,
-      );
+      Get.snackbar('Required', 'Please enter your full name',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: AppColor.error,
+          colorText: AppColor.white);
       return;
     }
-
     final email = emailController.text.trim();
     if (email.isNotEmpty && !GetUtils.isEmail(email)) {
-      Get.snackbar(
-        'Invalid Email',
-        'Please enter a valid email address',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: AppColor.error,
-        colorText: AppColor.white,
-      );
+      Get.snackbar('Invalid Email', 'Please enter a valid email address',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: AppColor.error,
+          colorText: AppColor.white);
+      return;
+    }
+    if (selectedDate != null && selectedDate!.isAfter(DateTime.now())) {
+      Get.snackbar('Invalid Date', 'Date of birth cannot be in the future',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: AppColor.error,
+          colorText: AppColor.white);
       return;
     }
 
-    if (selectedDate != null && selectedDate!.isAfter(DateTime.now())) {
-      Get.snackbar(
-        'Invalid Date',
-        'Date of birth cannot be in the future',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: AppColor.error,
-        colorText: AppColor.white,
+    final dobText = dobController.text.trim().isNotEmpty
+        ? dobController.text.trim()
+        : 'Not provided';
+    final genderText = selectedGender.value;
+
+    final isNewDobOrGender = !isDobLocked.value || !isGenderLocked.value;
+    if (isNewDobOrGender) {
+      final confirmed = await Get.dialog<bool>(
+        ProfileConfirmDialog(dob: dobText, gender: genderText),
       );
-      return;
+      if (confirmed != true) return;
     }
+
+    await saveProfile();
+  }
+
+  Future<void> saveProfile() async {
+    final enteredName = nameController.text.trim();
+    if (enteredName.isEmpty) return;
+    final email = emailController.text.trim();
 
     isSaving.value = true;
     final nameParts = enteredName.split(RegExp(r'\s+'));
@@ -278,12 +281,8 @@ class MyProfileController extends GetxController {
           'lastName': lastName,
           'gender': selectedGender.value.toLowerCase(),
         };
-        if (email.isNotEmpty) {
-          payload['email'] = email;
-        }
-        if (dobIso != null) {
-          payload['dateOfBirth'] = dobIso;
-        }
+        if (email.isNotEmpty) payload['email'] = email;
+        if (dobIso != null) payload['dateOfBirth'] = dobIso;
 
         final response = await dioPut(
           endUrl: 'auth/me',
@@ -292,36 +291,8 @@ class MyProfileController extends GetxController {
         );
 
         if (response.statusCode == 200 || response.statusCode == 201) {
-          userName.value = enteredName;
-          userEmail.value = email;
-          userPhone.value = phoneController.text.trim();
-
-          getBox.write(USER_NAME, userName.value);
-          if (email.isNotEmpty) getBox.write(USER_EMAIL, userEmail.value);
-          if (userPhone.value.isNotEmpty) {
-            getBox.write(USER_PHONE, userPhone.value);
-          }
-          if (dobIso != null) getBox.write(USER_DOB, dobController.text);
-          getBox.write(USER_GENDER, selectedGender.value);
-
-          isNameLocked.value = true;
-          if (email.isNotEmpty) isEmailLocked.value = true;
-          if (dobIso != null) isDobLocked.value = true;
-          isGenderLocked.value = true;
-          isProfileDone.value = true;
-
-          // Synchronize with AccountController if registered
-          if (Get.isRegistered<AccountController>()) {
-            final accountCtrl = Get.find<AccountController>();
-            accountCtrl.userName.value = userName.value;
-            accountCtrl.userEmail.value = userEmail.value;
-            accountCtrl.userPhone.value = userPhone.value;
-            await accountCtrl.fetchUserProfile();
-          }
-
-          // Refresh fresh data from API
-          await fetchProfile();
-
+          _persistProfileLocally(enteredName, email, dobIso);
+          await _syncAccountAndReload();
           Get.snackbar(
             'Success',
             'Profile updated successfully',
@@ -331,34 +302,7 @@ class MyProfileController extends GetxController {
             duration: const Duration(seconds: 2),
           );
         } else {
-          String msg = 'Could not update profile';
-          if (response.data is Map) {
-            final data = response.data as Map;
-            if (data['error'] is Map) {
-              final code = data['error']['code']?.toString();
-              final rawMsg = data['error']['message']?.toString();
-              if (code == 'EMAIL_TAKEN') {
-                msg = 'This email address is already registered to another account.';
-              } else if (code == 'INVALID_DOB') {
-                msg = 'Please provide a valid date of birth.';
-              } else if (code == 'UNAUTHENTICATED') {
-                msg = 'Your session has expired. Please log in again.';
-              } else if (code == 'RATE_LIMITED') {
-                msg = 'Too many requests. Please wait a moment and try again.';
-              } else if (rawMsg != null && rawMsg.isNotEmpty) {
-                msg = rawMsg;
-              }
-            } else if (data['message'] != null) {
-              msg = data['message'].toString();
-            }
-          }
-          Get.snackbar(
-            'Update Failed',
-            msg,
-            snackPosition: SnackPosition.TOP,
-            backgroundColor: AppColor.error,
-            colorText: AppColor.white,
-          );
+          _handleUpdateError(response.data);
         }
       } catch (e) {
         Get.snackbar(
@@ -373,25 +317,7 @@ class MyProfileController extends GetxController {
       }
     } else {
       isSaving.value = false;
-      userName.value = enteredName;
-      userEmail.value = email;
-      userPhone.value = phoneController.text.trim();
-
-      getBox.write(USER_NAME, userName.value);
-      if (email.isNotEmpty) getBox.write(USER_EMAIL, userEmail.value);
-      if (userPhone.value.isNotEmpty) getBox.write(USER_PHONE, userPhone.value);
-      if (dobController.text.isNotEmpty) {
-        getBox.write(USER_DOB, dobController.text);
-      }
-      getBox.write(USER_GENDER, selectedGender.value);
-
-      if (Get.isRegistered<AccountController>()) {
-        final accountCtrl = Get.find<AccountController>();
-        accountCtrl.userName.value = userName.value;
-        accountCtrl.userEmail.value = userEmail.value;
-        accountCtrl.userPhone.value = userPhone.value;
-      }
-
+      _persistProfileLocally(enteredName, email, dobIso);
       Get.snackbar(
         'Success',
         'Profile updated successfully',
@@ -401,5 +327,64 @@ class MyProfileController extends GetxController {
         duration: const Duration(seconds: 2),
       );
     }
+  }
+
+  void _persistProfileLocally(String name, String email, String? dobIso) {
+    userName.value = name;
+    userEmail.value = email;
+    userPhone.value = phoneController.text.trim();
+
+    getBox.write(USER_NAME, userName.value);
+    if (email.isNotEmpty) getBox.write(USER_EMAIL, userEmail.value);
+    if (userPhone.value.isNotEmpty) getBox.write(USER_PHONE, userPhone.value);
+    if (dobIso != null) getBox.write(USER_DOB, dobController.text);
+    getBox.write(USER_GENDER, selectedGender.value);
+
+    isNameLocked.value = true;
+    if (email.isNotEmpty) isEmailLocked.value = true;
+    if (dobIso != null || dobController.text.isNotEmpty) isDobLocked.value = true;
+    isGenderLocked.value = true;
+    _updateProfileDoneState();
+  }
+
+  Future<void> _syncAccountAndReload() async {
+    if (Get.isRegistered<AccountController>()) {
+      final accountCtrl = Get.find<AccountController>();
+      accountCtrl.userName.value = userName.value;
+      accountCtrl.userEmail.value = userEmail.value;
+      accountCtrl.userPhone.value = userPhone.value;
+      await accountCtrl.fetchUserProfile();
+    }
+    await fetchProfile();
+  }
+
+  void _handleUpdateError(dynamic rawData) {
+    String msg = 'Could not update profile';
+    if (rawData is Map) {
+      if (rawData['error'] is Map) {
+        final code = rawData['error']['code']?.toString();
+        final rawMsg = rawData['error']['message']?.toString();
+        if (code == 'EMAIL_TAKEN') {
+          msg = 'This email address is already registered to another account.';
+        } else if (code == 'INVALID_DOB') {
+          msg = 'Please provide a valid date of birth.';
+        } else if (code == 'UNAUTHENTICATED') {
+          msg = 'Your session has expired. Please log in again.';
+        } else if (code == 'RATE_LIMITED') {
+          msg = 'Too many requests. Please wait a moment and try again.';
+        } else if (rawMsg != null && rawMsg.isNotEmpty) {
+          msg = rawMsg;
+        }
+      } else if (rawData['message'] != null) {
+        msg = rawData['message'].toString();
+      }
+    }
+    Get.snackbar(
+      'Update Failed',
+      msg,
+      snackPosition: SnackPosition.TOP,
+      backgroundColor: AppColor.error,
+      colorText: AppColor.white,
+    );
   }
 }

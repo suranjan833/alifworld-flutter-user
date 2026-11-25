@@ -236,13 +236,31 @@ class MyProfileView extends GetView<MyProfileController> {
                       _buildFieldLabel('Gender'),
                       SizedBox(height: 8.h),
                       Obx(
-                        () => Row(
+                        () => Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildGenderChip('Male', isLocked: controller.isGenderLocked.value),
-                            SizedBox(width: 12.w),
-                            _buildGenderChip('Female', isLocked: controller.isGenderLocked.value),
-                            SizedBox(width: 12.w),
-                            _buildGenderChip('Other', isLocked: controller.isGenderLocked.value),
+                            Row(
+                              children: [
+                                _buildGenderChip('Male', isLocked: controller.isGenderLocked.value),
+                                SizedBox(width: 12.w),
+                                _buildGenderChip('Female', isLocked: controller.isGenderLocked.value),
+                                SizedBox(width: 12.w),
+                                _buildGenderChip('Other', isLocked: controller.isGenderLocked.value),
+                              ],
+                            ),
+                            if (controller.isGenderLocked.value) ...[
+                              SizedBox(height: 6.h),
+                              Padding(
+                                padding: EdgeInsets.only(left: 4.w),
+                                child: Text(
+                                  'Gender cannot be changed once submitted.',
+                                  style: GoogleFonts.lato(
+                                    fontSize: 12.sp,
+                                    color: const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -260,7 +278,7 @@ class MyProfileView extends GetView<MyProfileController> {
                             onPressed: (controller.isSaving.value ||
                                     controller.isLoading.value)
                                 ? null
-                                : () => controller.saveProfile(),
+                                : () => controller.onSavePressed(context),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColor.primary,
                               elevation: 0,
