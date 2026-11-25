@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../../../data/config/app_color.dart';
+import '../../../data/widgets/skeleton_box.dart';
 import '../controllers/order_details_controller.dart';
 import '../models/order_model.dart';
 
@@ -73,10 +74,9 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
         final o = controller.orderRx.value;
 
         if (controller.isLoading.value && o.items.isEmpty) {
-          return const Center(
-            child: CircularProgressIndicator(
-              color: AppColor.primary,
-            ),
+          return const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: SkeletonList(itemCount: 4),
           );
         }
 

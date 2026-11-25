@@ -69,7 +69,8 @@ class ProductModel {
     List<Map<String, dynamic>>? parsedVariants;
     if (json['variants'] is List) {
       parsedVariants = (json['variants'] as List)
-          .whereType<Map<String, dynamic>>()
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
           .toList();
     }
 
@@ -86,12 +87,18 @@ class ProductModel {
     // Check first variant if price is 0
     if (parsedPrice == 0.0 && parsedVariants != null && parsedVariants.isNotEmpty) {
       final firstVar = parsedVariants.first;
-      if (firstVar['priceMinor'] is num) {
+      if (firstVar['priceMinor'] is num && (firstVar['priceMinor'] as num) > 0) {
         parsedPrice = (firstVar['priceMinor'] as num) / 100.0;
+      } else if (firstVar['price'] is num && (firstVar['price'] as num) > 0) {
+        parsedPrice = (firstVar['price'] as num).toDouble();
       }
-      if (firstVar['compareAtPriceMinor'] is num) {
+      if (firstVar['compareAtPriceMinor'] is num &&
+          (firstVar['compareAtPriceMinor'] as num) > 0) {
         parsedOriginalPrice =
             (firstVar['compareAtPriceMinor'] as num) / 100.0;
+      } else if (firstVar['compareAtPrice'] is num &&
+          (firstVar['compareAtPrice'] as num) > 0) {
+        parsedOriginalPrice = (firstVar['compareAtPrice'] as num).toDouble();
       }
     }
 

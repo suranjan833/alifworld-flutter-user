@@ -434,6 +434,7 @@ class ShowcaseProductModel {
       'categoryName': categoryName,
       'price': '৳${price.toStringAsFixed(2)}',
       'rawPrice': price,
+      'priceMinor': (price * 100).round(),
       'originalPrice': originalPrice != null
           ? '৳${originalPrice!.toStringAsFixed(2)}'
           : null,

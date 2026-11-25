@@ -20,10 +20,13 @@ class OrderSuccessController extends GetxController {
 
   bool get isWallet {
     final pm = paymentMethod.value.toLowerCase();
-    return pm.contains('wallet');
+    final pid = paymentId.value.toLowerCase();
+    return pm.contains('wallet') || pid.contains('wallet');
   }
 
-  bool get showPaymentId => !isCod && paymentId.value.trim().isNotEmpty;
+  // Payment ID hidden for wallet payments / disabled for now per request
+  bool get showPaymentId =>
+      !isCod && !isWallet && paymentId.value.trim().isNotEmpty;
 
   String get formattedPaymentStatus {
     final status = paymentStatus.value.trim().toLowerCase();

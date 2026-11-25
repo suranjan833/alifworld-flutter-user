@@ -455,17 +455,28 @@ class CatalogSearchController extends GetxController {
     }
     final bagCtrl = Get.find<BagController>();
 
-    final vId = (product.variants != null && product.variants!.isNotEmpty)
-        ? product.variants!.first['id']?.toString()
+    final firstVar = (product.variants != null && product.variants!.isNotEmpty)
+        ? product.variants!.first
         : null;
+    final vId = firstVar?['id']?.toString();
+    final vLabel = firstVar?['label']?.toString();
+    final num? vMinor = firstVar?['priceMinor'] ?? firstVar?['unitPriceMinor'];
+    final double effectivePrice = (vMinor != null && vMinor > 0)
+        ? vMinor / 100.0
+        : (product.price > 0 ? product.price : 0.0);
 
     await bagCtrl.addItemToBag({
       'id': product.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
       'productId': product.id ?? '',
       'variantId': vId,
+      'variantLabel': vLabel,
       'variants': product.variants,
       'title': product.title ?? 'Product',
-      'price': product.price,
+      'price': effectivePrice,
+      'rawPrice': effectivePrice,
+      'priceMinor': (vMinor != null && vMinor > 0)
+          ? vMinor.toInt()
+          : (effectivePrice * 100).round(),
       'image': product.image ?? '',
       'brand': product.brand ?? 'Alif',
       'slug': product.slug,

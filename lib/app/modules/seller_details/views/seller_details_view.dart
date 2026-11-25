@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../../../data/config/app_color.dart';
+import '../../../data/widgets/app_skeletons.dart';
 import '../../../data/widgets/points_badge.dart';
 import '../controllers/seller_details_controller.dart';
 
@@ -41,7 +42,7 @@ class SellerDetailsView extends GetView<SellerDetailsController> {
       ),
       body: Obx(() {
         if (controller.isLoading.value && controller.shop.value == null) {
-          return const Center(child: CircularProgressIndicator());
+          return const SkeletonCardGrid();
         }
 
         if (controller.isNotFound.value) {

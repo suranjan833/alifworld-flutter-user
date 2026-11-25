@@ -59,8 +59,64 @@ class BagController extends GetxController with SkeletonLoadingMixin {
             .toList();
         cartItems.assignAll(items);
         cartItems.refresh();
+        _healGuestCartPrices(items);
       }
     } catch (_) {}
+  }
+
+  void _healGuestCartPrices(List<CartItemModel> items) {
+    final hasZeroPrice = items.any((it) => it.price <= 0);
+    if (!hasZeroPrice) return;
+
+    Future.microtask(() async {
+      bool updated = false;
+      for (int i = 0; i < cartItems.length; i++) {
+        final item = cartItems[i];
+        if (item.price <= 0) {
+          try {
+            final lookup = item.productId.isNotEmpty ? item.productId : (item.variantId ?? '');
+            if (lookup.isEmpty) continue;
+            final res = await dioGet('catalog/products/$lookup');
+            if (res.statusCode == 200 && res.data != null) {
+              dynamic pData = res.data;
+              if (pData is Map && pData.containsKey('data')) pData = pData['data'];
+              if (pData is Map && pData.containsKey('product')) pData = pData['product'];
+              if (pData is Map) {
+                num? minor;
+                String? label;
+                if (pData['variants'] is List) {
+                  for (var v in pData['variants'] as List) {
+                    if (v is Map &&
+                        (item.variantId == null ||
+                            item.variantId!.isEmpty ||
+                            v['id']?.toString() == item.variantId)) {
+                      minor = v['priceMinor'] ?? v['unitPriceMinor'];
+                      label = v['label']?.toString();
+                      break;
+                    }
+                  }
+                }
+                minor ??= pData['priceMinor'];
+                if (minor != null && minor > 0) {
+                  final newPrice = minor.toDouble() / 100.0;
+                  cartItems[i] = item.copyWith(
+                    price: newPrice,
+                    unitPriceMinor: minor.toInt(),
+                    variantLabel: label ?? item.variantLabel,
+                  );
+                  updated = true;
+                }
+              }
+            }
+          } catch (_) {}
+        }
+      }
+      if (updated) {
+        cartItems.refresh();
+        _saveGuestCartToStorage();
+        update();
+      }
+    });
   }
 
   void _saveGuestCartToStorage() {
@@ -102,6 +158,66 @@ class BagController extends GetxController with SkeletonLoadingMixin {
     } catch (_) {}
   }
 
+  /// Safely extracts numeric item price from any data shape (string with currency, minor units, raw, variants)
+  static double extractItemPrice(Map<String, dynamic> item, {String? resolvedVariantId}) {
+    // 1. Raw double price
+    if (item['rawPrice'] is num && (item['rawPrice'] as num) > 0) {
+      return (item['rawPrice'] as num).toDouble();
+    }
+    // 2. Minor units (poisha)
+    final minor = item['unitPriceMinor'] ?? item['priceMinor'];
+    if (minor is num && minor > 0) {
+      return minor.toDouble() / 100.0;
+    }
+    // 3. Direct price field (num or string with potential currency symbol)
+    final rawPrice = item['price'];
+    if (rawPrice is num && rawPrice > 0) {
+      return rawPrice.toDouble();
+    } else if (rawPrice != null) {
+      final clean = rawPrice
+          .toString()
+          .replaceAll('৳', '')
+          .replaceAll('₹', '')
+          .replaceAll('\$', '')
+          .replaceAll(',', '')
+          .trim();
+      final parsed = double.tryParse(clean);
+      if (parsed != null && parsed > 0) return parsed;
+    }
+    // 4. Nested variants list
+    if (item['variants'] is List && (item['variants'] as List).isNotEmpty) {
+      for (final v in item['variants'] as List) {
+        if (v is Map) {
+          final vMap = Map<String, dynamic>.from(v);
+          final matches = resolvedVariantId == null ||
+              resolvedVariantId.isEmpty ||
+              vMap['id']?.toString() == resolvedVariantId;
+          if (matches) {
+            final vMinor = vMap['priceMinor'] ?? vMap['unitPriceMinor'];
+            if (vMinor is num && vMinor > 0) {
+              return vMinor.toDouble() / 100.0;
+            }
+            final vPrice = vMap['price'] ?? vMap['salePrice'] ?? vMap['rawPrice'];
+            if (vPrice is num && vPrice > 0) {
+              return vPrice.toDouble();
+            } else if (vPrice != null) {
+              final clean = vPrice
+                  .toString()
+                  .replaceAll('৳', '')
+                  .replaceAll('₹', '')
+                  .replaceAll('\$', '')
+                  .replaceAll(',', '')
+                  .trim();
+              final parsed = double.tryParse(clean);
+              if (parsed != null && parsed > 0) return parsed;
+            }
+          }
+        }
+      }
+    }
+    return 0.0;
+  }
+
   /// Instant millisecond mutation of cart in memory
   CartItemModel addOptimisticItem(
     Map<String, dynamic> item, {
@@ -110,6 +226,11 @@ class BagController extends GetxController with SkeletonLoadingMixin {
   }) {
     final vId = resolvedVariantId ?? item['variantId']?.toString();
     final pId = item['productId']?.toString() ?? item['id']?.toString() ?? '';
+    final double price = extractItemPrice(item, resolvedVariantId: vId);
+    final int? unitPriceMinor = (price > 0)
+        ? (price * 100).round()
+        : (item['priceMinor'] as num?)?.toInt() ??
+            (item['unitPriceMinor'] as num?)?.toInt();
 
     final existingIdx = cartItems.indexWhere((c) =>
         (vId != null && vId.isNotEmpty && c.variantId == vId) ||
@@ -118,13 +239,16 @@ class BagController extends GetxController with SkeletonLoadingMixin {
     if (existingIdx != -1) {
       final existing = cartItems[existingIdx];
       existing.quantity += quantity;
+      if (existing.price <= 0 && price > 0) {
+        cartItems[existingIdx] = existing.copyWith(
+          price: price,
+          unitPriceMinor: unitPriceMinor,
+        );
+      }
       cartItems.refresh();
       if (!_hasAuth) _saveGuestCartToStorage();
-      return existing;
+      return cartItems[existingIdx];
     } else {
-      final double price = item['price'] is num
-          ? (item['price'] as num).toDouble()
-          : (double.tryParse(item['price']?.toString() ?? '0') ?? 0.0);
       final newItem = CartItemModel(
         id: 'opt_${DateTime.now().millisecondsSinceEpoch}',
         productId: pId,
@@ -135,6 +259,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
         price: price,
         quantity: quantity,
         image: item['image']?.toString() ?? '',
+        unitPriceMinor: unitPriceMinor,
         minPurchaseQty: item['minPurchaseQty'] is num
             ? (item['minPurchaseQty'] as num).toInt()
             : null,
@@ -524,6 +649,46 @@ class BagController extends GetxController with SkeletonLoadingMixin {
         colorText: AppColor.white,
       );
       return false;
+    }
+
+    final double checkPrice = extractItemPrice(item, resolvedVariantId: variantId);
+    if (checkPrice <= 0) {
+      final lookup = (slug != null && slug.isNotEmpty) ? slug : prodId;
+      if (lookup.isNotEmpty) {
+        try {
+          final prodRes = await dioGet('catalog/products/$lookup');
+          if (prodRes.statusCode == 200 && prodRes.data != null) {
+            dynamic raw = prodRes.data;
+            if (raw is Map && raw.containsKey('data')) raw = raw['data'];
+            if (raw is Map && raw.containsKey('product')) raw = raw['product'];
+            if (raw is Map) {
+              if (raw['variants'] is List) {
+                for (var v in raw['variants'] as List) {
+                  if (v is Map &&
+                      (variantId.isEmpty || v['id']?.toString() == variantId)) {
+                    final vMin = v['priceMinor'] ?? v['unitPriceMinor'];
+                    if (vMin is num && vMin > 0) {
+                      item['priceMinor'] = vMin.toInt();
+                      item['price'] = vMin / 100.0;
+                    }
+                    if (v['label'] != null) {
+                      item['variantLabel'] = v['label'].toString();
+                    }
+                    break;
+                  }
+                }
+              }
+              if (item['price'] == null || item['price'] == 0 || item['price'] == 0.0) {
+                final pMin = raw['priceMinor'];
+                if (pMin is num && pMin > 0) {
+                  item['priceMinor'] = pMin.toInt();
+                  item['price'] = pMin / 100.0;
+                }
+              }
+            }
+          }
+        } catch (_) {}
+      }
     }
 
     if (!_hasAuth) {

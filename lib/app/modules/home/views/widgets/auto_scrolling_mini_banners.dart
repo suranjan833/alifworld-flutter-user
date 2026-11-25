@@ -21,6 +21,14 @@ class AutoScrollingMiniBanners extends GetView<MiniBannersController> {
       miniBanners.isNotEmpty ? miniBanners : MiniBannersController.fallbackBanners;
 
   @override
+  MiniBannersController get controller {
+    if (!Get.isRegistered<MiniBannersController>()) {
+      Get.put(MiniBannersController());
+    }
+    return Get.find<MiniBannersController>();
+  }
+
+  @override
   Widget build(BuildContext context) {
     if (!Get.isRegistered<MiniBannersController>()) {
       Get.put(MiniBannersController());

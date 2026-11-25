@@ -79,21 +79,22 @@ class OrderSuccessView extends GetView<OrderSuccessController> {
                       () => _buildInfoRow('Order ID', controller.orderId.value),
                     ),
                     SizedBox(height: 10.h),
-                    Obx(() {
-                      if (!controller.showPaymentId) {
-                        return const SizedBox.shrink();
-                      }
-                      return Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildInfoRow(
-                            'Payment ID',
-                            controller.paymentId.value,
-                          ),
-                          SizedBox(height: 10.h),
-                        ],
-                      );
-                    }),
+                    // Payment ID commented out for now (not needed for full wallet payment)
+                    // Obx(() {
+                    //   if (!controller.showPaymentId) {
+                    //     return const SizedBox.shrink();
+                    //   }
+                    //   return Column(
+                    //     mainAxisSize: MainAxisSize.min,
+                    //     children: [
+                    //       _buildInfoRow(
+                    //         'Payment ID',
+                    //         controller.paymentId.value,
+                    //       ),
+                    //       SizedBox(height: 10.h),
+                    //     ],
+                    //   );
+                    // }),
                     Obx(
                       () => _buildInfoRow(
                         'Payment Mode',

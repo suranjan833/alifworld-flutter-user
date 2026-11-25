@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../../../data/config/app_color.dart';
+import '../../../data/widgets/skeleton_box.dart';
 import '../controllers/my_profile_controller.dart';
 
 class MyProfileView extends GetView<MyProfileController> {
@@ -39,17 +40,13 @@ class MyProfileView extends GetView<MyProfileController> {
       ),
       body: Obx(
         () => controller.isLoading.value && controller.nameController.text.isEmpty
-            ? const Center(
-                child: CircularProgressIndicator(
-                  color: AppColor.primary,
-                ),
-              )
+            ? const SkeletonProfile()
             : RefreshIndicator(
                 color: AppColor.primary,
                 onRefresh: () => controller.fetchProfile(),
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(
-                    parent: BouncingScrollPhysics(),
+                    parent: ClampingScrollPhysics(),
                   ),
                   padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
                   child: Column(

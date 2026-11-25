@@ -8,6 +8,7 @@ import 'package:iconsax/iconsax.dart';
 import '../../../data/config/app_color.dart';
 import '../../../data/services/recently_viewed_service.dart';
 import '../../../data/widgets/app_cached_image.dart';
+import '../../../data/widgets/app_skeletons.dart';
 import '../../../data/widgets/points_badge.dart';
 import '../../../routes/app_pages.dart';
 import '../../bag/controllers/bag_controller.dart';
@@ -142,9 +143,7 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
       body: Obx(() {
         if (controller.isLoadingDetails.value &&
             controller.product.value == null) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppColor.primary),
-          );
+          return const SkeletonDetail();
         }
 
         if (controller.product.value == null) {

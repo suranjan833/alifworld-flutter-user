@@ -66,57 +66,59 @@ class AccountView extends GetView<AccountController> {
             ? const SkeletonProfile()
             : Container(
                 color: const Color(0xFFF8FAFC),
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: ClampingScrollPhysics(),
+                  ),
                   padding: EdgeInsets.only(bottom: 30.h),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // 1. User Profile Card Header
-                      const AccountUserCard(),
+                  children: [
+                    // 1. User Profile Card Header
+                    const RepaintBoundary(child: AccountUserCard()),
 
-                      // 1.1 Total Balance Banner (ONLY when logged in)
-                      const AccountBalanceBanner(),
+                    // 1.1 Total Balance Banner (ONLY when logged in)
+                    const RepaintBoundary(child: AccountBalanceBanner()),
 
-                      // 1.2 Quick Feature Cards (Leaderboard, Lottery, Wallets - ONLY when logged in)
-                      Obx(
-                        () => controller.isLoggedIn.value
-                            ? const AccountQuickCards()
-                            : const SizedBox.shrink(),
+                    // 1.2 Quick Feature Cards (Leaderboard, Lottery, Wallets - ONLY when logged in)
+                    Obx(
+                      () => controller.isLoggedIn.value
+                          ? const RepaintBoundary(child: AccountQuickCards())
+                          : const SizedBox.shrink(),
+                    ),
+
+                    // 1.3 Lifetime Rank Card & Achievements Section (Club progress timeline - ONLY when logged in)
+                    Obx(
+                      () => controller.isLoggedIn.value
+                          ? const Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                RepaintBoundary(child: LifetimeRankCard()),
+                                RepaintBoundary(child: AchievementsTimelineCard()),
+                              ],
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+
+                    // 2. Sections (Manage, Settings, Others)
+                    Obx(
+                      () => Column(
+                        children: controller.sections
+                            .map(
+                              (section) => RepaintBoundary(
+                                child: _buildSectionGroup(context, section),
+                              ),
+                            )
+                            .toList(),
                       ),
+                    ),
 
-                      // 1.3 Lifetime Rank Card & Achievements Section (Club progress timeline - ONLY when logged in)
-                      Obx(
-                        () => controller.isLoggedIn.value
-                            ? const Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  LifetimeRankCard(),
-                                  AchievementsTimelineCard(),
-                                ],
-                              )
-                            : const SizedBox.shrink(),
+                    // 3. Logout / Log In Button Card
+                    Padding(
+                      padding: EdgeInsets.only(
+                        left: 16.w,
+                        right: 16.w,
+                        top: 20.h,
                       ),
-
-                      // 2. Sections (Manage, Settings, Others)
-                      Obx(
-                        () => Column(
-                          children: controller.sections
-                              .map(
-                                (section) =>
-                                    _buildSectionGroup(context, section),
-                              )
-                              .toList(),
-                        ),
-                      ),
-
-                      // 3. Logout / Log In Button Card
-                      Padding(
-                        padding: EdgeInsets.only(
-                          left: 16.w,
-                          right: 16.w,
-                          top: 20.h,
-                        ),
+                      child: RepaintBoundary(
                         child: Obx(() {
                           final isLoggedIn = controller.isLoggedIn.value;
                           final isBn = controller.currentLangCode.value == 'bn';
@@ -176,8 +178,8 @@ class AccountView extends GetView<AccountController> {
                           );
                         }),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
       ),
