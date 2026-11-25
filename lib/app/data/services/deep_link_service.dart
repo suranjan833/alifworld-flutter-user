@@ -93,9 +93,58 @@ class DeepLinkService extends GetxService {
   }
 
   void _handleIncomingUri(Uri uri) {
-    final code = extractReferralCodeFromUri(uri);
-    if (code == null || code.isEmpty) return;
+    log('DeepLink received URI: $uri');
 
+    // 1. Check for product deep link (/product/:slug or alifworld://product/:slug)
+    final productData = extractProductDetailsFromUri(uri);
+    if (productData != null) {
+      _handleProductDeepLink(productData);
+      return;
+    }
+
+    // 2. Check for referral deep link (/register?ref=CODE or alifworld://register?ref=CODE)
+    final code = extractReferralCodeFromUri(uri);
+    if (code != null && code.isNotEmpty) {
+      _handleReferralDeepLink(code);
+    }
+  }
+
+  void _handleProductDeepLink(Map<String, String> productData) {
+    final slug = productData['slug'];
+    if (slug == null || slug.isEmpty) return;
+    final variantId = productData['variantId'];
+
+    log('DeepLink product detected: slug=$slug, variantId=$variantId');
+
+    final current = Get.currentRoute.toLowerCase();
+    final isSplash = current.isEmpty || current.contains('splash');
+
+    if (isSplash) {
+      // Save for SplashController to open after initializing
+      getBox.write('pending_deep_link_product', slug);
+      if (variantId != null && variantId.isNotEmpty) {
+        getBox.write('pending_deep_link_variant', variantId);
+      } else {
+        getBox.remove('pending_deep_link_variant');
+      }
+      return;
+    }
+
+    // Navigate immediately if app is already active
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (Get.context != null) {
+        Get.toNamed(
+          Routes.PRODUCT_DETAILS,
+          arguments: {
+            'slug': slug,
+            if (variantId != null && variantId.isNotEmpty) 'variantId': variantId,
+          },
+        );
+      }
+    });
+  }
+
+  void _handleReferralDeepLink(String code) {
     // Tapped link always updates the pending code
     getBox.write(PENDING_REFERRAL_CODE, code);
     log('DeepLink saved referral code: $code');
@@ -133,6 +182,50 @@ class DeepLinkService extends GetxService {
         }
       });
     }
+  }
+
+  /// Extracts product slug and optional variantId from Uri
+  static Map<String, String>? extractProductDetailsFromUri(Uri uri) {
+    String? slug;
+    final variantId = uri.queryParameters['variant'];
+
+    // 1. Custom scheme: alifworld://product/SLUG or alifworld://products/SLUG
+    if (uri.scheme == 'alifworld') {
+      if (uri.host == 'product' || uri.host == 'products') {
+        if (uri.pathSegments.isNotEmpty) {
+          slug = uri.pathSegments.first;
+        } else if (uri.path.isNotEmpty) {
+          slug = uri.path.replaceAll('/', '').trim();
+        }
+      }
+    }
+
+    // 2. HTTPS / HTTP: https://domain/product/SLUG or /products/SLUG
+    if (slug == null || slug.isEmpty) {
+      final segments = uri.pathSegments;
+      if (segments.length >= 2) {
+        final first = segments[0].toLowerCase();
+        if (first == 'product' || first == 'products') {
+          slug = segments[1].trim();
+        }
+      } else if (segments.length == 1 &&
+          (uri.path.startsWith('/product/') || uri.path.startsWith('/products/'))) {
+        slug = uri.path.split('/').last.trim();
+      }
+    }
+
+    // 3. Fallback: query parameters e.g. ?product=SLUG or ?slug=SLUG
+    if (slug == null || slug.isEmpty) {
+      slug = uri.queryParameters['slug'] ?? uri.queryParameters['product'];
+    }
+
+    if (slug != null && slug.isNotEmpty) {
+      return {
+        'slug': slug,
+        if (variantId != null && variantId.isNotEmpty) 'variantId': variantId,
+      };
+    }
+    return null;
   }
 
   /// Extracts and sanitizes referral code from Uri

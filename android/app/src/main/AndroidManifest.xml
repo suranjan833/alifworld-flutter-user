@@ -27,7 +27,7 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
 
-            <!-- App Links: https://alifworld.com.bd/register?ref=CODE -->
+            <!-- App Links: https://alifworld.com.bd/register?ref=CODE and /product/:slug -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -40,9 +40,25 @@
                     android:scheme="https"
                     android:host="www.alifworld.com.bd"
                     android:pathPrefix="/register" />
+                <data
+                    android:scheme="https"
+                    android:host="alifworld.com.bd"
+                    android:pathPrefix="/product" />
+                <data
+                    android:scheme="https"
+                    android:host="www.alifworld.com.bd"
+                    android:pathPrefix="/product" />
+                <data
+                    android:scheme="https"
+                    android:host="alifworld.com.bd"
+                    android:pathPrefix="/products" />
+                <data
+                    android:scheme="https"
+                    android:host="www.alifworld.com.bd"
+                    android:pathPrefix="/products" />
             </intent-filter>
 
-            <!-- Dev App Links: https://dev.alifworld.com.bd/register?ref=CODE -->
+            <!-- Dev App Links: https://dev.alifworld.com.bd/register?ref=CODE and /product/:slug -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -51,9 +67,17 @@
                     android:scheme="https"
                     android:host="dev.alifworld.com.bd"
                     android:pathPrefix="/register" />
+                <data
+                    android:scheme="https"
+                    android:host="dev.alifworld.com.bd"
+                    android:pathPrefix="/product" />
+                <data
+                    android:scheme="https"
+                    android:host="dev.alifworld.com.bd"
+                    android:pathPrefix="/products" />
             </intent-filter>
 
-            <!-- Custom Scheme: alifworld://register?ref=CODE -->
+            <!-- Custom Scheme: alifworld://register?ref=CODE, alifworld://product/SLUG -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -61,6 +85,12 @@
                 <data
                     android:scheme="alifworld"
                     android:host="register" />
+                <data
+                    android:scheme="alifworld"
+                    android:host="product" />
+                <data
+                    android:scheme="alifworld"
+                    android:host="products" />
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

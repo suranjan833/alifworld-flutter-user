@@ -72,41 +72,60 @@ class AchievementsTimelineCard extends GetView<AccountController> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Header: Trophy Icon + "My achievements" + Subtitle
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  Icons.emoji_events_outlined,
-                  size: 24.r,
-                  color: const Color(0xFFD97706),
-                ),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'My achievements',
-                        style: GoogleFonts.lato(
-                          fontSize: 16.5.sp,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF0F172A),
-                        ),
-                      ),
-                      SizedBox(height: 2.h),
-                      Text(
-                        'Your club tier, across every period.',
-                        style: GoogleFonts.lato(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
+            // 1. Header: Trophy Icon + "My achievements" + Subtitle + Info Tap
+            GestureDetector(
+              onTap: () => ClubDetailsSheet.show(context, period: activePeriod),
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.emoji_events_outlined,
+                    size: 24.r,
+                    color: const Color(0xFFD97706),
                   ),
-                ),
-              ],
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'My achievements',
+                          style: GoogleFonts.lato(
+                            fontSize: 16.5.sp,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF0F172A),
+                          ),
+                        ),
+                        SizedBox(height: 2.h),
+                        Text(
+                          'Your club tier, across every period.',
+                          style: GoogleFonts.lato(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    width: 28.r,
+                    height: 28.r,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF1F5F9),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.info_outline_rounded,
+                        size: 16.r,
+                        color: const Color(0xFF64748B),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
             SizedBox(height: 14.h),
 
@@ -268,7 +287,7 @@ class AchievementsTimelineCard extends GetView<AccountController> {
                           ),
                           SizedBox(width: 14.w),
 
-                          // Right: Glassmorphism Club Tier Pill
+                          // Right: Glassmorphism Club Tier Pill (Tap to open Club Details)
                           GestureDetector(
                             onTap: () => ClubDetailsSheet.show(
                               context,
@@ -323,11 +342,11 @@ class AchievementsTimelineCard extends GetView<AccountController> {
                                       ),
                                     ],
                                   ),
-                                  SizedBox(width: 8.w),
+                                  SizedBox(width: 4.w),
                                   Icon(
-                                    Icons.info_outline_rounded,
-                                    size: 15.r,
-                                    color: Colors.white.withValues(alpha: 0.75),
+                                    Icons.chevron_right_rounded,
+                                    size: 16.r,
+                                    color: Colors.white.withValues(alpha: 0.8),
                                   ),
                                 ],
                               ),
@@ -459,9 +478,10 @@ class AchievementsTimelineCard extends GetView<AccountController> {
                 ),
               ),
             ),
+            SizedBox(width: 6.w),
             Icon(
               Icons.chevron_right_rounded,
-              size: 20.r,
+              size: 16.r,
               color: const Color(0xFFEA580C),
             ),
           ],

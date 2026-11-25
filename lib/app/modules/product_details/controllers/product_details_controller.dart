@@ -28,6 +28,7 @@ class ProductDetailsController extends GetxController
   final isDetailsLoaded = false.obs;
   final isLoadingDetails = false.obs;
   final isBuyingNow = false.obs;
+  String? _targetVariantId;
 
   @override
   void onInit() {
@@ -37,10 +38,11 @@ class ProductDetailsController extends GetxController
   }
 
   void _initializeData(dynamic args) {
-    if (args == null) return;
-
     String? targetSlug;
-    if (args is String) {
+    if (args == null) {
+      targetSlug = Get.parameters['slug'];
+      _targetVariantId = Get.parameters['variant'];
+    } else if (args is String) {
       targetSlug = args;
     } else if (args is ProductDetailsModel) {
       targetSlug = args.slug;
@@ -50,13 +52,17 @@ class ProductDetailsController extends GetxController
     } else if (args is ShowcaseProductModel) {
       targetSlug = args.slug;
       _setProduct(ProductDetailsModel.fromShowcase(args), isFullDetails: false);
-    } else if (args is Map<String, dynamic>) {
+    } else if (args is Map) {
       targetSlug = args['slug']?.toString();
-      _setProduct(ProductDetailsModel.fromJson(args), isFullDetails: false);
+      _targetVariantId = args['variantId']?.toString() ?? args['variant']?.toString();
+      try {
+        _setProduct(ProductDetailsModel.fromJson(Map<String, dynamic>.from(args)), isFullDetails: false);
+      } catch (_) {}
     } else {
       try {
         final map = (args as dynamic).toJson() as Map<String, dynamic>;
         targetSlug = map['slug']?.toString();
+        _targetVariantId = map['variantId']?.toString();
         _setProduct(ProductDetailsModel.fromJson(map), isFullDetails: false);
       } catch (_) {
         return;
@@ -111,7 +117,13 @@ class ProductDetailsController extends GetxController
     seller.value = merged.seller;
     isWishlisted.value = merged.isFavorite;
 
-    if (selectedVariantIndex.value >= merged.variants.length) {
+    final tVarId = _targetVariantId;
+    if (tVarId != null && tVarId.isNotEmpty) {
+      final idx = merged.variants.indexWhere((v) => v.id == tVarId);
+      if (idx >= 0) {
+        selectedVariantIndex.value = idx;
+      }
+    } else if (selectedVariantIndex.value >= merged.variants.length) {
       selectedVariantIndex.value = 0;
     }
 

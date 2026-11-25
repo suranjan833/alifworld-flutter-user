@@ -1,4 +1,4 @@
-import 'package:flutter/animation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
 import '../../../data/config/functions/dio_function/app_config.dart';
@@ -118,6 +118,27 @@ class SplashController extends GetxController
     final loggedInVal = getBox.read(IS_USER_LOGGED_IN);
     final isLoggedIn =
         (loggedInVal == true || loggedInVal == 'true' || hasToken);
+
+    // Deep link product check (cold start)
+    final pendingProduct = getBox.read('pending_deep_link_product')?.toString();
+    final pendingVariant = getBox.read('pending_deep_link_variant')?.toString();
+    if (pendingProduct != null && pendingProduct.trim().isNotEmpty) {
+      getBox.remove('pending_deep_link_product');
+      getBox.remove('pending_deep_link_variant');
+      Get.offAllNamed(Routes.MAIN_NAVIGATION);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Get.toNamed(
+          Routes.PRODUCT_DETAILS,
+          arguments: {
+            'slug': pendingProduct.trim(),
+            if (pendingVariant != null && pendingVariant.isNotEmpty)
+              'variantId': pendingVariant.trim(),
+          },
+        );
+      });
+      return;
+    }
+
     if (isLoggedIn) {
       Get.offAllNamed(Routes.MAIN_NAVIGATION);
     } else {

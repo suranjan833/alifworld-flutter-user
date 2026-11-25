@@ -89,20 +89,42 @@ class ClubPeriodTiersModel {
   final ClubTierModel? bronze;
   final ClubTierModel? silver;
   final ClubTierModel? gold;
+  final Map<String, ClubTierModel> allTiers;
 
-  ClubPeriodTiersModel({this.bronze, this.silver, this.gold});
+  ClubPeriodTiersModel({
+    this.bronze,
+    this.silver,
+    this.gold,
+    this.allTiers = const {},
+  });
 
   factory ClubPeriodTiersModel.fromJson(Map<String, dynamic> json) {
+    final tiersMap = <String, ClubTierModel>{};
+    json.forEach((key, val) {
+      if (val != null) {
+        num defPct = 0;
+        final k = key.toLowerCase();
+        if (k == 'bronze') defPct = 1;
+        if (k == 'silver') defPct = 2;
+        if (k == 'gold') defPct = 3;
+        tiersMap[k] = ClubTierModel.fromDynamic(val, defaultPct: defPct);
+      }
+    });
+
     return ClubPeriodTiersModel(
-      bronze: json['bronze'] != null
-          ? ClubTierModel.fromDynamic(json['bronze'], defaultPct: 1)
-          : null,
-      silver: json['silver'] != null
-          ? ClubTierModel.fromDynamic(json['silver'], defaultPct: 2)
-          : null,
-      gold: json['gold'] != null
-          ? ClubTierModel.fromDynamic(json['gold'], defaultPct: 3)
-          : null,
+      bronze: tiersMap['bronze'] ??
+          (json['bronze'] != null
+              ? ClubTierModel.fromDynamic(json['bronze'], defaultPct: 1)
+              : null),
+      silver: tiersMap['silver'] ??
+          (json['silver'] != null
+              ? ClubTierModel.fromDynamic(json['silver'], defaultPct: 2)
+              : null),
+      gold: tiersMap['gold'] ??
+          (json['gold'] != null
+              ? ClubTierModel.fromDynamic(json['gold'], defaultPct: 3)
+              : null),
+      allTiers: tiersMap,
     );
   }
 }
@@ -213,10 +235,11 @@ class RewardsInfoModel {
         [];
 
     final clubMap = <String, ClubPeriodTiersModel>{};
-    if (json['customerClub'] is Map<String, dynamic>) {
-      (json['customerClub'] as Map<String, dynamic>).forEach((k, v) {
+    if (json['customerClub'] is Map) {
+      (json['customerClub'] as Map).forEach((k, v) {
         if (v is Map) {
-          clubMap[k] = ClubPeriodTiersModel.fromJson(Map<String, dynamic>.from(v));
+          clubMap[k.toString().toLowerCase().trim()] =
+              ClubPeriodTiersModel.fromJson(Map<String, dynamic>.from(v));
         }
       });
     }

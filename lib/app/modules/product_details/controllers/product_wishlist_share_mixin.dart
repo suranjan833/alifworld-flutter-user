@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../data/config/app_color.dart';
+import '../../../data/config/functions/dio_function/app_config.dart';
 import '../../../data/config/functions/dio_function/my_dio.dart';
 import '../../../data/services/recently_viewed_service.dart';
 import '../../../data/services/wishlist_service.dart';
@@ -169,11 +170,13 @@ mixin ProductWishlistShareMixin {
       }
 
       if (shareText.isEmpty) {
+        final web = resolveWebUrl();
+        final baseUrl = web.isNotEmpty ? web : 'https://alifworld.com.bd';
         final fallbackUrl = shareUrl.isNotEmpty
             ? shareUrl
-            : 'https://dev.alifworld.com.bd/product/${p.slug}${vId != null ? '?variant=$vId' : ''}';
+            : '$baseUrl/product/${p.slug}${vId != null ? '?variant=$vId' : ''}';
         shareText =
-            'Check out ${p.name} on Alifworld!\n\nShop now: $fallbackUrl';
+            'Check out ${p.name} on Alif World!\n\nShop now: $fallbackUrl';
       }
 
       try {

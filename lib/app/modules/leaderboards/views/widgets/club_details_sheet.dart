@@ -4,9 +4,9 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../data/services/rewards_service.dart';
-import '../../controllers/leaderboard_controller.dart';
+import '../../controllers/club_details_controller.dart';
 
-class ClubDetailsSheet extends GetView<LeaderboardController> {
+class ClubDetailsSheet extends GetView<ClubDetailsController> {
   final String? period;
 
   const ClubDetailsSheet({
@@ -15,9 +15,16 @@ class ClubDetailsSheet extends GetView<LeaderboardController> {
   });
 
   static void show(BuildContext context, {String? period}) {
-    if (Get.isRegistered<RewardsService>()) {
-      RewardsService.to.fetchRewardsInfo();
+    if (!Get.isRegistered<RewardsService>()) {
+      Get.put(RewardsService());
     }
+    RewardsService.to.fetchRewardsInfo();
+
+    if (!Get.isRegistered<ClubDetailsController>()) {
+      Get.put(ClubDetailsController());
+    }
+    Get.find<ClubDetailsController>().setPeriod(period);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -33,72 +40,111 @@ class ClubDetailsSheet extends GetView<LeaderboardController> {
         );
   }
 
+  static Color _getTierColor(String name) {
+    switch (name.toLowerCase()) {
+      case 'bronze':
+        return const Color(0xFFB45309);
+      case 'silver':
+        return const Color(0xFF64748B);
+      case 'gold':
+        return const Color(0xFFD97706);
+      case 'platinum':
+        return const Color(0xFF0284C7);
+      case 'diamond':
+        return const Color(0xFF7C3AED);
+      default:
+        return const Color(0xFFEA580C);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    String resolvedPeriodKey = 'daily';
-    if (period != null && period!.trim().isNotEmpty) {
-      resolvedPeriodKey = period!.toLowerCase().trim();
-    } else if (Get.isRegistered<LeaderboardController>()) {
-      resolvedPeriodKey = controller.selectedPeriod.value.toLowerCase().trim();
-    }
-
-    final periodTitle = resolvedPeriodKey.isNotEmpty
-        ? (resolvedPeriodKey[0].toUpperCase() + resolvedPeriodKey.substring(1))
-        : 'Daily';
-
     return Obx(() {
+      final activePeriod = (period != null && period!.trim().isNotEmpty)
+          ? period!.toLowerCase().trim()
+          : controller.selectedPeriod.value;
+
+      final periodTitle = activePeriod.isNotEmpty
+          ? (activePeriod[0].toUpperCase() + activePeriod.substring(1))
+          : 'Daily';
+
       final rewardsInfo = Get.isRegistered<RewardsService>()
           ? RewardsService.to.info.value
           : null;
-      final clubPeriodTiers = rewardsInfo?.customerClub[resolvedPeriodKey];
+      final clubPeriodTiers = rewardsInfo?.customerClub[activePeriod];
 
-      final bronzePts = clubPeriodTiers?.bronze?.threshold ??
-          (resolvedPeriodKey == 'daily'
-              ? 1000
-              : (resolvedPeriodKey == 'weekly'
-                  ? 10000
-                  : (resolvedPeriodKey == 'monthly' ? 50000 : 100000)));
-      final bronzePct = clubPeriodTiers?.bronze?.pct ?? 1;
+      final List<_ClubTierItem> tierItems = [];
 
-      final silverPts = clubPeriodTiers?.silver?.threshold ??
-          (resolvedPeriodKey == 'daily'
-              ? 2000
-              : (resolvedPeriodKey == 'weekly'
-                  ? 20000
-                  : (resolvedPeriodKey == 'monthly' ? 100000 : 1500000)));
-      final silverPct = clubPeriodTiers?.silver?.pct ?? 2;
+      if (clubPeriodTiers != null && clubPeriodTiers.allTiers.isNotEmpty) {
+        final sortedKeys = clubPeriodTiers.allTiers.keys.toList()
+          ..sort((a, b) {
+            final tA = clubPeriodTiers.allTiers[a]?.threshold ?? 0;
+            final tB = clubPeriodTiers.allTiers[b]?.threshold ?? 0;
+            return tA.compareTo(tB);
+          });
 
-      final goldPts = clubPeriodTiers?.gold?.threshold ??
-          (resolvedPeriodKey == 'daily'
-              ? 5000
-              : (resolvedPeriodKey == 'weekly'
-                  ? 40000
-                  : (resolvedPeriodKey == 'monthly' ? 200000 : 2500000)));
-      final goldPct = clubPeriodTiers?.gold?.pct ?? 3;
+        for (final k in sortedKeys) {
+          final tier = clubPeriodTiers.allTiers[k]!;
+          final displayName = k.capitalizeFirst ?? k;
+          tierItems.add(
+            _ClubTierItem(
+              displayName,
+              '${_formatNumber(tier.threshold)} points',
+              '${tier.pct}% pool share',
+              _getTierColor(k),
+            ),
+          );
+        }
+      } else {
+        // Fallback defaults while rewards info is fetching
+        final bronzePts = clubPeriodTiers?.bronze?.threshold ??
+            (activePeriod == 'daily'
+                ? 1000
+                : (activePeriod == 'weekly'
+                    ? 10000
+                    : (activePeriod == 'monthly' ? 50000 : 100000)));
+        final bronzePct = clubPeriodTiers?.bronze?.pct ?? 1;
 
-      final tierItems = [
-        _ClubTierItem(
-          'Bronze',
-          '${_formatNumber(bronzePts)} points',
-          '$bronzePct% pool share',
-          const Color(0xFFB45309),
-        ),
-        _ClubTierItem(
-          'Silver',
-          '${_formatNumber(silverPts)} points',
-          '$silverPct% pool share',
-          const Color(0xFF64748B),
-        ),
-        _ClubTierItem(
-          'Gold',
-          '${_formatNumber(goldPts)} points',
-          '$goldPct% pool share',
-          const Color(0xFFD97706),
-        ),
-      ];
+        final silverPts = clubPeriodTiers?.silver?.threshold ??
+            (activePeriod == 'daily'
+                ? 2000
+                : (activePeriod == 'weekly'
+                    ? 20000
+                    : (activePeriod == 'monthly' ? 100000 : 1500000)));
+        final silverPct = clubPeriodTiers?.silver?.pct ?? 2;
+
+        final goldPts = clubPeriodTiers?.gold?.threshold ??
+            (activePeriod == 'daily'
+                ? 5000
+                : (activePeriod == 'weekly'
+                    ? 40000
+                    : (activePeriod == 'monthly' ? 200000 : 2500000)));
+        final goldPct = clubPeriodTiers?.gold?.pct ?? 3;
+
+        tierItems.addAll([
+          _ClubTierItem(
+            'Bronze',
+            '${_formatNumber(bronzePts)} points',
+            '$bronzePct% pool share',
+            const Color(0xFFB45309),
+          ),
+          _ClubTierItem(
+            'Silver',
+            '${_formatNumber(silverPts)} points',
+            '$silverPct% pool share',
+            const Color(0xFF64748B),
+          ),
+          _ClubTierItem(
+            'Gold',
+            '${_formatNumber(goldPts)} points',
+            '$goldPct% pool share',
+            const Color(0xFFD97706),
+          ),
+        ]);
+      }
 
       return Container(
-        padding: EdgeInsets.fromLTRB(20.w, 18.h, 20.w, 24.h),
+        padding: EdgeInsets.fromLTRB(20.w, 14.h, 20.w, 24.h),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
@@ -109,6 +155,17 @@ class ClubDetailsSheet extends GetView<LeaderboardController> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Center(
+                child: Container(
+                  width: 38.w,
+                  height: 4.h,
+                  margin: EdgeInsets.only(bottom: 12.h),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE2E8F0),
+                    borderRadius: BorderRadius.circular(4.r),
+                  ),
+                ),
+              ),
               Row(
                 children: [
                   Expanded(
@@ -143,14 +200,13 @@ class ClubDetailsSheet extends GetView<LeaderboardController> {
                   ),
                 ],
               ),
-              SizedBox(height: 22.h),
-
+              SizedBox(height: 18.h),
               ...List.generate(tierItems.length, (index) {
                 final item = tierItems[index];
                 return Column(
                   children: [
                     Padding(
-                      padding: EdgeInsets.symmetric(vertical: 4.h),
+                      padding: EdgeInsets.symmetric(vertical: 6.h),
                       child: Row(
                         children: [
                           Container(
@@ -163,7 +219,7 @@ class ClubDetailsSheet extends GetView<LeaderboardController> {
                           ),
                           SizedBox(width: 10.w),
                           SizedBox(
-                            width: 60.w,
+                            width: 68.w,
                             child: Text(
                               item.name,
                               style: GoogleFonts.inter(
@@ -173,7 +229,7 @@ class ClubDetailsSheet extends GetView<LeaderboardController> {
                               ),
                             ),
                           ),
-                          SizedBox(width: 12.w),
+                          SizedBox(width: 10.w),
                           Text(
                             item.points,
                             style: GoogleFonts.inter(
@@ -196,24 +252,13 @@ class ClubDetailsSheet extends GetView<LeaderboardController> {
                     ),
                     if (index != tierItems.length - 1)
                       Divider(
-                        height: 24.h,
+                        height: 22.h,
                         thickness: 1.r,
                         color: const Color(0xFFF1F5F9),
                       ),
                   ],
                 );
               }),
-              SizedBox(height: 14.h),
-              Center(
-                child: Container(
-                  width: 50.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF64748B).withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
-                ),
-              ),
             ],
           ),
         ),
