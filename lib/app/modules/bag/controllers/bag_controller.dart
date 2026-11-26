@@ -141,12 +141,16 @@ class BagController extends GetxController with SkeletonLoadingMixin {
           final vId = item.variantId;
           if (vId != null && vId.isNotEmpty) {
             try {
+              final postData = <String, dynamic>{
+                'variantId': vId,
+                'qty': item.quantity,
+              };
+              if (item.addons != null && item.addons!.isNotEmpty) {
+                postData['addons'] = item.addons;
+              }
               await dioPost(
                 endUrl: 'cart',
-                data: {
-                  'variantId': vId,
-                  'qty': item.quantity,
-                },
+                data: postData,
                 isJson: true,
               );
             } catch (_) {}
@@ -160,19 +164,20 @@ class BagController extends GetxController with SkeletonLoadingMixin {
 
   /// Safely extracts numeric item price from any data shape (string with currency, minor units, raw, variants)
   static double extractItemPrice(Map<String, dynamic> item, {String? resolvedVariantId}) {
+    final addonsMinor = item['addonsPerUnitMinor'] is num
+        ? (item['addonsPerUnitMinor'] as num).toInt()
+        : 0;
+
     // 1. Raw double price
     if (item['rawPrice'] is num && (item['rawPrice'] as num) > 0) {
-      return (item['rawPrice'] as num).toDouble();
+      return (item['rawPrice'] as num).toDouble() + (addonsMinor / 100.0);
     }
-    // 2. Minor units (poisha)
-    final minor = item['unitPriceMinor'] ?? item['priceMinor'];
-    if (minor is num && minor > 0) {
-      return minor.toDouble() / 100.0;
-    }
-    // 3. Direct price field (num or string with potential currency symbol)
+
+    // 2. Direct price field
     final rawPrice = item['price'];
+    double? directPrice;
     if (rawPrice is num && rawPrice > 0) {
-      return rawPrice.toDouble();
+      directPrice = rawPrice.toDouble();
     } else if (rawPrice != null) {
       final clean = rawPrice
           .toString()
@@ -182,7 +187,21 @@ class BagController extends GetxController with SkeletonLoadingMixin {
           .replaceAll(',', '')
           .trim();
       final parsed = double.tryParse(clean);
-      if (parsed != null && parsed > 0) return parsed;
+      if (parsed != null && parsed > 0) directPrice = parsed;
+    }
+
+    // 3. Minor units (poisha)
+    final minor = item['priceMinor'] ?? item['unitPriceMinor'];
+    if (minor is num && minor > 0) {
+      final base = minor.toDouble() / 100.0;
+      if (directPrice != null && directPrice > base) {
+        return directPrice;
+      }
+      return base + (addonsMinor / 100.0);
+    }
+
+    if (directPrice != null && directPrice > 0) {
+      return directPrice;
     }
     // 4. Nested variants list
     if (item['variants'] is List && (item['variants'] as List).isNotEmpty) {
@@ -274,6 +293,7 @@ class BagController extends GetxController with SkeletonLoadingMixin {
             ? (item['maxPurchaseQty'] as num).toInt()
             : null,
         addons: addons,
+        addonsSummary: item['addonsSummary']?.toString(),
         addonsKey: currentAddonsKey,
       );
       cartItems.add(newItem);
@@ -284,14 +304,19 @@ class BagController extends GetxController with SkeletonLoadingMixin {
   }
 
   /// Fire-and-forget background server sync without blocking UI
-  void syncItemToServerBackground(String variantId, int quantity) {
+  void syncItemToServerBackground(String variantId, int quantity,
+      {List<dynamic>? addons}) {
     if (!_hasAuth) return;
+    final postData = <String, dynamic>{
+      'variantId': variantId,
+      'qty': quantity,
+    };
+    if (addons != null && addons.isNotEmpty) {
+      postData['addons'] = addons;
+    }
     dioPost(
       endUrl: 'cart',
-      data: {
-        'variantId': variantId,
-        'qty': quantity,
-      },
+      data: postData,
       isJson: true,
     ).then((response) {
       if (response.statusCode == 200 || response.statusCode == 201) {

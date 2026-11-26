@@ -457,6 +457,22 @@ class CheckoutView extends GetView<CheckoutController> {
                                             color: AppColor.textSecondary,
                                           ),
                                         ),
+                                        if (item['addonsSummary'] != null &&
+                                            item['addonsSummary']
+                                                .toString()
+                                                .isNotEmpty) ...[
+                                          SizedBox(height: 2.h),
+                                          Text(
+                                            '+ ${item['addonsSummary']}',
+                                            style: GoogleFonts.lato(
+                                              fontSize: 11.sp,
+                                              color: const Color(0xFFE65100),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
                                       ],
                                     ),
                                   ),

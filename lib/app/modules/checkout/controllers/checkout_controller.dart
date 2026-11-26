@@ -522,10 +522,24 @@ class CheckoutController extends GetxController {
                   final pId = line['productId']?.toString() ?? '';
                   final vId = line['variantId']?.toString() ?? '';
                   final pMinor = line['unitPriceMinor'] ?? line['priceMinor'];
-                  final priceVal = pMinor is num ? (pMinor / 100.0) : 0.0;
+                  final rawAddonsMinor = line['addonsPerUnitMinor'];
+                  final int addonsMinor =
+                      rawAddonsMinor is num ? rawAddonsMinor.toInt() : 0;
+                  final rawLineTotalMinor = line['lineTotalMinor'];
                   final qVal = line['qty'] is num
                       ? (line['qty'] as num).toInt()
                       : 1;
+
+                  double priceVal = pMinor is num
+                      ? ((pMinor + addonsMinor) / 100.0)
+                      : 0.0;
+                  if (rawLineTotalMinor is num && qVal > 0) {
+                    final unitFromLine =
+                        rawLineTotalMinor / (qVal * 100.0);
+                    if (unitFromLine > priceVal) {
+                      priceVal = unitFromLine;
+                    }
+                  }
 
                   // Find matching image from existing items or bag items
                   String img = '';
@@ -537,16 +551,20 @@ class CheckoutController extends GetxController {
                   if (existingMatch != null && existingMatch['image'] != null) {
                     img = existingMatch['image'].toString();
                   }
-                  if (img.isEmpty && bagItems.isNotEmpty) {
-                    final bagMatch = bagItems.firstWhereOrNull(
-                      (el) =>
-                          (vId.isNotEmpty && el.variantId == vId) ||
-                          (pId.isNotEmpty && el.productId == pId),
-                    );
-                    if (bagMatch != null) {
-                      img = bagMatch.image;
-                    }
+                  final bagMatch = bagItems.isNotEmpty
+                      ? bagItems.firstWhereOrNull(
+                          (el) =>
+                              (vId.isNotEmpty && el.variantId == vId) ||
+                              (pId.isNotEmpty && el.productId == pId),
+                        )
+                      : null;
+                  if (img.isEmpty && bagMatch != null) {
+                    img = bagMatch.image;
                   }
+
+                  final summary = line['addonsSummary']?.toString() ??
+                      existingMatch?['addonsSummary']?.toString() ??
+                      bagMatch?.addonsSummary;
 
                   updatedItems.add({
                     'id': vId.isNotEmpty ? vId : pId,
@@ -560,6 +578,8 @@ class CheckoutController extends GetxController {
                     'price': priceVal,
                     'quantity': qVal,
                     'image': img,
+                    if (summary != null && summary.isNotEmpty)
+                      'addonsSummary': summary,
                   });
                 }
               }

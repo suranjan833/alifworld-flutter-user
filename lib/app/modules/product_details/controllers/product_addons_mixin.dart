@@ -67,6 +67,28 @@ mixin ProductAddonsMixin {
     return payload;
   }
 
+  String buildAddonsSummary() {
+    final currentVariant = selectedVariant;
+    if (currentVariant == null) return '';
+
+    final parts = <String>[];
+    for (final addon in currentVariant.addons) {
+      final val = addonSelections[addon.id];
+      if (val == null) continue;
+
+      if (addon.type == 'checkbox' && val == true) {
+        parts.add(addon.name);
+      } else if ((addon.type == 'dropdown' || addon.type == 'radio') &&
+          val is String &&
+          val.isNotEmpty) {
+        parts.add('${addon.name}: $val');
+      } else if (addon.type == 'multi_select' && val is List && val.isNotEmpty) {
+        parts.add('${addon.name}: ${val.join(', ')}');
+      }
+    }
+    return parts.join(' • ');
+  }
+
   void resetAddons() {
     addonSelections.clear();
   }

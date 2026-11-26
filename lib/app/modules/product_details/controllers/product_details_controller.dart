@@ -403,6 +403,8 @@ class ProductDetailsController extends GetxController
   ) {
     final sv = selectedVariant;
     final addonsPayload = buildAddonsPayload();
+    final addonsSummary = buildAddonsSummary();
+    final unitWithAddonsMinor = activePriceMinor + totalAddonPriceMinor;
     return <String, dynamic>{
       'id': p.id,
       'productId': p.id,
@@ -411,11 +413,14 @@ class ProductDetailsController extends GetxController
           sv?.label ?? (p.variants.isNotEmpty ? p.variants.first.label : null),
       'brand': p.displayBrand,
       'title': p.name,
-      'price': activePriceValue,
+      'price': unitWithAddonsMinor > 0 ? (unitWithAddonsMinor / 100.0) : activePriceValue,
+      'unitPriceMinor': unitWithAddonsMinor > 0 ? unitWithAddonsMinor : activePriceMinor,
+      'addonsPerUnitMinor': totalAddonPriceMinor,
       'image': imagesList.first,
       'slug': p.slug,
       'variants': p.variants.map((v) => v.toJson()).toList(),
       if (addonsPayload.isNotEmpty) 'addons': addonsPayload,
+      if (addonsSummary.isNotEmpty) 'addonsSummary': addonsSummary,
       if (minPurchaseQty > 1) 'minPurchaseQty': minPurchaseQty,
       if (maxPurchaseQty != null) 'maxPurchaseQty': maxPurchaseQty,
     };
@@ -423,13 +428,10 @@ class ProductDetailsController extends GetxController
 
   Future<void> addToBag() async {
     if (!isVisible || variants.isEmpty) {
-      Get.snackbar(
-        'Not Available',
-        'This product is not available right now.',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: AppColor.error,
-        colorText: AppColor.white,
-      );
+      Get.snackbar('Not Available', 'This product is not available right now.',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: AppColor.error,
+          colorText: AppColor.white);
       return;
     }
 
@@ -453,13 +455,10 @@ class ProductDetailsController extends GetxController
     if (isBuyingNow.value) return;
 
     if (!isVisible || variants.isEmpty) {
-      Get.snackbar(
-        'Not Available',
-        'This product is not available right now.',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: AppColor.error,
-        colorText: AppColor.white,
-      );
+      Get.snackbar('Not Available', 'This product is not available right now.',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: AppColor.error,
+          colorText: AppColor.white);
       return;
     }
 
@@ -481,16 +480,17 @@ class ProductDetailsController extends GetxController
     final bool hasAuth = (token != null && token.toString().trim().isNotEmpty) ||
         (sessionCookie != null && sessionCookie.toString().trim().isNotEmpty);
 
-    bagCtrl.addOptimisticItem(
-      itemPayload,
-      quantity: effectiveQty,
-      resolvedVariantId: fallbackVariantId,
-    );
+    bagCtrl.addOptimisticItem(itemPayload,
+        quantity: effectiveQty, resolvedVariantId: fallbackVariantId);
 
     Get.toNamed(Routes.BAG);
 
     if (hasAuth && fallbackVariantId != null && fallbackVariantId.isNotEmpty) {
-      bagCtrl.syncItemToServerBackground(fallbackVariantId, effectiveQty);
+      bagCtrl.syncItemToServerBackground(
+        fallbackVariantId,
+        effectiveQty,
+        addons: itemPayload['addons'] as List<dynamic>?,
+      );
     }
   }
 }

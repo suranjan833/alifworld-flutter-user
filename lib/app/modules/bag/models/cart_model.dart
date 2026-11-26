@@ -23,6 +23,7 @@ class CartItemModel {
   final List<dynamic>? addons;
   final String? addonsSummary;
   final String? addonsKey;
+  final int? addonsPerUnitMinor;
 
   CartItemModel({
     required this.id,
@@ -47,6 +48,7 @@ class CartItemModel {
     this.addons,
     this.addonsSummary,
     this.addonsKey,
+    this.addonsPerUnitMinor,
   });
 
   int get effectiveMinQty =>
@@ -281,8 +283,15 @@ class CartItemModel {
       for (final a in extractedAddons) {
         if (a is Map) {
           final name = a['name']?.toString() ?? a['addonName']?.toString();
-          final opt = a['optionLabel']?.toString() ??
-              (a['checked'] == true ? '' : null) ??
+          String? opt = a['optionLabel']?.toString();
+          if (opt == null && a['options'] is List && (a['options'] as List).isNotEmpty) {
+            opt = (a['options'] as List)
+                .whereType<Map>()
+                .map((o) => o['label']?.toString() ?? '')
+                .where((s) => s.isNotEmpty)
+                .join(', ');
+          }
+          opt ??= (a['checked'] == true ? '' : null) ??
               (a['optionLabels'] is List
                   ? (a['optionLabels'] as List).join(', ')
                   : null);
@@ -304,6 +313,67 @@ class CartItemModel {
         (extractedAddons != null && extractedAddons.isNotEmpty
             ? extractedAddons.map((e) => e.toString()).join('|')
             : 'none');
+
+    // Calculate add-on charge per unit
+    int addonsPerUnitMinor = 0;
+    final rawAddonsMinor = json['addonsPerUnitMinor'] ??
+        json['addonPriceMinor'] ??
+        json['addonsMinor'];
+    if (rawAddonsMinor is num && rawAddonsMinor > 0) {
+      addonsPerUnitMinor = rawAddonsMinor.toInt();
+    } else if (extractedAddons != null && extractedAddons.isNotEmpty) {
+      for (final a in extractedAddons) {
+        if (a is Map) {
+          final pMin = a['priceMinor'];
+          final pMaj = a['price'];
+          if (pMin is num && pMin > 0) {
+            addonsPerUnitMinor += pMin.toInt();
+          } else if (pMaj is num && pMaj > 0) {
+            addonsPerUnitMinor += (pMaj * 100).round();
+          }
+          if (a['options'] is List) {
+            for (final opt in a['options']) {
+              if (opt is Map) {
+                final optMin = opt['priceMinor'];
+                final optMaj = opt['price'];
+                if (optMin is num && optMin > 0) {
+                  addonsPerUnitMinor += optMin.toInt();
+                } else if (optMaj is num && optMaj > 0) {
+                  addonsPerUnitMinor += (optMaj * 100).round();
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (addonsPerUnitMinor == 0 &&
+        extractedLineTotalMinor != null &&
+        extractedQty > 0 &&
+        extractedUnitPriceMinor != null) {
+      final lineUnitMinor = (extractedLineTotalMinor / extractedQty).round();
+      if (lineUnitMinor > extractedUnitPriceMinor) {
+        addonsPerUnitMinor = lineUnitMinor - extractedUnitPriceMinor;
+      }
+    } else if (addonsPerUnitMinor == 0 && extractedQty > 0) {
+      final rawTotal = json['addonsTotalMinor'];
+      if (rawTotal is num) {
+        addonsPerUnitMinor = (rawTotal / extractedQty).round();
+      }
+    }
+
+    // Add addonsPerUnitMinor to unit price and price if addons were detected
+    if (addonsPerUnitMinor > 0) {
+      final base = rawPriceMinor is num
+          ? rawPriceMinor.toInt()
+          : (extractedUnitPriceMinor ?? (extractedPrice * 100).round());
+      final expectedWithAddons = base + addonsPerUnitMinor;
+      if (extractedUnitPriceMinor != expectedWithAddons) {
+        extractedUnitPriceMinor = expectedWithAddons;
+        extractedPrice = extractedUnitPriceMinor / 100.0;
+      }
+    }
 
     return CartItemModel(
       id: extractedId,
@@ -328,6 +398,7 @@ class CartItemModel {
       addons: extractedAddons,
       addonsSummary: extractedAddonsSummary,
       addonsKey: extractedAddonsKey,
+      addonsPerUnitMinor: addonsPerUnitMinor > 0 ? addonsPerUnitMinor : null,
     );
   }
 
@@ -356,6 +427,7 @@ class CartItemModel {
       if (addons != null) 'addons': addons,
       if (addonsSummary != null) 'addonsSummary': addonsSummary,
       if (addonsKey != null) 'addonsKey': addonsKey,
+      if (addonsPerUnitMinor != null) 'addonsPerUnitMinor': addonsPerUnitMinor,
     };
   }
 
@@ -380,6 +452,7 @@ class CartItemModel {
     List<dynamic>? addons,
     String? addonsSummary,
     String? addonsKey,
+    int? addonsPerUnitMinor,
   }) {
     return CartItemModel(
       id: id ?? this.id,
@@ -404,6 +477,7 @@ class CartItemModel {
       addons: addons ?? this.addons,
       addonsSummary: addonsSummary ?? this.addonsSummary,
       addonsKey: addonsKey ?? this.addonsKey,
+      addonsPerUnitMinor: addonsPerUnitMinor ?? this.addonsPerUnitMinor,
     );
   }
 

@@ -35,8 +35,8 @@ class ProductVariantModel {
     this.dimensions = const [],
     this.minPurchaseQty,
     this.maxPurchaseQty,
-    List<VariantAddonModel>? addons = const [],
-  }) : _addons = addons;
+    this._addons = const [],
+  });
 
   bool get isCampaignActive =>
       campaignSaleMinor != null && campaignSaleMinor! > 0;
