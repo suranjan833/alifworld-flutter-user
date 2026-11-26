@@ -220,7 +220,7 @@ class BagView extends GetView<BagController> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Order Summary',
+                              'Payment bill',
                               style: GoogleFonts.lato(
                                 fontSize: 16.sp,
                                 fontWeight: FontWeight.bold,
@@ -229,8 +229,28 @@ class BagView extends GetView<BagController> {
                             ),
                             SizedBox(height: 12.h),
                             _buildSummaryRow(
-                              'Subtotal (${controller.totalItemCount} items)',
-                              '৳${controller.subtotal.toStringAsFixed(2)}',
+                              'Subtotal',
+                              '৳${controller.baseSubtotal.toStringAsFixed(2)}',
+                            ),
+                            if (controller.totalAddons > 0) ...[
+                              SizedBox(height: 8.h),
+                              _buildSummaryRow(
+                                'Add-ons',
+                                '৳${controller.totalAddons.toStringAsFixed(2)}',
+                              ),
+                            ],
+                            SizedBox(height: 8.h),
+                            _buildSummaryRow(
+                              'Shipping',
+                              controller.deliveryFee == 0
+                                  ? '৳0.00'
+                                  : '৳${controller.deliveryFee.toStringAsFixed(2)}',
+                              isGreen: false,
+                            ),
+                            SizedBox(height: 8.h),
+                            _buildSummaryRow(
+                              'Tax',
+                              '৳${controller.tax.toStringAsFixed(2)}',
                             ),
                             if (controller.totalDiscount > 0) ...[
                               SizedBox(height: 8.h),
@@ -238,21 +258,6 @@ class BagView extends GetView<BagController> {
                                 'Discount',
                                 '- ৳${controller.totalDiscount.toStringAsFixed(2)}',
                                 isGreen: true,
-                              ),
-                            ],
-                            SizedBox(height: 8.h),
-                            _buildSummaryRow(
-                              'Delivery Fee',
-                              controller.deliveryFee == 0
-                                  ? 'FREE'
-                                  : '৳${controller.deliveryFee.toStringAsFixed(2)}',
-                              isGreen: controller.deliveryFee == 0,
-                            ),
-                            if (controller.tax > 0) ...[
-                              SizedBox(height: 8.h),
-                              _buildSummaryRow(
-                                'Estimated Tax',
-                                '৳${controller.tax.toStringAsFixed(2)}',
                               ),
                             ],
                             if (controller.totalPoints > 0) ...[
@@ -267,7 +272,7 @@ class BagView extends GetView<BagController> {
                             const Divider(color: Color(0xFFF1F5F9), height: 1),
                             SizedBox(height: 12.h),
                             _buildSummaryRow(
-                              'Total Payable',
+                              'Total',
                               '৳${controller.totalAmount.toStringAsFixed(2)}',
                               isBold: true,
                             ),

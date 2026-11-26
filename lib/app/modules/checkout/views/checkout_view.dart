@@ -700,7 +700,7 @@ class CheckoutView extends GetView<CheckoutController> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Price Details',
+                            'Payment bill',
                             style: GoogleFonts.lato(
                               fontSize: 16.sp,
                               fontWeight: FontWeight.bold,
@@ -709,24 +709,29 @@ class CheckoutView extends GetView<CheckoutController> {
                           ),
                           SizedBox(height: 12.h),
                           _buildDetailRow(
-                            'Items Subtotal',
-                            '৳${controller.subtotal.value.toStringAsFixed(2)}',
+                            'Subtotal',
+                            '৳${controller.baseSubtotal.toStringAsFixed(2)}',
+                          ),
+                          if (controller.totalAddons > 0) ...[
+                            SizedBox(height: 8.h),
+                            _buildDetailRow(
+                              'Add-ons',
+                              '৳${controller.totalAddons.toStringAsFixed(2)}',
+                            ),
+                          ],
+                          SizedBox(height: 8.h),
+                          _buildDetailRow(
+                            'Shipping',
+                            controller.deliveryFee.value == 0
+                                ? '৳0.00'
+                                : '৳${controller.deliveryFee.value.toStringAsFixed(2)}',
+                            isGreen: false,
                           ),
                           SizedBox(height: 8.h),
                           _buildDetailRow(
-                            'Delivery Charge',
-                            controller.deliveryFee.value == 0
-                                ? 'FREE'
-                                : '৳${controller.deliveryFee.value.toStringAsFixed(2)}',
-                            isGreen: controller.deliveryFee.value == 0,
+                            'Tax',
+                            '৳${controller.tax.value.toStringAsFixed(2)}',
                           ),
-                          if (controller.tax.value > 0) ...[
-                            SizedBox(height: 8.h),
-                            _buildDetailRow(
-                              'Estimated Tax',
-                              '৳${controller.tax.value.toStringAsFixed(2)}',
-                            ),
-                          ],
                           if (controller.discount.value > 0) ...[
                             SizedBox(height: 8.h),
                             _buildDetailRow(
@@ -757,11 +762,45 @@ class CheckoutView extends GetView<CheckoutController> {
                           const Divider(color: Color(0xFFF1F5F9), height: 1),
                           SizedBox(height: 10.h),
                           _buildDetailRow(
-                            controller.selectedPaymentMethod.value == 'Wallet'
-                                ? 'Payable'
-                                : 'Total Amount',
-                            '৳${controller.finalPayable.toStringAsFixed(2)}',
+                            'Total',
+                            '৳${controller.orderTotal.toStringAsFixed(2)}',
                             isBold: true,
+                          ),
+                          SizedBox(height: 12.h),
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 12.w,
+                              vertical: 10.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFF7ED),
+                              borderRadius: BorderRadius.circular(8.r),
+                              border: Border.all(
+                                color: const Color(0xFFFFEDD5),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Due — ${controller.dueMethodLabel}',
+                                  style: GoogleFonts.lato(
+                                    fontSize: 13.5.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFFEA580C),
+                                  ),
+                                ),
+                                Text(
+                                  '৳${controller.finalPayable.toStringAsFixed(2)}',
+                                  style: GoogleFonts.lato(
+                                    fontSize: 14.5.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFFEA580C),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                           if (controller.discount.value > 0) ...[
                             SizedBox(height: 12.h),

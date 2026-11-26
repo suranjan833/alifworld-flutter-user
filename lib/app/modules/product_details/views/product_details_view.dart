@@ -21,20 +21,36 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      appBar: AppBar(
-        backgroundColor: AppColor.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_rounded,
-            color: AppColor.textPrimary,
-            size: 24.r,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        } else {
+          Get.offAllNamed(Routes.MAIN_NAVIGATION);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8F9FA),
+        appBar: AppBar(
+          backgroundColor: AppColor.white,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          leading: IconButton(
+            icon: Icon(
+              Icons.arrow_back_rounded,
+              color: AppColor.textPrimary,
+              size: 24.r,
+            ),
+            onPressed: () {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              } else {
+                Get.offAllNamed(Routes.MAIN_NAVIGATION);
+              }
+            },
           ),
-          onPressed: () => Get.back(),
-        ),
         title: Text(
           'Product Details',
           style: GoogleFonts.lato(
@@ -262,6 +278,7 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
           ],
         );
       }),
+    ),
     );
   }
 

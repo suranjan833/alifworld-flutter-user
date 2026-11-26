@@ -77,5 +77,6 @@ mera_push.sh
 !.env.example
 .kotlin/
 android/.kotlin/
+srun.ps1
 
 

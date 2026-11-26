@@ -77,13 +77,29 @@ mixin ProductAddonsMixin {
       if (val == null) continue;
 
       if (addon.type == 'checkbox' && val == true) {
-        parts.add(addon.name);
+        final suffix = addon.priceMinor > 0
+            ? ' + ৳${(addon.priceMinor / 100.0).toStringAsFixed(addon.priceMinor % 100 == 0 ? 0 : 2)}'
+            : '';
+        parts.add('${addon.name}$suffix');
       } else if ((addon.type == 'dropdown' || addon.type == 'radio') &&
           val is String &&
           val.isNotEmpty) {
-        parts.add('${addon.name}: $val');
+        final opt = addon.options.firstWhereOrNull((o) => o.label == val);
+        final optMinor = opt?.priceMinor ?? 0;
+        final suffix = optMinor > 0
+            ? ' + ৳${(optMinor / 100.0).toStringAsFixed(optMinor % 100 == 0 ? 0 : 2)}'
+            : '';
+        parts.add('${addon.name}: $val$suffix');
       } else if (addon.type == 'multi_select' && val is List && val.isNotEmpty) {
-        parts.add('${addon.name}: ${val.join(', ')}');
+        int multiTotal = 0;
+        for (final label in val) {
+          final opt = addon.options.firstWhereOrNull((o) => o.label == label);
+          if (opt != null) multiTotal += opt.priceMinor;
+        }
+        final suffix = multiTotal > 0
+            ? ' + ৳${(multiTotal / 100.0).toStringAsFixed(multiTotal % 100 == 0 ? 0 : 2)}'
+            : '';
+        parts.add('${addon.name}: ${val.join(', ')}$suffix');
       }
     }
     return parts.join(' • ');

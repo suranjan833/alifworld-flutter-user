@@ -446,6 +446,16 @@ class BagController extends GetxController with SkeletonLoadingMixin {
     return total;
   }
 
+  double get totalAddons {
+    double total = 0.0;
+    for (var item in cartItems) {
+      total += item.addonsPerUnit * item.quantity;
+    }
+    return total;
+  }
+
+  double get baseSubtotal => (subtotal - totalAddons).clamp(0.0, subtotal);
+
   double get deliveryFee => subtotal > 499 || subtotal == 0 ? 0.0 : 49.0;
   double get tax => 0.0;
   double get totalDiscount {

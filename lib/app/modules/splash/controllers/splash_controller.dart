@@ -113,6 +113,13 @@ class SplashController extends GetxController
       }
     }
 
+    // 0. If product details is already open, STOP! Do not navigate away to home!
+    final currentRoute = Get.currentRoute.toLowerCase();
+    if (currentRoute.contains('product-details') ||
+        currentRoute.contains('product_details')) {
+      return;
+    }
+
     final token = getBox.read(USER_TOKEN);
     final hasToken = token != null && token.toString().trim().isNotEmpty;
     final loggedInVal = getBox.read(IS_USER_LOGGED_IN);
@@ -125,17 +132,17 @@ class SplashController extends GetxController
     if (pendingProduct != null && pendingProduct.trim().isNotEmpty) {
       getBox.remove('pending_deep_link_product');
       getBox.remove('pending_deep_link_variant');
-      Get.offAllNamed(Routes.MAIN_NAVIGATION);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Get.toNamed(
-          Routes.PRODUCT_DETAILS,
-          arguments: {
-            'slug': pendingProduct.trim(),
-            if (pendingVariant != null && pendingVariant.isNotEmpty)
-              'variantId': pendingVariant.trim(),
-          },
-        );
-      });
+
+      // Navigate DIRECTLY to product details, replacing Splash.
+      // This ensures the user stays on the product page and never gets redirected to Home!
+      Get.offNamed(
+        Routes.PRODUCT_DETAILS,
+        arguments: {
+          'slug': pendingProduct.trim(),
+          if (pendingVariant != null && pendingVariant.isNotEmpty)
+            'variantId': pendingVariant.trim(),
+        },
+      );
       return;
     }
 

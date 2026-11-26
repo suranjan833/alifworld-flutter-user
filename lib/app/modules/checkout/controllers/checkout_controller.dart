@@ -231,6 +231,31 @@ class CheckoutController extends GetxController {
   double get finalPayable =>
       selectedPaymentMethod.value == 'Wallet' ? remainingPayable : orderTotal;
 
+  double get totalAddons {
+    double total = 0.0;
+    for (var item in items) {
+      final q = (item['quantity'] ?? item['qty'] ?? 1) as num;
+      final addonsMinor = item['addonsPerUnitMinor'] ?? item['addonPriceMinor'];
+      if (addonsMinor is num && addonsMinor > 0) {
+        total += (addonsMinor / 100.0) * q;
+      } else if (item['addonsTotalMinor'] is num && item['addonsTotalMinor'] > 0) {
+        total += (item['addonsTotalMinor'] as num) / 100.0;
+      }
+    }
+    return total;
+  }
+
+  double get baseSubtotal => (subtotal.value - totalAddons).clamp(0.0, subtotal.value);
+
+  String get dueMethodLabel {
+    if (selectedPaymentMethod.value == 'COD') return 'Cash on delivery';
+    if (selectedPaymentMethod.value == 'Wallet') {
+      return remainingPayable > 0 ? 'Wallet + Cash on delivery' : 'Wallet';
+    }
+    if (selectedPaymentMethod.value == 'Online') return 'Online payment';
+    return selectedPaymentMethod.value;
+  }
+
   String? get selectedAddressId {
     if (addresses.isNotEmpty && selectedAddressIndex.value < addresses.length) {
       final id = addresses[selectedAddressIndex.value]['id']?.toString();

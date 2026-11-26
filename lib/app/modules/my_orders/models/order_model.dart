@@ -54,6 +54,9 @@ class OrderItemModel {
   final double lineTotal;
   final int? pointsPerUnit;
   final bool isReviewed;
+  final List<dynamic>? addons;
+  final String? addonsSummary;
+  final int? addonsTotalMinor;
 
   OrderItemModel({
     required this.id,
@@ -66,6 +69,9 @@ class OrderItemModel {
     this.lineTotal = 0.0,
     this.pointsPerUnit,
     this.isReviewed = false,
+    this.addons,
+    this.addonsSummary,
+    this.addonsTotalMinor,
   });
 
   factory OrderItemModel.fromJson(Map<String, dynamic> json) {
@@ -127,6 +133,82 @@ class OrderItemModel {
         json['reviewed'] == true ||
         json['hasReviewed'] == true;
 
+    final rawAddons = json['addons'] ?? json['selectedAddons'];
+    List<dynamic>? addons;
+    if (rawAddons is List) {
+      addons = rawAddons;
+    }
+
+    String? addonsSummary = json['addonsSummary']?.toString();
+    if ((addonsSummary == null || addonsSummary.isEmpty) &&
+        addons != null &&
+        addons.isNotEmpty) {
+      final parts = <String>[];
+      for (final a in addons) {
+        if (a is Map) {
+          final aName = a['name']?.toString() ?? a['addonName']?.toString();
+          String? opt = a['optionLabel']?.toString();
+          if (opt == null && a['options'] is List && (a['options'] as List).isNotEmpty) {
+            opt = (a['options'] as List)
+                .whereType<Map>()
+                .map((o) {
+                  final lbl = o['label']?.toString() ?? '';
+                  final pMin = o['priceMinor'];
+                  final pMaj = o['price'];
+                  int charge = 0;
+                  if (pMin is num && pMin > 0) {
+                    charge = pMin.toInt();
+                  } else if (pMaj is num && pMaj > 0) {
+                    charge = (pMaj * 100).round();
+                  }
+                  if (charge > 0 && lbl.isNotEmpty) {
+                    return '$lbl + ৳${(charge / 100.0).toStringAsFixed(2)}';
+                  }
+                  return lbl;
+                })
+                .where((s) => s.isNotEmpty)
+                .join(', ');
+          }
+          opt ??= (a['checked'] == true ? '' : null) ??
+              (a['optionLabels'] is List
+                  ? (a['optionLabels'] as List).join(', ')
+                  : null);
+          int singleCharge = 0;
+          final pMin = a['priceMinor'];
+          final pMaj = a['price'];
+          if (pMin is num && pMin > 0) {
+            singleCharge = pMin.toInt();
+          } else if (pMaj is num && pMaj > 0) {
+            singleCharge = (pMaj * 100).round();
+          }
+          if (singleCharge > 0 && opt != null && opt.isNotEmpty && !opt.contains('+ ৳')) {
+            opt = '$opt + ৳${(singleCharge / 100.0).toStringAsFixed(2)}';
+          }
+          if (aName != null && opt != null && opt.isNotEmpty) {
+            parts.add('$aName: $opt');
+          } else if (aName != null) {
+            if (singleCharge > 0) {
+              parts.add('$aName + ৳${(singleCharge / 100.0).toStringAsFixed(2)}');
+            } else {
+              parts.add(aName);
+            }
+          } else if (opt != null && opt.isNotEmpty) {
+            parts.add(opt);
+          }
+        }
+      }
+      if (parts.isNotEmpty) {
+        addonsSummary = parts.join(' • ');
+      }
+    }
+
+    int? addonsTotalMinor;
+    if (json['addonsTotalMinor'] is num) {
+      addonsTotalMinor = (json['addonsTotalMinor'] as num).toInt();
+    } else if (json['addonsPerUnitMinor'] is num) {
+      addonsTotalMinor = (json['addonsPerUnitMinor'] as num).toInt() * q;
+    }
+
     return OrderItemModel(
       id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
       productId:
@@ -139,6 +221,9 @@ class OrderItemModel {
       lineTotal: parsedLineTotal,
       pointsPerUnit: ptsPerUnit,
       isReviewed: isRev,
+      addons: addons,
+      addonsSummary: addonsSummary,
+      addonsTotalMinor: addonsTotalMinor,
     );
   }
 
@@ -284,6 +369,21 @@ class OrderModel {
       '৳${(subtotal > 0 ? subtotal : totalAmount).toStringAsFixed(2)}';
   String get formattedShipping =>
       shippingFee == 0 ? 'FREE' : '৳${shippingFee.toStringAsFixed(2)}';
+
+  double get totalAddons {
+    double total = 0.0;
+    for (var it in items) {
+      if (it.addonsTotalMinor != null && it.addonsTotalMinor! > 0) {
+        total += it.addonsTotalMinor! / 100.0;
+      }
+    }
+    return total;
+  }
+
+  double get baseSubtotal => (subtotal - totalAddons).clamp(0.0, subtotal);
+  String get formattedBaseSubtotal =>
+      '৳${(baseSubtotal > 0 ? baseSubtotal : (subtotal > 0 ? subtotal : totalAmount)).toStringAsFixed(2)}';
+  String get formattedTotalAddons => '৳${totalAddons.toStringAsFixed(2)}';
 
   String get formattedPaymentMethod {
     final method = (paymentMethod ?? 'Cash on Delivery').toLowerCase();

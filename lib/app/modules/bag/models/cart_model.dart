@@ -51,6 +51,13 @@ class CartItemModel {
     this.addonsPerUnitMinor,
   });
 
+  double get addonsPerUnit =>
+      (addonsPerUnitMinor != null && addonsPerUnitMinor! > 0)
+          ? addonsPerUnitMinor! / 100.0
+          : 0.0;
+
+  double get baseUnitPrice => (price - addonsPerUnit).clamp(0.0, price);
+
   int get effectiveMinQty =>
       (minPurchaseQty != null && minPurchaseQty! > 0) ? minPurchaseQty! : 1;
 
@@ -287,7 +294,21 @@ class CartItemModel {
           if (opt == null && a['options'] is List && (a['options'] as List).isNotEmpty) {
             opt = (a['options'] as List)
                 .whereType<Map>()
-                .map((o) => o['label']?.toString() ?? '')
+                .map((o) {
+                  final lbl = o['label']?.toString() ?? '';
+                  final pMin = o['priceMinor'];
+                  final pMaj = o['price'];
+                  int charge = 0;
+                  if (pMin is num && pMin > 0) {
+                    charge = pMin.toInt();
+                  } else if (pMaj is num && pMaj > 0) {
+                    charge = (pMaj * 100).round();
+                  }
+                  if (charge > 0 && lbl.isNotEmpty) {
+                    return '$lbl + ৳${(charge / 100.0).toStringAsFixed(2)}';
+                  }
+                  return lbl;
+                })
                 .where((s) => s.isNotEmpty)
                 .join(', ');
           }
@@ -295,10 +316,25 @@ class CartItemModel {
               (a['optionLabels'] is List
                   ? (a['optionLabels'] as List).join(', ')
                   : null);
+          int singleCharge = 0;
+          final pMin = a['priceMinor'];
+          final pMaj = a['price'];
+          if (pMin is num && pMin > 0) {
+            singleCharge = pMin.toInt();
+          } else if (pMaj is num && pMaj > 0) {
+            singleCharge = (pMaj * 100).round();
+          }
+          if (singleCharge > 0 && opt != null && opt.isNotEmpty && !opt.contains('+ ৳')) {
+            opt = '$opt + ৳${(singleCharge / 100.0).toStringAsFixed(2)}';
+          }
           if (name != null && opt != null && opt.isNotEmpty) {
             parts.add('$name: $opt');
           } else if (name != null) {
-            parts.add(name);
+            if (singleCharge > 0) {
+              parts.add('$name + ৳${(singleCharge / 100.0).toStringAsFixed(2)}');
+            } else {
+              parts.add(name);
+            }
           } else if (opt != null && opt.isNotEmpty) {
             parts.add(opt);
           }

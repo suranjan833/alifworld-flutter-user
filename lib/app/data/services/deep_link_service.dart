@@ -9,6 +9,7 @@ import 'package:play_install_referrer/play_install_referrer.dart';
 
 import '../config/functions/dio_function/app_config.dart';
 import '../../modules/signup/controllers/signup_controller.dart';
+import '../../modules/splash/controllers/splash_controller.dart';
 import '../../routes/app_pages.dart';
 
 class DeepLinkService extends GetxService {
@@ -16,6 +17,17 @@ class DeepLinkService extends GetxService {
 
   late final AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSub;
+  String? pendingProductSlug;
+  String? pendingVariantId;
+  String? _lastHandledUrl;
+  DateTime? _lastHandledTime;
+
+  void clearPendingProduct() {
+    pendingProductSlug = null;
+    pendingVariantId = null;
+    getBox.remove('pending_deep_link_product');
+    getBox.remove('pending_deep_link_variant');
+  }
 
   Future<DeepLinkService> init() async {
     _appLinks = AppLinks();
@@ -95,6 +107,17 @@ class DeepLinkService extends GetxService {
   void _handleIncomingUri(Uri uri) {
     log('DeepLink received URI: $uri');
 
+    final urlStr = uri.toString();
+    final now = DateTime.now();
+    if (_lastHandledUrl == urlStr &&
+        _lastHandledTime != null &&
+        now.difference(_lastHandledTime!).inMilliseconds < 1500) {
+      log('DeepLink: Duplicate URI ignored ($urlStr)');
+      return;
+    }
+    _lastHandledUrl = urlStr;
+    _lastHandledTime = now;
+
     // 1. Check for product deep link (/product/:slug or alifworld://product/:slug)
     final productData = extractProductDetailsFromUri(uri);
     if (productData != null) {
@@ -116,23 +139,41 @@ class DeepLinkService extends GetxService {
 
     log('DeepLink product detected: slug=$slug, variantId=$variantId');
 
+    // Always persist so SplashController can detect it reliably
+    pendingProductSlug = slug;
+    pendingVariantId = variantId;
+    getBox.write('pending_deep_link_product', slug);
+    if (variantId != null && variantId.isNotEmpty) {
+      getBox.write('pending_deep_link_variant', variantId);
+    } else {
+      getBox.remove('pending_deep_link_variant');
+    }
+
     final current = Get.currentRoute.toLowerCase();
-    final isSplash = current.isEmpty || current.contains('splash');
+    final isSplash = Get.isRegistered<SplashController>() ||
+        current.isEmpty ||
+        current == '/' ||
+        current.contains('splash');
 
     if (isSplash) {
-      // Save for SplashController to open after initializing
-      getBox.write('pending_deep_link_product', slug);
-      if (variantId != null && variantId.isNotEmpty) {
-        getBox.write('pending_deep_link_variant', variantId);
-      } else {
-        getBox.remove('pending_deep_link_variant');
-      }
+      log('DeepLink: Splash active. Stored pending product for SplashController.');
       return;
     }
 
-    // Navigate immediately if app is already active
+    // Navigate immediately if app is already active beyond splash
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (Get.context != null) {
+        // If already on product details for the same product, don't re-push
+        if (Get.currentRoute.toLowerCase().contains('product-details')) {
+          final currentArgs = Get.arguments;
+          final currentSlug =
+              currentArgs is Map ? currentArgs['slug']?.toString() : null;
+          if (currentSlug == slug) {
+            log('DeepLink: Already on product details for $slug');
+            return;
+          }
+        }
+
         Get.toNamed(
           Routes.PRODUCT_DETAILS,
           arguments: {

@@ -1074,6 +1074,20 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
                                   ),
                               ],
                             ),
+                            if (item.addonsSummary != null &&
+                                item.addonsSummary!.isNotEmpty) ...[
+                              SizedBox(height: 3.h),
+                              Text(
+                                '+ ${item.addonsSummary!}',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11.5.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFFE65100),
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -1321,14 +1335,14 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Items Subtotal',
+                'Subtotal',
                 style: GoogleFonts.inter(
                   fontSize: 13.sp,
                   color: AppColor.textSecondary,
                 ),
               ),
               Text(
-                o.formattedSubtotal,
+                o.formattedBaseSubtotal,
                 style: GoogleFonts.inter(
                   fontSize: 13.5.sp,
                   fontWeight: FontWeight.w600,
@@ -1337,6 +1351,29 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
               ),
             ],
           ),
+          if (o.totalAddons > 0) ...[
+            SizedBox(height: 10.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Add-ons',
+                  style: GoogleFonts.inter(
+                    fontSize: 13.sp,
+                    color: AppColor.textSecondary,
+                  ),
+                ),
+                Text(
+                  o.formattedTotalAddons,
+                  style: GoogleFonts.inter(
+                    fontSize: 13.5.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColor.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ],
           SizedBox(height: 10.h),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
