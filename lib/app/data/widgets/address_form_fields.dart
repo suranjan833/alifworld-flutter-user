@@ -6,13 +6,14 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../config/app_color.dart';
 import '../controllers/address_form_controller.dart';
+import '../models/geo_model.dart';
 
 class AddressDropdownField extends GetView<AddressFormController> {
   final String label;
   final String hint;
   final bool isLoading;
   final String? value;
-  final List<String> items;
+  final List<GeoDropdownOption> items;
   final ValueChanged<String?>? onChanged;
 
   const AddressDropdownField({
@@ -53,7 +54,7 @@ class AddressDropdownField extends GetView<AddressFormController> {
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               isExpanded: true,
-              value: items.contains(value) ? value : null,
+              value: items.any((item) => item.id == value) ? value : null,
               hint: isLoading
                   ? Row(
                       children: [
@@ -81,9 +82,11 @@ class AddressDropdownField extends GetView<AddressFormController> {
                     ),
               items: items.map((item) {
                 return DropdownMenuItem<String>(
-                  value: item,
+                  value: item.id,
                   child: Text(
-                    item,
+                    item.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.lato(
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w600,

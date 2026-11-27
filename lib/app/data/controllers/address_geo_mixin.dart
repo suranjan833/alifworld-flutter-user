@@ -3,8 +3,15 @@ import 'package:get/get.dart';
 
 import '../config/functions/dio_function/my_dio.dart';
 import '../models/address_model.dart';
+import '../services/app_translations.dart';
 
 mixin AddressGeoMixin on GetxController {
+  static final Map<String, GeoLevelTypes> _cachedGeoTypes = {};
+  static DateTime? _lastGeoTypesFetch;
+
+  final levelTypes = <String, GeoLevelTypes>{}.obs;
+  final isLoadingGeoTypes = false.obs;
+
   final divisions = <GeoDivision>[].obs;
   final districts = <GeoDistrict>[].obs;
   final upazilas = <GeoUpazila>[].obs;
@@ -28,6 +35,59 @@ mixin AddressGeoMixin on GetxController {
   Timer? searchDebounce;
 
   AddressModel? get currentEditingAddress;
+
+  Future<void> loadGeoTypes({bool force = false}) async {
+    final now = DateTime.now();
+    if (!force &&
+        _cachedGeoTypes.isNotEmpty &&
+        _lastGeoTypesFetch != null &&
+        now.difference(_lastGeoTypesFetch!).inMinutes < 5) {
+      levelTypes.assignAll(_cachedGeoTypes);
+      return;
+    }
+
+    isLoadingGeoTypes.value = true;
+    try {
+      final res = await dioGet('geo/types');
+      if (res.statusCode == 200 && res.data != null) {
+        final data = res.data is Map && res.data['data'] != null
+            ? res.data['data']
+            : res.data;
+        final rawLevels = (data is Map && data['levels'] is List)
+            ? (data['levels'] as List)
+            : <dynamic>[];
+        final parsed = <String, GeoLevelTypes>{};
+        for (final entry in rawLevels) {
+          if (entry is Map) {
+            final lt = GeoLevelTypes.fromJson(Map<String, dynamic>.from(entry));
+            if (lt.level.isNotEmpty) {
+              parsed[lt.level] = lt;
+            }
+          }
+        }
+        if (parsed.isNotEmpty) {
+          _cachedGeoTypes
+            ..clear()
+            ..addAll(parsed);
+          _lastGeoTypesFetch = DateTime.now();
+          levelTypes.assignAll(parsed);
+        }
+      }
+    } catch (_) {
+    } finally {
+      isLoadingGeoTypes.value = false;
+    }
+  }
+
+  String levelFieldLabel(String level, String fallbackEn, String fallbackBn) {
+    final isBn = AppTranslations.currentLanguageCode == 'bn';
+    final lt = levelTypes[level];
+    if (lt != null && lt.types.isNotEmpty) {
+      final joined = lt.fieldLabel(isBn);
+      if (joined.isNotEmpty) return joined;
+    }
+    return isBn ? fallbackBn : fallbackEn;
+  }
 
   Future<void> loadDivisions() async {
     isLoadingDivisions.value = true;
@@ -221,22 +281,7 @@ mixin AddressGeoMixin on GetxController {
             .map((j) => GeoArea.fromJson(j))
             .toList();
 
-        GeoArea? fallbackArea;
-        if (list.isEmpty && selectedUnion.value != null) {
-          final unionName = selectedUnion.value!.name;
-          final unionBn = selectedUnion.value!.bnName;
-          fallbackArea = GeoArea(
-            id: '',
-            name: '$unionName Area',
-            bnName: unionBn.isNotEmpty ? '$unionBn এলাকা' : '',
-            isVirtual: true,
-          );
-        }
-
         areas.assignAll(list);
-        if (fallbackArea != null) {
-          selectedArea.value = fallbackArea;
-        }
 
         final editAddr = currentEditingAddress;
         if (prefill && editAddr != null) {

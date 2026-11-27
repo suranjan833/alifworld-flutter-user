@@ -284,78 +284,118 @@ class AddressFormModal extends GetView<AddressFormController> {
       final selectedUn = controller.selectedUnion.value;
       final selectedAr = controller.selectedArea.value;
 
+      // Read levelTypes map to register Obx dependency for dynamic labels
+      final _ = controller.levelTypes.length;
+
+      final divLabel = controller.levelFieldLabel('division', 'Division', 'বিভাগ');
+      final distLabel = controller.levelFieldLabel('district', 'District', 'জেলা');
+      final upzLabel = controller.levelFieldLabel('upazila', 'Upazila / City Corporation', 'উপজেলা / সিটি কর্পোরেশন');
+      final unLabel = controller.levelFieldLabel('union', 'Union / Pourashava', 'ইউনিয়ন / পৌরসভা');
+      final areaLabel = controller.levelFieldLabel('area', 'Area', 'এলাকা');
+
+      final divOptions = buildGeoDropdownOptions<GeoDivision>(
+        controller.divisions,
+        getId: (d) => d.id,
+        getName: (d) => d.name,
+        getLabel: (d, c) => d.displayWithCollision(c),
+      );
+      final distOptions = buildGeoDropdownOptions<GeoDistrict>(
+        controller.districts,
+        getId: (d) => d.id,
+        getName: (d) => d.name,
+        getLabel: (d, c) => d.displayWithCollision(c),
+      );
+      final upzOptions = buildGeoDropdownOptions<GeoUpazila>(
+        controller.upazilas,
+        getId: (u) => u.id,
+        getName: (u) => u.name,
+        getLabel: (u, c) => u.displayWithCollision(c),
+      );
+      final unOptions = buildGeoDropdownOptions<GeoUnion>(
+        controller.unions,
+        getId: (u) => u.id,
+        getName: (u) => u.name,
+        getLabel: (u, c) => u.displayWithCollision(c),
+      );
+      final areaOptions = buildGeoDropdownOptions<GeoArea>(
+        controller.areas,
+        getId: (a) => a.id,
+        getName: (a) => a.name,
+        getLabel: (a, c) => a.displayWithCollision(c),
+      );
+
       return Column(
         children: [
           AddressDropdownField(
-            label: 'Division *',
-            hint: 'Select Division',
+            label: '$divLabel *',
+            hint: 'Select $divLabel',
             isLoading: controller.isLoadingDivisions.value,
-            value: selectedDiv?.displayName,
-            items: controller.divisions.map((d) => d.displayName).toList(),
-            onChanged: (displayName) {
-              final match = controller.divisions.firstWhereOrNull((d) => d.displayName == displayName);
+            value: selectedDiv?.id,
+            items: divOptions,
+            onChanged: (id) {
+              final match = controller.divisions.firstWhereOrNull((d) => d.id == id);
               if (match != null) controller.onSelectDivision(match);
             },
           ),
           SizedBox(height: 10.h),
           AddressDropdownField(
-            label: 'District *',
-            hint: selectedDiv == null ? 'Select division first' : 'Select District',
+            label: '$distLabel *',
+            hint: selectedDiv == null ? 'Select $divLabel first' : 'Select $distLabel',
             isLoading: controller.isLoadingDistricts.value,
-            value: selectedDist?.displayName,
-            items: controller.districts.map((d) => d.displayName).toList(),
+            value: selectedDist?.id,
+            items: distOptions,
             onChanged: selectedDiv == null
                 ? null
-                : (displayName) {
-                    final match = controller.districts.firstWhereOrNull((d) => d.displayName == displayName);
+                : (id) {
+                    final match = controller.districts.firstWhereOrNull((d) => d.id == id);
                     if (match != null) controller.onSelectDistrict(match);
                   },
           ),
           SizedBox(height: 10.h),
           AddressDropdownField(
-            label: 'Thana / Upazila / City Corporation *',
-            hint: selectedDist == null ? 'Select district first' : 'Select Thana / Upazila / City Corporation',
+            label: '$upzLabel *',
+            hint: selectedDist == null ? 'Select $distLabel first' : 'Select $upzLabel',
             isLoading: controller.isLoadingUpazilas.value,
-            value: selectedUpz?.displayName,
-            items: controller.upazilas.map((u) => u.displayName).toList(),
+            value: selectedUpz?.id,
+            items: upzOptions,
             onChanged: selectedDist == null
                 ? null
-                : (displayName) {
-                    final match = controller.upazilas.firstWhereOrNull((u) => u.displayName == displayName);
+                : (id) {
+                    final match = controller.upazilas.firstWhereOrNull((u) => u.id == id);
                     if (match != null) controller.onSelectUpazila(match);
                   },
           ),
           SizedBox(height: 10.h),
           AddressDropdownField(
-            label: 'Union / Pourashava / Word *',
+            label: '$unLabel *',
             hint: selectedUpz == null
-                ? 'Select upazila first'
-                : (controller.unions.isEmpty ? 'No unions for this area' : 'Select Union / Pourashava / Word'),
+                ? 'Select $upzLabel first'
+                : (controller.unions.isEmpty ? 'No entries for this selection' : 'Select $unLabel'),
             isLoading: controller.isLoadingUnions.value,
-            value: selectedUn?.displayName,
-            items: controller.unions.map((u) => u.displayName).toList(),
+            value: selectedUn?.id,
+            items: unOptions,
             onChanged: (selectedUpz == null || controller.unions.isEmpty)
                 ? null
-                : (displayName) {
-                    final match = controller.unions.firstWhereOrNull((u) => u.displayName == displayName);
+                : (id) {
+                    final match = controller.unions.firstWhereOrNull((u) => u.id == id);
                     if (match != null) controller.onSelectUnion(match);
                   },
           ),
           SizedBox(height: 10.h),
           AddressDropdownField(
-            label: 'Area *',
+            label: '$areaLabel *',
             hint: selectedUn == null
-                ? 'Select union first'
-                : (controller.isLoadingAreas.value ? 'Loading areas...' : 'Select Area'),
+                ? 'Select $unLabel first'
+                : (controller.isLoadingAreas.value
+                    ? 'Loading areas...'
+                    : (controller.areas.isEmpty ? 'No areas added yet' : 'Select $areaLabel')),
             isLoading: controller.isLoadingAreas.value,
-            value: selectedAr?.displayName,
-            items: controller.areas.isNotEmpty
-                ? controller.areas.map((a) => a.displayName).toList()
-                : (selectedAr != null ? [selectedAr.displayName] : const []),
+            value: selectedAr?.id,
+            items: areaOptions,
             onChanged: (selectedUn == null || controller.areas.isEmpty)
                 ? null
-                : (displayName) {
-                    final match = controller.areas.firstWhereOrNull((a) => a.displayName == displayName);
+                : (id) {
+                    final match = controller.areas.firstWhereOrNull((a) => a.id == id);
                     if (match != null) controller.selectedArea.value = match;
                   },
           ),

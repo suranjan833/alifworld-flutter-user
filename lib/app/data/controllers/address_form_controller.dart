@@ -69,6 +69,7 @@ class AddressFormController extends GetxController with AddressGeoMixin {
     selectedLabel.value = address != null ? address.label : 'Home';
     isDefault.value = address != null ? address.isDefault : false;
 
+    loadGeoTypes();
     loadDivisions();
   }
 
@@ -125,7 +126,15 @@ class AddressFormController extends GetxController with AddressGeoMixin {
     }
 
     if (selectedArea.value == null) {
-      showSnack('Missing Area', 'Please select your area', bg: AppColor.red);
+      showSnack(
+        areas.isEmpty && selectedUnion.value != null
+            ? 'No Areas Available'
+            : 'Missing Area',
+        areas.isEmpty && selectedUnion.value != null
+            ? 'No areas added yet for this selection. Address cannot be completed yet.'
+            : 'Please select your area',
+        bg: AppColor.red,
+      );
       return;
     }
 
@@ -133,10 +142,7 @@ class AddressFormController extends GetxController with AddressGeoMixin {
 
     final normalizedPhone = normalizeBdPhone(rawPhone);
     final isEditing = editingAddress != null;
-    final isVirtualArea = selectedArea.value?.isVirtual == true;
-    final areaName = (areas.isNotEmpty && !isVirtualArea)
-        ? (selectedArea.value?.name ?? '')
-        : '';
+    final areaName = selectedArea.value?.name ?? '';
 
     final payload = <String, dynamic>{
       'label': selectedLabel.value,
@@ -156,9 +162,7 @@ class AddressFormController extends GetxController with AddressGeoMixin {
       if (selectedUnion.value != null && selectedUnion.value!.bnName.isNotEmpty)
         'unionBn': selectedUnion.value!.bnName,
       'area': areaName,
-      if (selectedArea.value != null &&
-          selectedArea.value!.bnName.isNotEmpty &&
-          !isVirtualArea)
+      if (selectedArea.value != null && selectedArea.value!.bnName.isNotEmpty)
         'areaBn': selectedArea.value!.bnName,
       'postalCode': postalCode,
       'isDefault': isDefault.value,
